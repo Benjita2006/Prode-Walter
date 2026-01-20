@@ -1,0 +1,154 @@
+/* src/components/Login.css */
+
+/* 1. FONDO DE PANTALLA (Selección Argentina) */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+
+  /* --- AQUÍ LA MAGIA --- */
+  /* Ponemos la foto y encima una capa negra al 50% para que no encandile */
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+              url('https://i.pinimg.com/736x/77/d7/83/77d783a361427592eaa48e7b81ec5478.jpg'); /* <--- CAMBIA ESTO POR TU LINK DE LA SELECCIÓN */
+  
+  background-size: cover;       /* Que cubra toda la pantalla */
+  background-position: center;  /* Que se vea el centro de la foto */
+  background-attachment: fixed; /* Efecto elegante: la foto queda fija al hacer scroll */
+}
+
+/* 2. LA TARJETA (Estadio Kempes) */
+.auth-card {
+  /* Tamaño y forma */
+  width: 100%;
+  max-width: 400px;
+  padding: 40px 30px; /* Un poco más de espacio interno */
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3); /* Sombra más fuerte para resaltar del fondo */
+  text-align: center;
+
+  /* --- FONDO DEL FORMULARIO --- */
+  background: linear-gradient(rgba(212, 211, 211, 0.6), rgba(52, 112, 216, 0.6)),
+              url(''); /* <--- Aca imagen en el formulario, opcional */
+  
+  background-size: cover;
+  background-position: center;
+}
+
+/* Títulos y Textos */
+.auth-card h2 {
+  margin-bottom: 5px;
+  color: #1a1a1a; 
+  font-weight: 800;
+  text-transform: uppercase; /* Mayúsculas tipo deportivo */
+}
+
+.auth-card p {
+  margin-top: 0;
+  color: #555;
+  margin-bottom: 25px;
+  font-weight: 500;
+}
+
+/* 3. INPUTS (Campos de texto) */
+.input-group {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: #333;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0; /* Borde suave */
+  border-radius: 12px;
+  font-size: 1rem;
+  background-color: rgba(255, 255, 255, 0.8); /* Fondo semi-transparente en el input */
+  transition: all 0.3s;
+}
+
+.input-group input:focus {
+  border-color: #74acdf; /* Celeste Argentina al escribir */
+  background-color: #fff;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(116, 172, 223, 0.2); /* Resplandor celeste */
+}
+
+/* 4. BOTÓN INGRESAR */
+.auth-button {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #74acdf 0%, #3e8ef7 100%); /* Degradado Celeste/Azul */
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.auth-button:hover {
+  transform: translateY(-2px); /* Se levanta un poco */
+  box-shadow: 0 5px 15px rgba(62, 142, 247, 0.4);
+}
+
+/* 5. SEPARADOR */
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 25px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ccc;
+}
+
+.divider span {
+  padding: 0 10px;
+  color: #777;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* 6. BOTÓN GOOGLE */
+.google-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: white;
+  color: #444;
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.google-button:hover {
+  background-color: #f9f9f9;
+  border-color: #bbb;
+}
+
+.switch-text {
+  margin-top: 25px;
+  font-size: 0.9rem;
+  color: #666;
+}

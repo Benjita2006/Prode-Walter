@@ -1,0 +1,154 @@
+/* prode-oficial/src/components/NavBar.css */
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    height: 70px;
+    background-color: var(--nav-bg); /* Negro minimalista */
+    color: var(--nav-text);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+/* LOGO */
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logo-text { color: #fff; }
+.logo-dot { color: var(--accent-color); font-size: 2rem; line-height: 0; }
+
+/* ENLACES CENTRALES */
+.navbar-center {
+    display: flex;
+    gap: 30px;
+}
+
+.nav-link {
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #888; /* Gris apagado por defecto */
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-link:hover {
+    color: var(--accent-color); /* Verde al pasar el mouse */
+}
+
+/* Efecto de línea verde al hacer hover */
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0%;
+    height: 2px;
+    bottom: -5px;
+    left: 0;
+    background-color: var(--accent-color);
+    transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+/* PARTE DERECHA */
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.theme-toggle {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.theme-toggle:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.user-badge {
+    background-color: rgba(255,255,255,0.1);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-logout-minimal {
+    background: transparent;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 6px 15px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-logout-minimal:hover {
+    border-color: #ff4444;
+    color: #ff4444;
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        height: auto; /* Altura automática para permitir que crezca */
+        padding: 15px;
+        flex-wrap: wrap; /* Permite que los elementos bajen de línea */
+    }
+
+    /* El Logo se queda a la izquierda */
+    .navbar-brand {
+        order: 1; 
+    }
+
+    /* Los controles de usuario (derecha) se quedan a la derecha */
+    .navbar-right {
+        order: 2;
+        gap: 10px;
+    }
+
+    /* El Menú central BAJA a una segunda línea y ocupa todo el ancho */
+    .navbar-center {
+        order: 3;
+        width: 100%;
+        margin-top: 15px;
+        justify-content: center; /* Centrar los enlaces */
+        border-top: 1px solid rgba(255,255,255,0.1); /* Línea separadora sutil */
+        padding-top: 15px;
+        gap: 20px;
+    }
+
+    /* Ajustamos textos para que no ocupen tanto espacio */
+    .nav-link {
+        font-size: 0.9rem;
+    }
+    
+    .logo-text {
+        display: none; /* Opcional: Ocultar texto "PRODE" en móviles muy pequeños si quieres */
+    }
+    
+    .user-badge {
+        display: none; /* Ocultamos el rol en móviles para ahorrar espacio */
+    }
+}

@@ -1,0 +1,89 @@
+/* prode-oficial/src/App.css */
+
+.app-container {
+  /* Usamos las variables del tema */
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  
+  /* Asegura que cubra el 100% de la altura de la pantalla */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.main-content-wrapper {
+  max-width: 1200px;
+  width: 90%; /* En móviles usa el 90%, en PC se limita a 1200px */
+  margin: 0 auto;
+  padding: 20px 0;
+  flex: 1;
+}
+
+/* Títulos y textos adaptables */
+h1 {
+  color: var(--text-primary);
+}
+
+small {
+  color: var(--text-secondary);
+}
+.whatsapp-float { /* O el nombre de la clase que tenga tu botón */
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    bottom: 10px; /* Se mantiene abajo */
+    
+    /* 🔴 ANTES: */
+    /* right: 20px; */
+
+    /* 🟢 AHORA: Lo mandamos a la izquierda */
+    left: 20px; 
+    right: auto; /* Importante para anular el right si estaba definido */
+    
+    background-color: #25d366;
+    color: #FFF;
+    border-radius: 50px;
+    text-align: center;
+    font-size: 30px;
+    box-shadow: 2px 2px 3px #999;
+    z-index: 100;
+}
+
+.welcome-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    color: white;
+    animation: fadeOut 0.5s ease-in-out 2s forwards; /* Dura 2s y luego desaparece */
+}
+
+@keyframes fadeOut {
+    to { opacity: 0; visibility: hidden; }
+}
+
+.welcome-text {
+    font-size: 2rem;
+    animation: scaleUp 0.5s ease-out;
+}
+
+@keyframes scaleUp {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.matches-grid-container {
+   display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    /* 1. AUMENTAMOS EL ANCHO MÁXIMO */
+    max-width: 1200px; /* Antes era 800px. 1200px se ve mas piola🏍 */
+    /* 2. ASEGURAMOS QUE OCUPE CASI TODA LA PANTALLA EN MÓVILES */
+    width: 95%; 
+    margin: 0 auto;
+}
