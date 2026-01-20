@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 // Reutilizamos estilos, asumiendo que los estilos de MatchCreator.css funcionan
 import './MatchCreator.css'; 
+import { API_URL } from '../config';
 
 function UsersManagement() {
     const [usuarios, setUsuarios] = useState([]);
@@ -15,7 +16,7 @@ function UsersManagement() {
             setLoading(true);
             const token = localStorage.getItem('token');
             try {
-                const res = await fetch('http://localhost:3000/api/admin/users', {
+                const res = await fetch(`${API_URL}/api/admin/users`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
