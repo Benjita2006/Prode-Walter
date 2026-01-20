@@ -1,14 +1,14 @@
-// prode-backend/footballService.js (CORREGIDO Y OPTIMIZADO)
+// prode-backend/footballService.js (VERSIÓN FINAL LIMPIA)
 const db = require('./db');
 
-// --- 1. LECTURA DE PARTIDOS (Para el Usuario - CON LOGOS) ---
+// --- 1. LECTURA DE PARTIDOS (Para el Usuario) ---
 async function obtenerPartidos(userId) { 
     try {
         const sql = `
             SELECT 
                 m.id, m.home_team, m.home_logo, m.away_team, m.away_logo, 
                 m.match_date, m.status, 
-                p.prediction_result /* 🆕 CAMBIO AQUÍ: Traemos el resultado 1X2 */
+                p.prediction_result
             FROM matches m
             LEFT JOIN predictions p ON m.id = p.match_id AND p.user_id = ?
             WHERE m.is_active = TRUE
@@ -26,7 +26,6 @@ async function obtenerPartidos(userId) {
             logoVisitante: row.away_logo,
             fecha: new Date(row.match_date).toLocaleString('es-AR'),
             status: row.status,
-            // 🆕 CAMBIO: Ya no enviamos goles, enviamos la elección ('HOME', 'DRAW', 'AWAY')
             miPronostico: row.prediction_result, 
             yaJugo: row.prediction_result !== null 
         }));
@@ -39,7 +38,7 @@ async function obtenerPartidos(userId) {
     }
 }
 
-// --- 2. ESCRITURA: Crear MÚLTIPLES partidos ---
+// --- 2. ESCRITURA: Crear MÚLTIPLES partidos (Admin) ---
 async function crearPartidos(matches) {
     const conn = await db.getConnection(); 
     let insertedCount = 0;
@@ -49,7 +48,6 @@ async function crearPartidos(matches) {
 
         for (const match of matches) {
             const { local, visitante, fecha } = match;
-            // Nota: Al crear manual no tenemos logos, se insertan como NULL
             await conn.execute(
                 'INSERT INTO matches (home_team, away_team, match_date, is_active) VALUES (?, ?, ?, 1)',
                 [local, visitante, fecha]
@@ -69,23 +67,38 @@ async function crearPartidos(matches) {
     }
 }
 
-// --- 3. ESCRITURA: Enviar Pronóstico ---
-async function submitPrediction(userId, matchId, result) { // 🆕 Recibimos 'result' en vez de goles
+// --- 3. ESCRITURA: Enviar Pronóstico (Usuario) ---
+async function submitPrediction(userId, matchId, result) { 
     if (!userId || !matchId || !result) {
         return { success: false, message: 'Faltan datos.' };
     }
 
     try {
+        // Validación de hora (Evitar trampa si el partido ya empezó)
+        const [match] = await db.execute('SELECT match_date FROM matches WHERE id = ?', [matchId]);
+        if (match.length > 0) {
+            const now = new Date();
+            const matchDate = new Date(match[0].match_date);
+            if (now >= matchDate) {
+                return { success: false, message: 'El partido ya comenzó.' };
+            }
+        }
+
         const [existing] = await db.execute(
             'SELECT id FROM predictions WHERE user_id = ? AND match_id = ?',
             [userId, matchId]
         );
 
         if (existing.length > 0) {
-            return { success: false, message: 'Ya pronosticaste este partido.' };
+            // Si ya existe, actualizamos en lugar de dar error (Mejor experiencia de usuario)
+            await db.execute(
+                'UPDATE predictions SET prediction_result = ? WHERE id = ?',
+                [result, existing[0].id]
+            );
+            return { success: true, message: 'Pronóstico actualizado.' };
         }
 
-        // 🆕 Insertamos en la columna prediction_result
+        // Insertar nuevo
         const [resultDb] = await db.execute(
             'INSERT INTO predictions (user_id, match_id, prediction_result) VALUES (?, ?, ?)',
             [userId, matchId, result]
@@ -99,7 +112,7 @@ async function submitPrediction(userId, matchId, result) { // 🆕 Recibimos 're
     }
 }
 
-// --- 4. LECTURA: Todos los Pronósticos (Dashboard Admin) ---
+// --- 4. LECTURA: Todos los Pronósticos (Admin Dashboard) ---
 async function obtenerTodosLosPronosticos() {
     try {
         const sql = `
@@ -107,12 +120,12 @@ async function obtenerTodosLosPronosticos() {
                 p.id,
                 u.username,
                 m.home_team,
-                m.home_logo,   /* 🛡️ AGREGADO PARA DASHBOARD */
+                m.home_logo,   
                 m.away_team,
-                m.away_logo,   /* 🛡️ AGREGADO PARA DASHBOARD */
+                m.away_logo,   
                 m.match_date,
-                p.prediction_home,
-                p.prediction_away
+                p.prediction_result, /* Usamos result, no home/away */
+                p.points
             FROM predictions p
             JOIN users u ON p.user_id = u.id
             JOIN matches m ON p.match_id = m.id
@@ -126,48 +139,7 @@ async function obtenerTodosLosPronosticos() {
     }
 }
 
-// --- 5. LECTURA: Pronósticos de un Usuario Específico (FALTABA ESTA FUNCIÓN) ---
-async function obtenerPronosticosDeUsuario(userId) {
-    try {
-        const sql = `
-            SELECT 
-                m.home_team, m.home_logo,
-                m.away_team, m.away_logo,
-                m.match_date, m.home_score, m.away_score, m.status,
-                p.prediction_home, p.prediction_away
-            FROM matches m
-            LEFT JOIN predictions p ON m.id = p.match_id AND p.user_id = ?
-            WHERE m.is_active = 1
-            ORDER BY m.match_date ASC
-        `;
-        const [rows] = await db.execute(sql, [userId]);
-        return rows;
-    } catch (error) {
-        console.error("Error obteniendo historial de usuario:", error);
-        return [];
-    }
-}
-
-// --- 6. LECTURA: Lista de Usuarios ---
-async function obtenerTodosLosUsuarios() {
-    try {
-        const sql = `
-            SELECT 
-                u.id, u.username, u.email, 
-                r.name AS role, u.role_id
-            FROM users u
-            JOIN roles r ON u.role_id = r.id
-            ORDER BY u.username ASC
-        `;
-        const [rows] = await db.execute(sql);
-        return { success: true, users: rows };
-    } catch (error) {
-        console.error("Error obteniendo usuarios:", error);
-        return { success: false, users: [] };
-    }
-}
-
-// --- 7. RANKING: Calcular puntos en tiempo real ---
+// --- 5. RANKING: Calcular puntos en tiempo real 🏆 ---
 async function obtenerRanking() {
     try {
         const sql = `
@@ -190,30 +162,29 @@ async function obtenerRanking() {
                         /* Si no acertó */
                         ELSE 0
                     END
-                ), 0) as puntos
+                ), 0) as points
             FROM users u
             LEFT JOIN predictions p ON u.id = p.user_id
             LEFT JOIN matches m ON p.match_id = m.id
             GROUP BY u.id, u.username
-            ORDER BY puntos DESC, u.username ASC
+            ORDER BY points DESC, u.username ASC
         `;
 
         const [rows] = await db.execute(sql);
-        return rows;
+        // ✨ CAMBIO CLAVE: Devolvemos un objeto con 'success' para que index.js lo entienda
+        return { success: true, ranking: rows };
 
     } catch (error) {
         console.error("Error calculando ranking:", error);
-        return [];
+        return { success: false, message: error.message };
     }
 }
+
+// Exportamos solo lo que usamos en index.js
 module.exports = { 
     obtenerPartidos, 
     crearPartidos, 
     submitPrediction, 
     obtenerTodosLosPronosticos, 
-    obtenerPronosticosDeUsuario, 
-    obtenerTodosLosUsuarios,
     obtenerRanking
 };
-
-
