@@ -5,4 +5,4 @@ const isLocal = window.location.hostname === "localhost" || window.location.host
 // Si es local, usa el puerto 3000. Si es producción, usa la URL que te dará Railway.
 export const API_URL = isLocal 
     ? 'http://localhost:3000' 
-    : 'https://TU-PROYECTO-EN-RAILWAY.app';
+    : 'https://prode-walter-production.up.railway.app';
