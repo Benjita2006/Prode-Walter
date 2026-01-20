@@ -1,74 +1,80 @@
-// src/components/Ranking.jsx (CORREGIDO)
-import React, { useState, useEffect } from 'react';
-import './Ranking.css';
-import { API_URL } from '../config'; // 👈 1. Importado correctamente
+// src/components/Ranking.jsx (VERSIÓN SEGURA)
+import React, { useEffect, useState } from 'react';
+import { API_URL } from '../config';
+import './Ranking.css'; // Asegúrate de que este archivo exista o quita la línea
 
 function Ranking() {
-    const [ranking, setRanking] = useState([]);
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
+        const fetchRanking = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                // IMPORTANTE: Asegúrate de que API_URL esté bien importada
+                const response = await fetch(`${API_URL}/api/ranking`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error del servidor: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // VALIDACIÓN DE SEGURIDAD:
+                // Si data no es un array, lo convertimos en uno vacío para no romper el .map
+                if (Array.isArray(data)) {
+                    setUsers(data);
+                } else {
+                    console.error("El ranking no devolvió una lista válida:", data);
+                    setUsers([]); 
+                }
+
+            } catch (err) {
+                console.error("Error cargando ranking:", err);
+                setError("No se pudo cargar el ranking. Intenta más tarde.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
         fetchRanking();
     }, []);
 
-    const fetchRanking = async () => {
-        const token = localStorage.getItem('token');
-        try {
-            // 👇 2. CORREGIDO: Sintaxis limpia, sin los tres puntos (...)
-            const res = await fetch(`${API_URL}/api/ranking`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setRanking(data);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Función para asignar medallas
-    const getMedal = (index) => {
-        if (index === 0) return '🥇';
-        if (index === 1) return '🥈';
-        if (index === 2) return '🥉';
-        return index + 1; 
-    };
-
-    if (loading) return <div className="loading-text">Cargando posiciones...</div>;
+    if (loading) return <div className="loading-spinner">Cargando Tabla...</div>;
+    if (error) return <div className="error-message">⚠️ {error}</div>;
 
     return (
         <div className="ranking-container">
             <h2 className="ranking-title">🏆 Tabla de Posiciones</h2>
-            
-            <div className="ranking-card">
-                <table className="ranking-table">
-                    <thead>
-                        <tr>
-                            <th style={{width: '15%'}}>#</th>
-                            <th style={{textAlign: 'left'}}>Usuario</th>
-                            <th style={{textAlign: 'right'}}>Puntos</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {ranking.map((user, index) => (
-                            <tr key={index} className={`rank-row position-${index + 1}`}>
-                                <td className="rank-pos">{getMedal(index)}</td>
-                                <td className="rank-user">
-                                    <div className="user-info">
-                                        <div className="user-avatar">
-                                            {user.username.charAt(0).toUpperCase()}
-                                        </div>
-                                        <span>{user.username}</span>
-                                    </div>
+            <table className="ranking-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Jugador</th>
+                        <th>Puntos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {users.length > 0 ? (
+                        users.map((user, index) => (
+                            <tr key={index} className={index < 3 ? `top-${index + 1}` : ''}>
+                                <td className="rank-position">
+                                    {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                                 </td>
-                                <td className="rank-points">{user.puntos}</td>
+                                <td className="rank-user">{user.username}</td>
+                                <td className="rank-points">{user.points} pts</td>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {ranking.length === 0 && <p className="no-data">Nadie ha sumado puntos aún.</p>}
-            </div>
+                        ))
+                    ) : (
+                        <tr>
+                            <td colSpan="3" style={{textAlign: 'center'}}>Aún no hay puntos registrados.</td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
         </div>
     );
 }
