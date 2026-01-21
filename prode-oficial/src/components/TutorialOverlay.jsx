@@ -65,8 +65,8 @@ function TutorialOverlay({ username }) {
                         <h3>Tabla de Posiciones</h3>
                         <p>Compite contra los demás usuarios.</p>
                         <ul style={{textAlign: 'left', margin: '0 auto', maxWidth: '300px', marginBottom: '20px'}}>
-                            <li><b>3 Puntos:</b> Si aciertas el resultado exacto (ej: dijiste 2-1 y salió 2-1).</li>
                             <li><b>1 Punto:</b> Si aciertas quién ganó pero no el resultado exacto.</li>
+                            <li><b>2 Punto:</b> Revisa la tabla para poder ver tus puntos y el de los demas</li>
                         </ul>
                         <button className="btn-tutorial" onClick={handleNext}>Siguiente ➡</button>
                     </>
