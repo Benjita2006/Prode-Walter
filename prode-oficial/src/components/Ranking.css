@@ -1,15 +1,16 @@
 .ranking-container {
-    max-width: 600px;
+    max-width: 800px;
     margin: 0 auto;
     padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     animation: fadeIn 0.5s ease-in;
 }
 
 .ranking-title {
-    text-align: center;
-    color: #fbc02d; /* Dorado */
-    margin-bottom: 20px;
+   text-align: center;
+    color: #fff;
     font-size: 2rem;
+    margin-bottom: 25px;
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
@@ -22,16 +23,30 @@
 }
 
 .ranking-table {
-    width: 100%;
+   width: 100%;
     border-collapse: collapse;
+    background-color: #1e1e1e; /* Fondo oscuro */
+    border-radius: 10px;
+    overflow: hidden; /* Para que los bordes redondeados funcionen */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 .ranking-table th {
-    color: #888;
-    font-size: 0.9rem;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #444;
+   background-color: #333;
+    color: #4caf50; /* Verde estilo fútbol */
+    padding: 15px;
+    text-align: left;
+    font-weight: bold;
     text-transform: uppercase;
+    font-size: 0.9rem;
+}
+.ranking-table td {
+    padding: 15px;
+    color: #e0e0e0;
+    border-bottom: 1px solid #333;
+}
+.ranking-table tr:hover {
+    background-color: #2a2a2a;
 }
 
 .rank-row {
@@ -83,18 +98,35 @@
     font-size: 1.3rem;
 }
 
-/* Destacar al Top 1 (Dorado) */
-.position-1 .rank-points { color: #ffd700; }
-.position-1 .user-avatar { background: linear-gradient(135deg, #ffd700, #ffb900); color: black; }
+.rank-1 {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+    border-left: 5px solid #ffd700;
+}
+.rank-1 .rank-position { font-size: 1.5rem; }
+.rank-1 .rank-user { color: #ffd700; font-weight: bold; }
 
-/* Destacar al Top 2 (Plateado) */
-.position-2 .rank-points { color: #c0c0c0; }
-.position-2 .user-avatar { background: linear-gradient(135deg, #e0e0e0, #bdbdbd); color: black; }
+/* 🥈 SEGUNDO LUGAR */
+.rank-2 {
+    background: linear-gradient(90deg, rgba(192, 192, 192, 0.1) 0%, rgba(192, 192, 192, 0.05) 100%);
+    border-left: 5px solid #c0c0c0;
+}
+.rank-2 .rank-position { font-size: 1.4rem; }
+.rank-2 .rank-user { color: #c0c0c0; font-weight: bold; }
 
-/* Destacar al Top 3 (Bronce) */
-.position-3 .rank-points { color: #cd7f32; }
-.position-3 .user-avatar { background: linear-gradient(135deg, #cd7f32, #a05a2c); }
+/* 🥉 TERCER LUGAR */
+.rank-3 {
+    background: linear-gradient(90deg, rgba(205, 127, 50, 0.1) 0%, rgba(205, 127, 50, 0.05) 100%);
+    border-left: 5px solid #cd7f32;
+}
+.rank-3 .rank-position { font-size: 1.3rem; }
+.rank-3 .rank-user { color: #cd7f32; font-weight: bold; }
 
+/* Columnas especificas */
+.rank-points {
+    font-weight: bold;
+    text-align: right;
+    font-size: 1.1rem;
+}
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }

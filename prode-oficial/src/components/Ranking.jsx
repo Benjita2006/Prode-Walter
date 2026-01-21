@@ -1,7 +1,7 @@
-// src/components/Ranking.jsx (VERSIÓN SEGURA)
+// src/components/Ranking.jsx (VISUAL MEJORADA)
 import React, { useEffect, useState } from 'react';
 import { API_URL } from '../config';
-import './Ranking.css'; // Asegúrate de que este archivo exista o quita la línea
+import './Ranking.css'; 
 
 function Ranking() {
     const [users, setUsers] = useState([]);
@@ -12,29 +12,23 @@ function Ranking() {
         const fetchRanking = async () => {
             try {
                 const token = localStorage.getItem('token');
-                // IMPORTANTE: Asegúrate de que API_URL esté bien importada
                 const response = await fetch(`${API_URL}/api/ranking`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!response.ok) {
-                    throw new Error(`Error del servidor: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
                 const data = await response.json();
                 
-                // VALIDACIÓN DE SEGURIDAD:
-                // Si data no es un array, lo convertimos en uno vacío para no romper el .map
                 if (Array.isArray(data)) {
                     setUsers(data);
                 } else {
-                    console.error("El ranking no devolvió una lista válida:", data);
                     setUsers([]); 
                 }
 
             } catch (err) {
                 console.error("Error cargando ranking:", err);
-                setError("No se pudo cargar el ranking. Intenta más tarde.");
+                setError("No se pudo cargar la tabla.");
             } finally {
                 setLoading(false);
             }
@@ -43,38 +37,64 @@ function Ranking() {
         fetchRanking();
     }, []);
 
-    if (loading) return <div className="loading-spinner">Cargando Tabla...</div>;
+    // Función auxiliar para iconos
+    const getMedal = (index) => {
+        if (index === 0) return '🥇';
+        if (index === 1) return '🥈';
+        if (index === 2) return '🥉';
+        return `#${index + 1}`;
+    };
+
+    // Función auxiliar para clases CSS
+    const getRowClass = (index) => {
+        if (index === 0) return 'rank-1';
+        if (index === 1) return 'rank-2';
+        if (index === 2) return 'rank-3';
+        return '';
+    };
+
+    if (loading) return <div className="loading-spinner">Cargando posiciones...</div>;
     if (error) return <div className="error-message">⚠️ {error}</div>;
 
     return (
         <div className="ranking-container">
             <h2 className="ranking-title">🏆 Tabla de Posiciones</h2>
-            <table className="ranking-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Jugador</th>
-                        <th>Puntos</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {users.length > 0 ? (
-                        users.map((user, index) => (
-                            <tr key={index} className={index < 3 ? `top-${index + 1}` : ''}>
-                                <td className="rank-position">
-                                    {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
-                                </td>
-                                <td className="rank-user">{user.username}</td>
-                                <td className="rank-points">{user.points} pts</td>
-                            </tr>
-                        ))
-                    ) : (
+            
+            <div className="table-responsive">
+                <table className="ranking-table">
+                    <thead>
                         <tr>
-                            <td colSpan="3" style={{textAlign: 'center'}}>Aún no hay puntos registrados.</td>
+                            <th style={{width: '60px'}}>Pos</th>
+                            <th>Jugador</th>
+                            <th style={{textAlign: 'right'}}>Puntos</th>
                         </tr>
-                    )}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {users.length > 0 ? (
+                            users.map((user, index) => (
+                                <tr key={index} className={getRowClass(index)}>
+                                    <td className="rank-position">
+                                        {getMedal(index)}
+                                    </td>
+                                    <td className="rank-user">
+                                        {user.username}
+                                        {index === 0 && <span style={{fontSize:'0.8em', marginLeft:'10px', color:'#ffd700'}}>👑 LÍDER</span>}
+                                    </td>
+                                    <td className="rank-points">
+                                        {user.points} <span style={{fontSize:'0.8rem', fontWeight:'normal', opacity:0.7}}>pts</span>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="3" style={{textAlign: 'center', padding: '30px'}}>
+                                    Aún no hay puntos registrados. ¡Sé el primero en jugar!
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }
