@@ -171,10 +171,12 @@ function App() {
                 )}
 
                 {/* 👇 NUEVA VISTA: CHAT (Ahora es una pantalla completa) 👇 */}
-                {appView === 'chat' && (
-                    <div className="chat-full-page">
-                        <ChatGlobal username={username} />
-                    </div>
+               {appView === 'chat' && (
+                <div className="chat-full-page">
+
+                <ChatGlobal username={username} fullPage={true} />
+
+                </div>
                 )}
 
                 {/* VISTA: LISTA DE PARTIDOS (DEFAULT) */}

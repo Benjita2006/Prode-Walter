@@ -1,127 +1,171 @@
 /* src/components/ChatGlobal.css */
 
-.chat-wrapper {
+/* --- BOTÓN FLOTANTE (SOLO CUANDO ESTÁ CERRADO) --- */
+.chat-toggle-btn {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 1000;
-    font-family: 'Segoe UI', sans-serif;
-}
-
-.chat-toggle-btn {
-    background-color: #4caf50;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #25D366; /* Verde Whatsapp/Chat */
     color: white;
+    font-size: 30px;
     border: none;
-    padding: 12px 20px;
-    border-radius: 30px;
-    font-weight: bold;
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 1000;
     transition: transform 0.2s;
 }
 
 .chat-toggle-btn:hover {
-    transform: scale(1.05);
-    background-color: #45a049;
+    transform: scale(1.1);
 }
 
-.chat-toggle-btn.open {
-    background-color: #d32f2f;
-}
-
-/* Ventana */
-.chat-window {
-    position: absolute;
-    bottom: 60px;
-    right: 0;
-    width: 320px;
-    height: 400px;
-    background-color: #2b2b2b;
-    border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+/* --- CONTENEDOR PRINCIPAL COMÚN --- */
+.chat-container {
+    background-color: #1e1e1e; /* Fondo oscuro */
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid #444;
+    border: 1px solid #333;
 }
 
+/* MODO 1: FLOTANTE (Como estaba antes) */
+.floating-mode {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 350px;
+    height: 500px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    z-index: 1000;
+}
+
+/* MODO 2: PANTALLA COMPLETA (Nuevo) */
+.full-mode {
+    width: 100%;
+    height: 100%; /* Ocupa todo el alto del padre */
+    border-radius: 0; /* Sin bordes redondeados */
+    border: none;
+    box-shadow: none;
+}
+
+/* --- HEADER --- */
 .chat-header {
-    background-color: #1e1e1e;
-    padding: 10px 15px;
-    border-bottom: 1px solid #444;
-    color: #4caf50;
+    background-color: #075e54; /* Verde oscuro */
+    padding: 15px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-.chat-header h4 { margin: 0; }
 
-.chat-body {
-    flex: 1;
-    padding: 10px;
+.chat-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.close-chat {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+/* --- PUNTO DE ESTADO (ONLINE/OFFLINE) --- */
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.online { background-color: #00e676; box-shadow: 0 0 5px #00e676; }
+.offline { background-color: #ff4444; }
+
+/* --- ÁREA DE MENSAJES --- */
+.chat-messages {
+    flex: 1; /* Ocupa todo el espacio sobrante */
+    padding: 15px;
     overflow-y: auto;
+    background-color: #121212; /* Fondo del chat */
     display: flex;
     flex-direction: column;
     gap: 10px;
-    background-color: #222;
 }
 
-/* Mensajes */
-.chat-bubble {
-    max-width: 80%;
-    padding: 8px 12px;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    word-wrap: break-word;
-}
-
-.my-msg {
-    align-self: flex-end;
-    background-color: #2e7d32; /* Verde oscuro */
-    color: white;
-    border-bottom-right-radius: 2px;
-}
-
-.other-msg {
-    align-self: flex-start;
-    background-color: #333;
-    color: #ddd;
-    border-bottom-left-radius: 2px;
-}
-
-.msg-info {
+/* --- MENSAJES INDIVIDUALES --- */
+.message {
     display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    margin-bottom: 2px;
-    opacity: 0.8;
+    flex-direction: column;
+    max-width: 80%;
 }
 
-.msg-user { font-weight: bold; margin-right: 10px; }
+.my-message {
+    align-self: flex-end; /* A la derecha */
+}
+.my-message .msg-content {
+    background-color: #005c4b; /* Verde oscuro estilo WA */
+    border-radius: 10px 0 10px 10px;
+}
 
-/* Footer / Input */
-.chat-footer {
+.other-message {
+    align-self: flex-start; /* A la izquierda */
+}
+.other-message .msg-content {
+    background-color: #202c33; /* Gris oscuro */
+    border-radius: 0 10px 10px 10px;
+}
+
+.msg-content {
+    padding: 8px 12px;
+    color: #e9edef;
+    position: relative;
+}
+
+.msg-user {
+    font-weight: bold;
+    color: #00e676; /* Nombre usuario */
+    font-size: 0.8rem;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.msg-time {
+    display: block;
+    font-size: 0.7rem;
+    color: #8696a0;
+    text-align: right;
+    margin-top: 2px;
+}
+
+/* --- INPUT --- */
+.chat-input-area {
     padding: 10px;
     background-color: #1e1e1e;
     display: flex;
-    gap: 5px;
+    gap: 10px;
+    border-top: 1px solid #333;
 }
 
-.chat-footer input {
+.chat-input-area input {
     flex: 1;
-    padding: 8px;
+    padding: 10px;
     border-radius: 20px;
-    border: 1px solid #555;
-    background-color: #333;
+    border: 1px solid #444;
+    background-color: #2a2a2a;
     color: white;
     outline: none;
 }
 
-.chat-footer button {
-    background-color: #2196F3;
+.chat-input-area button {
+    background-color: #00a884;
     color: white;
     border: none;
-    border-radius: 50%;
-    width: 35px;
-    height: 35px;
+    padding: 10px 20px;
+    border-radius: 20px;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-weight: bold;
 }

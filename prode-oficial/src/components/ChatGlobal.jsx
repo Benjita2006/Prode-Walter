@@ -1,93 +1,118 @@
-// src/components/ChatGlobal.jsx
-import { API_URL } from '../config';
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
-import './ChatGlobal.css'; // Ahora creamos el CSS
+import { API_URL } from '../config';
+import './ChatGlobal.css';
 
-// Conexión fuera del componente para que no se reconecte en cada render
-const socket = io(API_URL); 
+// Conectamos el socket fuera del componente para evitar reconexiones múltiples
+const socket = io(API_URL);
 
-function ChatGlobal({ username }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [mensajes, setMensajes] = useState([]);
-    const [nuevoMensaje, setNuevoMensaje] = useState("");
-    const messagesEndRef = useRef(null); // Para el scroll automático
+function ChatGlobal({ username, fullPage = false }) {
+    // Inicializamos el estado basándonos en si es fullPage o no.
+    const [isOpen, setIsOpen] = useState(fullPage);
+    const [message, setMessage] = useState('');
+    const [messages, setMessages] = useState([]);
+    const [isConnected, setIsConnected] = useState(socket.connected);
+    const messagesEndRef = useRef(null);
 
+    // --- CORRECCIÓN AQUÍ ---
     useEffect(() => {
-        // Escuchar mensajes que vienen del servidor
-        socket.on('chat_message', (msg) => {
-            setMensajes((prev) => [...prev, msg]);
+        // 1. Eliminamos la línea "if (fullPage) setIsOpen(true)" que daba error.
+        //    No es necesaria porque la lógica de abajo (el return) ya maneja esto.
+
+        // Listeners del Socket
+        socket.on('connect', () => setIsConnected(true));
+        socket.on('disconnect', () => setIsConnected(false));
+
+        socket.on('chat_message', (data) => {
+            setMessages((prev) => [...prev, data]);
         });
 
+        // Limpieza al desmontar
         return () => {
+            socket.off('connect');
+            socket.off('disconnect');
             socket.off('chat_message');
         };
-    }, []);
+    }, []); // 👈 2. Array vacío: Esto se ejecuta solo una vez al montar el componente.
 
-    // Scroll automático al último mensaje
+    // Auto-scroll al fondo cuando llegan mensajes o se abre el chat
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [mensajes, isOpen]);
+        if (isOpen || fullPage) { // Agregamos fullPage aquí para asegurar el scroll
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages, isOpen, fullPage]);
 
-    const enviarMensaje = (e) => {
+    const sendMessage = (e) => {
         e.preventDefault();
-        if (nuevoMensaje.trim() && username) {
-            const data = {
-                usuario: username,
-                texto: nuevoMensaje,
-                hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        if (message.trim()) {
+            const msgData = {
+                user: username,
+                text: message,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                id: Date.now()
             };
-            
-            // Enviar al servidor
-            socket.emit('chat_message', data);
-            setNuevoMensaje("");
+            socket.emit('chat_message', msgData);
+            setMessage('');
         }
     };
 
-    return (
-        <div className="chat-wrapper">
-            {/* Botón flotante para abrir/cerrar */}
+    // LÓGICA DE RENDERIZADO:
+    // Si NO es pantalla completa Y NO está abierto manualmente -> Muestra Botón Flotante
+    if (!fullPage && !isOpen) {
+        return (
             <button 
-                className={`chat-toggle-btn ${isOpen ? 'open' : ''}`} 
-                onClick={() => setIsOpen(!isOpen)}
+                className="chat-toggle-btn" 
+                onClick={() => setIsOpen(true)}
             >
-                {isOpen ? '❌' : '💬 Chat Global'}
+                💬
             </button>
+        );
+    }
 
-            {/* Ventana del Chat */}
-            {isOpen && (
-                <div className="chat-window">
-                    <div className="chat-header">
-                        <h4>La Tribuna 🏟️</h4>
-                    </div>
-                    
-                    <div className="chat-body">
-                        {mensajes.map((msg, index) => (
-                            <div 
-                                key={index} 
-                                className={`chat-bubble ${msg.usuario === username ? 'my-msg' : 'other-msg'}`}
-                            >
-                                <div className="msg-info">
-                                    <span className="msg-user">{msg.usuario}</span>
-                                    <span className="msg-time">{msg.hora}</span>
-                                </div>
-                                <div className="msg-text">{msg.texto}</div>
-                            </div>
-                        ))}
-                        <div ref={messagesEndRef} />
-                    </div>
-
-                    <form className="chat-footer" onSubmit={enviarMensaje}>
-                        <input 
-                            type="text" 
-                            placeholder="Escribe algo..." 
-                            value={nuevoMensaje}
-                            onChange={(e) => setNuevoMensaje(e.target.value)}
-                        />
-                        <button type="submit">Enviar</button>
-                    </form>
+    // Si es fullPage O está abierto -> Muestra el Chat completo
+    return (
+        <div className={`chat-container ${fullPage ? 'full-mode' : 'floating-mode'}`}>
+            
+            {/* ENCABEZADO */}
+            <div className="chat-header">
+                <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                    <span className={`status-dot ${isConnected ? 'online' : 'offline'}`}></span>
+                    <h3>Chat General {fullPage ? '' : '💬'}</h3>
                 </div>
-            )}
+                
+                {/* Solo mostramos la X de cerrar si es modo flotante */}
+                {!fullPage && (
+                    <button className="close-chat" onClick={() => setIsOpen(false)}>✖</button>
+                )}
+            </div>
+
+            {/* CUERPO MENSAJES */}
+            <div className="chat-messages">
+                {messages.map((msg) => (
+                    <div 
+                        key={msg.id} 
+                        className={`message ${msg.user === username ? 'my-message' : 'other-message'}`}
+                    >
+                        <div className="msg-content">
+                            <small className="msg-user">{msg.user}</small>
+                            <p>{msg.text}</p>
+                            <span className="msg-time">{msg.time}</span>
+                        </div>
+                    </div>
+                ))}
+                <div ref={messagesEndRef} />
+            </div>
+
+            {/* INPUT */}
+            <form className="chat-input-area" onSubmit={sendMessage}>
+                <input
+                    type="text"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Escribe un mensaje..."
+                />
+                <button type="submit">Enviar</button>
+            </form>
         </div>
     );
 }
