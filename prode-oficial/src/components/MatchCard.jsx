@@ -1,3 +1,4 @@
+// src/components/MatchCard.jsx (RESTAURADO + FIX IMÁGENES)
 import React, { useState } from 'react';
 import { API_URL } from '../config'; 
 import './MatchCard.css'; 
@@ -10,8 +11,30 @@ function MatchCard({
     yaGuardado 
 }) { 
     
+    // Estado de la selección ('HOME', 'DRAW', 'AWAY')
     const [seleccion, setSeleccion] = useState(valorInicial || null);
     const [requestStatus, setRequestStatus] = useState(yaGuardado ? 'submitted' : null); 
+
+    // 🛡️ LÓGICA DE IMAGEN (NUEVO)
+    const fallbackLogo = "https://cdn-icons-png.flaticon.com/512/16/16480.png";
+    const handleImageError = (e) => {
+        e.target.src = fallbackLogo;
+        e.target.style.opacity = "0.5"; 
+    };
+
+    // 🛡️ LÓGICA DE FECHA (NUEVO)
+    // Intentamos formatear la fecha solo si es válida
+    let fechaFormateada = fecha;
+    try {
+        const d = new Date(fecha);
+        // Si la fecha es válida, la mostramos bonita. Si no, mostramos el texto original.
+        if (!isNaN(d.getTime())) {
+            fechaFormateada = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+    } catch (e) {
+        console.warn("Fecha inválida:", fecha, e);
+    }
+
 
     const manejarEnvio = async () => {
         if (!seleccion) return; 
@@ -20,7 +43,6 @@ function MatchCard({
         const token = localStorage.getItem('token');
 
         try {
-            // 👇 2. CORREGIDO: Usamos API_URL y la ruta correcta de predictions
             const response = await fetch(`${API_URL}/api/predictions/submit`, {
                 method: 'POST',
                 headers: { 
@@ -31,24 +53,34 @@ function MatchCard({
             });
             
             const data = await response.json();
-            if (response.ok && data.success) setRequestStatus('submitted'); 
-            else { setRequestStatus(null); alert(data.message); }
+            if (response.ok && data.success) {
+                setRequestStatus('submitted'); 
+            } else { 
+                setRequestStatus(null); 
+                alert(data.message || "Error al guardar"); 
+            }
 
         } catch (error) {
             setRequestStatus(null);
             console.error(error);
+            alert("Error de conexión");
         }
     };
 
-    // ... (El resto del renderizado, return y HTML sigue IGUAL, no hace falta cambiarlo)
     const bloqueado = requestStatus === 'submitted' || requestStatus === 'loading' || status === 'FT';
 
     return (
-        <div className={`match-card ${yaGuardado ? 'card-voted' : ''}`}>
-            {/* ... Todo el HTML de la tarjeta sigue igual ... */}
+        <div className={`match-card ${requestStatus === 'submitted' ? 'card-voted' : ''}`}>
+            
             <div className="card-header">
-                <span className="match-date">{fecha}</span>
-                <span className={`status-badge`}>{status}</span>
+                {/* Usamos la fecha corregida */}
+                <span className="match-date">⏰ {fechaFormateada}</span>
+                
+                {status === 'FT' ? (
+                     <span className="status-badge status-finished">FINALIZADO</span>
+                ) : (
+                     <span className="status-badge status-scheduled">{status}</span>
+                )}
             </div>
 
             <div className="card-body">
@@ -57,7 +89,12 @@ function MatchCard({
                     className={`team-col team-selectable ${seleccion === 'HOME' ? 'selected-win' : ''} ${bloqueado ? 'disabled' : ''}`}
                     onClick={() => !bloqueado && setSeleccion('HOME')}
                 >
-                    <img src={logoA} alt={equipoA} className="team-logo" />
+                    <img 
+                        src={logoA || fallbackLogo} 
+                        onError={handleImageError} // 🔥 APLICAMOS EL FIX AQUÍ
+                        alt={equipoA} 
+                        className="team-logo" 
+                    />
                     <span className="team-name">{equipoA}</span>
                     {seleccion === 'HOME' && <div className="check-mark">✅ GANA</div>}
                 </div>
@@ -78,7 +115,12 @@ function MatchCard({
                     className={`team-col team-selectable ${seleccion === 'AWAY' ? 'selected-win' : ''} ${bloqueado ? 'disabled' : ''}`}
                     onClick={() => !bloqueado && setSeleccion('AWAY')}
                 >
-                    <img src={logoB} alt={equipoB} className="team-logo" />
+                    <img 
+                        src={logoB || fallbackLogo} 
+                        onError={handleImageError} // 🔥 APLICAMOS EL FIX AQUÍ
+                        alt={equipoB} 
+                        className="team-logo" 
+                    />
                     <span className="team-name">{equipoB}</span>
                     {seleccion === 'AWAY' && <div className="check-mark">✅ GANA</div>}
                 </div>
