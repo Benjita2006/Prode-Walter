@@ -233,6 +233,7 @@ function App() {
             
             {/* BOTÓN WHATSAPP (Ese sí lo dejamos flotando) */}
             <WhatsAppBtn /> 
+            {appView !== 'chat' && <WhatsAppBtn />}
 
             {/* ❌ ELIMINADO: El ChatGlobal flotante ya no está aquí */}
         </div>
