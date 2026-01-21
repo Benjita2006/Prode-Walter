@@ -1,20 +1,22 @@
-/* src/components/Auth.css */
 
-/* 1. FONDO DE ESTADIO */
+
 .auth-container {
     width: 100%;
-    min-height: 100vh;
+    min-height: 100vh; 
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
+
+    background-color: #1a1a1a;
+
+    background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('https://i.pinimg.com/736x/77/d7/83/77d783a361427592eaa48e7b81ec5478.jpg');
     
-    /* Imagen de fondo de estadio */
-    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1522778119026-d647f0565c6d?q=80&w=1470&auto=format&fit=crop');
+
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    
-    padding: 20px;
+    background-attachment: fixed; /* Opcional: efecto parallax al hacer scroll */
 }
 
 /* 2. TARJETA DE VIDRIO (Glassmorphism) */
