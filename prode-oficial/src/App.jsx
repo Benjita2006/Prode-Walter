@@ -1,4 +1,4 @@
-// prode-oficial/src/App.jsx (CHAT INTEGRADO COMO PESTAÑA)
+// prode-oficial/src/App.jsx (CORREGIDO: UN SOLO WHATSAPP)
 import React, { useState, useEffect, useCallback } from 'react';
 import MatchCard from './components/MatchCard';
 import Login from './components/Login';
@@ -142,7 +142,7 @@ function App() {
                 onNavClick={handleNavClick} 
                 theme={theme}
                 toggleTheme={toggleTheme}
-                currentView={appView} // Le pasamos la vista actual para marcar el botón activo
+                currentView={appView} 
             /> 
             
             {/* CONTENIDO PRINCIPAL */}
@@ -170,13 +170,11 @@ function App() {
                     <Ranking />
                 )}
 
-                {/* 👇 NUEVA VISTA: CHAT (Ahora es una pantalla completa) 👇 */}
-               {appView === 'chat' && (
-                <div className="chat-full-page">
-
-                <ChatGlobal username={username} fullPage={true} />
-
-                </div>
+                {/* VISTA: CHAT (Pantalla completa) */}
+                {appView === 'chat' && (
+                    <div className="chat-full-page">
+                        <ChatGlobal username={username} fullPage={true} />
+                    </div>
                 )}
 
                 {/* VISTA: LISTA DE PARTIDOS (DEFAULT) */}
@@ -231,11 +229,9 @@ function App() {
                 )}
             </div>
             
-            {/* BOTÓN WHATSAPP (Ese sí lo dejamos flotando) */}
-            <WhatsAppBtn /> 
-            {appView !== 'chat' && <WhatsAppBtn />}
+            {/* ✅ CORRECCIÓN: BOTÓN WHATSAPP ÚNICO Y CONDICIONAL */}
+            {appView !== 'chat' && <WhatsAppBtn />} 
 
-            {/* ❌ ELIMINADO: El ChatGlobal flotante ya no está aquí */}
         </div>
     );
 }

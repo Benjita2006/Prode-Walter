@@ -90,6 +90,7 @@
 /* --- ÁREA DE MENSAJES --- */
 .chat-messages {
     flex: 1; /* Ocupa todo el espacio sobrante */
+    flex-grow: 1;
     padding: 15px;
     overflow-y: auto;
     background-color: #121212; /* Fondo del chat */
