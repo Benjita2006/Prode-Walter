@@ -1,61 +1,63 @@
-// prode-oficial/src/components/NavBar.jsx (CÓDIGO COMPLETO)
+// prode-oficial/src/components/NavBar.jsx (LIMPIO Y ORDENADO)
 import React from 'react';
 import './NavBar.css'; 
 
-function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme }) { 
+function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentView }) { 
     
+    // Definimos TODAS las opciones aquí para que se generen ordenadas
     const menuOptions = [
-        { name: 'Partidos', view: 'matches', roles: ['User', 'Owner', 'Dev'] }, 
-        { name: 'Panel Admin & API', view: 'admin-dashboard', roles: ['Owner', 'Dev'] },
-        { name: 'Crear Partidos', view: 'creator', roles: ['Owner', 'Dev'] },
-        { name: 'Administrar Usuarios/Roles', view: 'manage-users', roles: ['Dev', 'Owner'] }, // Agregué Owner aquí también por si acaso
+        // Opciones para TODOS
+        { name: 'Partidos', view: 'matches', roles: ['User', 'Owner', 'Dev'] },
+        { name: 'Ranking', view: 'ranking', roles: ['User', 'Owner', 'Dev'] },
+        { name: 'Chat', view: 'chat', roles: ['User', 'Owner', 'Dev'] },
+
+        // Opciones solo para ADMINS
+        // Acorté un poco los nombres para que entren mejor en celular
+        { name: 'Admin', view: 'admin-dashboard', roles: ['Owner', 'Dev'] },
+        { name: 'Crear', view: 'creator', roles: ['Owner', 'Dev'] },
+        { name: 'Usuarios', view: 'manage-users', roles: ['Dev', 'Owner'] },
     ];
+
     const visibleOptions = menuOptions.filter(option => 
         option.roles.includes(userRole)
     );
 
     return (
         <nav className="navbar">
-            {/* LOGO MINIMALISTA */}
+            {/* LOGO IZQUIERDA */}
             <div className="navbar-brand" onClick={() => onNavClick('matches')}>
                 <span className="logo-icon">⚽</span> 
-                <span className="logo-text">PRODE WALTER</span>
-                <span className="logo-dot">.</span>
+                <span className="logo-text">PRODE</span>
             </div>
             
+            {/* CENTRO: NAVEGACIÓN PRINCIPAL */}
             <div className="navbar-center">
                 {visibleOptions.map((option) => (
-                    <div 
-                        key={option.name} 
+                    <button 
+                        key={option.view} 
                         onClick={() => onNavClick(option.view)} 
-                        className="nav-link"
+                        className={`nav-link ${currentView === option.view ? 'active' : ''}`}
                     >
                         {option.name}
-                    </div>
+                    </button>
                 ))}
             </div>
             
+            {/* DERECHA: UTILIDADES (TEMA Y SALIR) */}
             <div className="navbar-right">
+                
                 {/* BOTÓN MODO OSCURO */}
                 <button onClick={toggleTheme} className="theme-toggle" title="Cambiar Tema">
                     {theme === 'light' ? '🌙' : '☀️'}
                 </button>
-                    <button onClick={() => onNavClick('chat')}>
-                    💬 Chat
-                </button>
 
-                <div className="user-badge">
-                    <small>{userRole}</small>
-                </div>
-                <li onClick={() => onNavClick('ranking')}>🏆Puntos</li>
+                {/* BOTÓN SALIR */}
                 <button onClick={onLogout} className="btn-logout-minimal">
                     Salir
                 </button>
             </div>
         </nav>
     );
-    
 }
-
 
 export default NavBar;

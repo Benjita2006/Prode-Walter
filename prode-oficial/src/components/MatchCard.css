@@ -1,124 +1,136 @@
 /* src/components/MatchCard.css */
 
 .match-card {
-    /* USAR VARIABLES */
     background-color: var(--card-bg);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow);
-    
     border-radius: 12px;
-    padding: 20px;
+    padding: 15px; /* Padding reducido para móviles */
     margin-bottom: 15px;
     transition: transform 0.2s, background-color 0.3s;
-    
     width: 100%;
-    min-height: 240px;
+    /* Quitamos height fijo para que se adapte al contenido */
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
 }
 
-.match-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--accent-color);
-}
-
+/* HEADER (Fecha y Estado) */
 .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    font-size: 0.85rem;
-    color: var(--text-secondary); /* Gris adaptable */
+    margin-bottom: 12px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 8px;
 }
 
+/* CUERPO (Equipos y Botones) */
 .card-body {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    align-items: center; /* Alinea verticalmente al centro */
+    justify-content: space-between; /* Distribuye espacio */
+    gap: 5px; /* Espacio mínimo entre columnas */
     margin-bottom: 15px;
 }
 
+/* COLUMNA DE EQUIPO (Izquierda y Derecha) */
 .team-col {
-    flex: 1;
+    flex: 1; /* Ocupan el mismo ancho */
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    /* Límite de ancho para que no empujen al centro */
+    max-width: 35%; 
+}
+
+/* --- SOLUCIÓN AL ESCUDO GIGANTE --- */
+.team-logo {
+    width: 45px;  /* Tamaño fijo seguro */
+    height: 45px; /* Tamaño fijo seguro */
+    object-fit: contain; /* Evita que se deforme */
+    margin-bottom: 5px;
 }
 
 .team-name {
-    font-size: 0.95rem;
+    font-size: 0.85rem; /* Texto un poco más chico en móvil */
     font-weight: 600;
-    color: var(--text-primary); /* IMPORTANTE: Texto dinámico */
-    margin-top: 5px;
+    line-height: 1.2;
+    color: var(--text-primary);
+    word-wrap: break-word; /* Si el nombre es largo, baja de línea */
 }
 
-/* Botones y Selectores */
+/* COLUMNA CENTRAL (Empate) */
+.draw-col {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 20%; /* Ancho fijo para el centro */
+}
+
+/* BOTONES DE SELECCIÓN */
 .team-selectable {
     cursor: pointer;
-    padding: 10px;
+    padding: 8px 4px; /* Menos padding lateral */
     border-radius: 8px;
-    transition: all 0.2s;
     border: 2px solid transparent;
+    transition: all 0.2s;
+    width: 100%; /* Que ocupe su columna */
 }
 
 .team-selectable:hover {
-    background-color: var(--input-bg); /* Color sutil al hover */
+    background-color: var(--input-bg);
 }
 
-/* Ganador Seleccionado (Verde) */
-.selected-win {
-    background-color: rgba(0, 200, 83, 0.15); /* Verde suave */
-    border-color: var(--accent-color);
-}
-
-/* Empate (Botón) */
 .btn-draw {
     background-color: var(--input-bg);
     color: var(--text-secondary);
     border: 1px solid var(--border-color);
-    padding: 10px 15px;
+    padding: 8px 5px;
+    font-size: 0.75rem; /* Letra más chica para que quepa "EMPATE" */
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
+    width: 100%;
 }
 
-.btn-draw:hover {
-    border-color: var(--text-secondary);
+/* ESTADOS ACTIVOS (Ganador/Empate) */
+.selected-win {
+    background-color: rgba(0, 200, 83, 0.15);
+    border-color: var(--accent-color);
 }
 
-/* Empate Seleccionado (Amarillo) */
 .selected-draw {
-    background-color: #fff9c4; /* Amarillo muy suave */
-    color: #fbc02d;            /* Amarillo oscuro texto */
-    border-color: #fbc02d;
-}
-/* En modo oscuro, ajustamos el amarillo para que no encandile */
-[data-theme='dark'] .selected-draw {
     background-color: rgba(251, 192, 45, 0.2);
     color: #fbc02d;
+    border-color: #fbc02d;
 }
 
-/* Botón Guardar */
+/* BOTÓN GUARDAR (Footer) */
 .btn-save {
     width: 100%;
-    padding: 12px;
+    padding: 10px;
     background-color: var(--accent-color);
-    color: white; /* Siempre blanco */
+    color: white;
     border: none;
     border-radius: 6px;
     font-weight: bold;
+    font-size: 0.9rem;
     cursor: pointer;
-}
-.btn-save:hover {
-    opacity: 0.9;
+    margin-top: auto; /* Empuja al fondo */
 }
 .btn-save:disabled {
     background-color: var(--border-color);
     color: var(--text-secondary);
-    cursor: not-allowed;
+}
+
+/* CHECK VERDE */
+.check-mark {
+    font-size: 0.75rem;
+    color: var(--accent-color);
+    font-weight: bold;
+    margin-top: 2px;
 }

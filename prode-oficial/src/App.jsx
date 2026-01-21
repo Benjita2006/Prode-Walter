@@ -182,7 +182,7 @@ function App() {
                     <>
                         <h1 style={{textAlign: 'center', marginBottom: '15px'}}>🏆 Prode</h1>
                         <small style={{display: 'block', textAlign: 'center', marginBottom: '30px'}}>
-                            Hola, {usuario?.username} | Rol: {userRole}
+                            Hola, {usuario?.username}! Aquí están los próximos partidos disponibles para pronosticar.
                         </small>
                     
                         {loading ? (
