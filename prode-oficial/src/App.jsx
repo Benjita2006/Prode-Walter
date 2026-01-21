@@ -232,7 +232,7 @@ function App() {
             
             {/* ✅ CORRECCIÓN: BOTÓN WHATSAPP ÚNICO Y CONDICIONAL */}
             {appView !== 'chat' && <WhatsAppBtn />}
-            {usuario && <TutorialOverlay />} 
+            {usuario && <TutorialOverlay username={usuario.username} />}
 
         </div>
     );

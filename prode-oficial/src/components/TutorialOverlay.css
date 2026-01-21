@@ -111,3 +111,14 @@
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0, 200, 83, 0.4);
 }
+
+.warning-text {
+    color: #ff4444;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+ul li {
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+}
