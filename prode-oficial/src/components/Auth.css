@@ -1,0 +1,190 @@
+/* src/components/Auth.css */
+
+/* 1. FONDO DE ESTADIO */
+.auth-container {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Imagen de fondo de estadio */
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1522778119026-d647f0565c6d?q=80&w=1470&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    padding: 20px;
+}
+
+/* 2. TARJETA DE VIDRIO (Glassmorphism) */
+.auth-card {
+    background: rgba(40, 40, 40, 0.75); /* Fondo oscuro semitransparente */
+    backdrop-filter: blur(12px);         /* Efecto borroso */
+    -webkit-backdrop-filter: blur(12px);
+    
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 40px 30px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    
+    /* Animación suave de entrada */
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 3. TIPOGRAFÍA Y LOGO */
+.auth-card h2 {
+    color: white;
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+
+.auth-card p {
+    color: #bbb;
+    font-size: 0.95rem;
+    margin-bottom: 25px;
+}
+
+.auth-logo-icon {
+    font-size: 3.5rem;
+    margin-bottom: 10px;
+    display: block;
+    filter: drop-shadow(0 0 10px rgba(0, 200, 83, 0.5));
+}
+
+/* 4. INPUTS MODERNOS */
+.input-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    color: #e0e0e0;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-left: 5px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.input-group input:focus {
+    border-color: #00c853; /* Verde Prode */
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 10px rgba(0, 200, 83, 0.2);
+}
+
+/* 5. BOTONES */
+.auth-button {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #00c853 0%, #009624 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.auth-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 200, 83, 0.4);
+}
+
+.auth-button:disabled {
+    background: #555;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.google-button {
+    width: 100%;
+    padding: 12px;
+    background: white;
+    color: #333;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background 0.2s;
+}
+
+.google-button:hover {
+    background: #f1f1f1;
+}
+
+/* 6. EXTRAS (Divisor y Link) */
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.divider span {
+    padding: 0 10px;
+}
+
+.switch-text {
+    margin-top: 25px;
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.auth-link-text {
+    color: #00c853 !important; /* Verde */
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    margin-left: 5px;
+}
+
+.auth-link-text:hover {
+    text-decoration: underline;
+    color: #69f0ae !important;
+}
+
+/* Mensajes de Estado */
+.message-box {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+.msg-error { background: rgba(255, 0, 0, 0.1); color: #ff5252; border: 1px solid #ff5252; }
+.msg-success { background: rgba(0, 200, 83, 0.1); color: #00c853; border: 1px solid #00c853; }
