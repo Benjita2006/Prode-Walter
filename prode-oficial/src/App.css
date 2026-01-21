@@ -29,7 +29,6 @@ small {
   color: var(--text-secondary);
 }
 .whatsapp-float { /* O el nombre de la clase que tenga tu botón */
-    position: fixed;
     width: 60px;
     height: 60px;
     bottom: 10px; /* Se mantiene abajo */
@@ -86,4 +85,31 @@ small {
     /* 2. ASEGURAMOS QUE OCUPE CASI TODA LA PANTALLA EN MÓVILES */
     width: 95%; 
     margin: 0 auto;
+}
+
+.chat-full-page {
+    height: calc(100vh - 80px); /* Restamos la altura aproximada del NavBar */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Para que empiece desde abajo como Whatsapp */
+}
+
+/* Ajuste para el componente ChatGlobal existente */
+/* Asegúrate de que tu componente ChatGlobal no tenga 'position: fixed' en su CSS */
+.chat-window {
+    position: relative !important; /* Forzamos a que no sea fixed */
+    bottom: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-messages {
+    flex-grow: 1; /* Ocupa todo el espacio disponible */
+    overflow-y: auto; /* Scroll solo en los mensajes */
 }

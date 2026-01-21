@@ -40,6 +40,9 @@ function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme }) {
                 <button onClick={toggleTheme} className="theme-toggle" title="Cambiar Tema">
                     {theme === 'light' ? '🌙' : '☀️'}
                 </button>
+                    <button onClick={() => onNavClick('chat')}>
+                    💬 Chat
+                </button>
 
                 <div className="user-badge">
                     <small>{userRole}</small>

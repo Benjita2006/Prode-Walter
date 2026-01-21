@@ -1,4 +1,4 @@
-// prode-oficial/src/App.jsx (CORREGIDO Y LISTO PARA DEPLOY)
+// prode-oficial/src/App.jsx (CHAT INTEGRADO COMO PESTAÑA)
 import React, { useState, useEffect, useCallback } from 'react';
 import MatchCard from './components/MatchCard';
 import Login from './components/Login';
@@ -10,7 +10,7 @@ import WhatsAppBtn from './components/WhatsAppBtn';
 import UsersManagement from './components/UsersManagement'; 
 import ChatGlobal from './components/ChatGlobal';
 import Ranking from './components/Ranking';
-import { API_URL } from './config'; // 👈 Importante
+import { API_URL } from './config'; 
 import './App.css';
 
 function App() {
@@ -26,7 +26,7 @@ function App() {
     // Nombre de usuario para el chat
     const username = localStorage.getItem('username') || (usuario ? usuario.username : "Anónimo");
 
-    // --- LÓGICA DEL TEMA (Modo Oscuro) ---
+    // --- LÓGICA DEL TEMA ---
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
@@ -58,7 +58,6 @@ function App() {
                 return;
             }
 
-            // 👇 CORREGIDO: Usamos backticks (``) y quitamos los "..."
             const respuesta = await fetch(`${API_URL}/api/partidos`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -143,6 +142,7 @@ function App() {
                 onNavClick={handleNavClick} 
                 theme={theme}
                 toggleTheme={toggleTheme}
+                currentView={appView} // Le pasamos la vista actual para marcar el botón activo
             /> 
             
             {/* CONTENIDO PRINCIPAL */}
@@ -170,6 +170,13 @@ function App() {
                     <Ranking />
                 )}
 
+                {/* 👇 NUEVA VISTA: CHAT (Ahora es una pantalla completa) 👇 */}
+                {appView === 'chat' && (
+                    <div className="chat-full-page">
+                        <ChatGlobal username={username} />
+                    </div>
+                )}
+
                 {/* VISTA: LISTA DE PARTIDOS (DEFAULT) */}
                 {appView === 'matches' && (
                     <>
@@ -187,10 +194,8 @@ function App() {
                                 <div className="predictions-table">
                                     <div className="matches-grid-container"> 
                                     
-                                    {/* 👇 LOGICA DE AGRUPACIÓN POR FECHAS (Restaurada) 👇 */}
                                     {(() => {
                                         let ultimaFecha = null;
-                                        
                                         return partidos.map((p) => {
                                             const fechaActual = p.fecha.split(',')[0]; 
                                             const mostrarHeader = fechaActual !== ultimaFecha;
@@ -198,25 +203,17 @@ function App() {
 
                                             return (
                                                 <React.Fragment key={p.id}>
-                                                    {/* Separador de Fecha */}
                                                     {mostrarHeader && (
-                                                        <div className="date-separator">
-                                                            📅 {fechaActual}
-                                                        </div>
+                                                        <div className="date-separator">📅 {fechaActual}</div>
                                                     )}
-
                                                     <MatchCard 
                                                         matchId={p.id}
                                                         fecha={p.fecha}
                                                         status={p.status}
-                                                        
-                                                        // Datos Equipos
                                                         equipoA={p.local}
                                                         logoA={p.logoLocal}
                                                         equipoB={p.visitante}
                                                         logoB={p.logoVisitante}
-                                                        
-                                                        // Pronóstico
                                                         valorInicial={p.miPronostico} 
                                                         yaGuardado={p.yaJugo}
                                                     />
@@ -224,8 +221,6 @@ function App() {
                                             );
                                         });
                                     })()}
-                                    {/* 👆 FIN LOGICA 👆 */}
-
                                     </div>
                                 </div>
                             </div>
@@ -234,11 +229,10 @@ function App() {
                 )}
             </div>
             
-            {/* BOTÓN WHATSAPP */}
+            {/* BOTÓN WHATSAPP (Ese sí lo dejamos flotando) */}
             <WhatsAppBtn /> 
 
-            {/* CHAT GLOBAL */}
-            {usuario && <ChatGlobal username={username} />}
+            {/* ❌ ELIMINADO: El ChatGlobal flotante ya no está aquí */}
         </div>
     );
 }
