@@ -11,6 +11,7 @@ import UsersManagement from './components/UsersManagement';
 import ChatGlobal from './components/ChatGlobal';
 import Ranking from './components/Ranking';
 import { API_URL } from './config'; 
+import TutorialOverlay from './components/TutorialOverlay';
 import './App.css';
 
 function App() {
@@ -230,7 +231,8 @@ function App() {
             </div>
             
             {/* ✅ CORRECCIÓN: BOTÓN WHATSAPP ÚNICO Y CONDICIONAL */}
-            {appView !== 'chat' && <WhatsAppBtn />} 
+            {appView !== 'chat' && <WhatsAppBtn />}
+            {usuario && <TutorialOverlay />} 
 
         </div>
     );
