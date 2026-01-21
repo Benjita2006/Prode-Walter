@@ -1,80 +1,65 @@
 /* src/index.css */
 
-/* 1. RESET GLOBAL: Obligatorio en todo proyecto profesional */
+/* 1. VARIABLES DE TEMA (La parte más importante) */
+:root {
+  /* --- MODO CLARO (Sol/Día) ☀️ --- */
+  --bg-color: #f0f2f5;        /* Gris muy suave para el fondo */
+  --card-bg: #ffffff;         /* Tarjetas blancas */
+  --text-primary: #1c1e21;    /* Texto casi negro (buena lectura) */
+  --text-secondary: #65676b;  /* Gris medio */
+  --nav-bg: #ffffff;          /* Navbar blanco */
+  --nav-text: #050505;        /* Texto navbar oscuro */
+  --border-color: #ced0d4;    /* Bordes suaves */
+  --input-bg: #f0f2f5;        /* Inputs gris muy claro */
+  --shadow: 0 2px 4px rgba(0,0,0,0.1); /* Sombra suave */
+  
+  --accent-color: #00c853;    /* El Verde Prode */
+}
+
+[data-theme='dark'] {
+  /* --- MODO OSCURO (Luna/Noche) 🌙 --- */
+  --bg-color: #121212;        /* Fondo negro profundo */
+  --card-bg: #1e1e1e;         /* Tarjetas gris oscuro */
+  --text-primary: #e4e6eb;    /* Texto blanco suave */
+  --text-secondary: #b0b3b8;  /* Gris claro */
+  --nav-bg: #1e1e1e;          /* Navbar oscuro */
+  --nav-text: #e4e6eb;        /* Texto navbar blanco */
+  --border-color: #3e4042;    /* Bordes oscuros */
+  --input-bg: #3a3b3c;        /* Inputs gris medio */
+  --shadow: 0 4px 6px rgba(0,0,0,0.3); /* Sombra más fuerte */
+}
+
+/* 2. RESET GLOBAL */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 html, body {
-  margin: 0;
-  padding: 0;
   width: 100%;
-  overflow-x: hidden; /* Esto evita el desplazamiento lateral indeseado */
-  background-color: #121212; /* Asegura fondo oscuro siempre */
-  color: #ffffff; /* Color de letra base blanco */
-}
-
-h1, h2, h3, h4, h5, h6 {
-  color: #ffffff; /* Títulos siempre blancos */
-}
-p, span, label {
-  color: #e0e0e0; /* Texto normal gris muy claro */
-}
-
-input, select, textarea {
-  background-color: #2c2c2c;
-  color: #ffffff;
-  border: 1px solid #444;
-}
-input::placeholder {
-  color: #888;
-}
-:root {
-  /* --- COLORES BASE (Modo Claro por defecto) --- */
-  --bg-color: #f4f6f8;            /* Fondo gris muy claro */
-  --card-bg: #ffffff;             /* Fondo de tarjetas blanco */
-  --text-primary: #1a1a1a;        /* Texto casi negro */
-  --text-secondary: #666666;      /* Texto gris */
-  --accent-color: #00c853;        /* VERDE NEÓN/EMERALD (El protagonista) */
-  --accent-hover: #009624;        /* Verde más oscuro para hover */
-  --border-color: #e0e0e0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   
-  /* --- NAV BAR (Siempre oscura para el estilo minimalista) --- */
-  --nav-bg: #121212;
-  --nav-text: #ffffff;
-}
-
-/* --- MODO OSCURO (Sobrescribe las variables) --- */
-[data-theme='dark'] {
-  --bg-color: #121212;            /* Fondo casi negro */
-  --card-bg: #1e1e1e;             /* Tarjetas gris oscuro */
-  --text-primary: #e0e0e0;        /* Texto blanco suave */
-  --text-secondary: #a0a0a0;
-  --border-color: #333333;
-}
-
-/* --- ESTILOS GLOBALES --- */
-body {
-  margin: 0;
-  background-color: var(--bg-color);
+  /* AQUÍ ESTABA EL ERROR: Usamos la variable, no un color fijo */
+  background-color: var(--bg-color); 
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, sans-serif; /* Fuente limpia */
+  
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
 
-/* Ajuste para Inputs en modo oscuro */
-input, select {
-  background-color: var(--card-bg);
+/* Títulos y textos generales */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+}
+p, span, label, small {
+  color: var(--text-primary); /* Por defecto color principal */
+}
+
+/* Inputs globales */
+input, select, textarea {
+  background-color: var(--input-bg);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-}
-
-* {
-  box-sizing: border-box; /* Esto hace que el padding no deforme el tamaño */
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: #f4f6f8;
-  /* Evitamos el rebote elástico feo en Mac/iOS */
-  overscroll-behavior: none; 
 }

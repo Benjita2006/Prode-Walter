@@ -1,81 +1,40 @@
 /* src/components/MatchCard.css */
 
-/* Contenedor principal de la tarjeta */
 .match-card {
-   background-color: #2b2b2b;
+    /* USAR VARIABLES */
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+    
     border-radius: 12px;
-    padding: 20px; /* Un poco más de aire */
+    padding: 20px;
     margin-bottom: 15px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    border: 1px solid #444;
-    transition: transform 0.2s, border-color 0.2s;
+    transition: transform 0.2s, background-color 0.3s;
     
-    /* --- CAMBIOS DE TAMAÑO --- */
-    width: 100%;       /* Ocupa todo el ancho disponible del padre */
-    max-width: 100%;   /* Quitamos el límite individual */
-    min-height: 240px; /* 📏 Altura mínima obligatoria para uniformidad */
-    
-    /* Flexbox para distribuir el espacio verticalmente */
+    width: 100%;
+    min-height: 240px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
 }
-.card-footer {
-    min-height: 50px; 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 15px;
-}
 
 .match-card:hover {
-    border-color: #555;
     transform: translateY(-2px);
+    border-color: var(--accent-color);
 }
 
-.card-voted {
-    border-left: 4px solid #4caf50; /* Borde verde si ya votó */
-}
-
-/* --- HEADER --- */
 .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
     font-size: 0.85rem;
-    color: #aaa;
-    border-bottom: 1px solid #3d3d3d;
+    color: var(--text-secondary); /* Gris adaptable */
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 8px;
 }
 
-/* Badges de Estado */
-.status-badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-weight: bold;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-}
-
-.status-scheduled { background-color: #333; color: #ccc; border: 1px solid #555; }
-.status-finished { background-color: #d32f2f; color: white; } /* Rojo Finalizado */
-.status-warning { background-color: #fbc02d; color: black; }
-
-.status-live { 
-    background-color: #388e3c; 
-    color: white; 
-    box-shadow: 0 0 8px #388e3c;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
-}
-
-/* --- BODY (EQUIPOS) --- */
 .card-body {
     display: flex;
     align-items: center;
@@ -91,91 +50,14 @@
     text-align: center;
 }
 
-.team-logo {
-    width: 50px;
-    height: 50px;
-    object-fit: contain;
-    margin-bottom: 8px;
-}
-
 .team-name {
     font-size: 0.95rem;
     font-weight: 600;
-    color: #fff;
-    line-height: 1.2;
+    color: var(--text-primary); /* IMPORTANTE: Texto dinámico */
+    margin-top: 5px;
 }
 
-/* --- INPUTS --- */
-.score-col {
-    flex: 0.8;
-    display: flex;
-    justify-content: center;
-}
-
-.inputs-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #1e1e1e;
-    padding: 8px;
-    border-radius: 8px;
-}
-
-.score-input {
-    width: 40px;
-    height: 40px;
-    text-align: center;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border: 1px solid #555;
-    background-color: #333;
-    color: white;
-    border-radius: 6px;
-    outline: none;
-}
-
-.score-input.locked {
-    background-color: #1a1a1a;
-    color: #4caf50; /* Verde si ya está enviado */
-    border-color: #2e7d32;
-}
-
-.vs-divider {
-    color: #666;
-    font-weight: bold;
-}
-
-/* --- FOOTER --- */
-.btn-save {
-    width: 100%;
-    padding: 10px;
-    background-color: #2196F3;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-save:hover {
-    background-color: #1976D2;
-}
-
-.btn-save:disabled {
-    background-color: #555;
-    cursor: not-allowed;
-}
-
-.success-msg {
-    text-align: center;
-    color: #4caf50;
-    font-weight: bold;
-    padding: 5px;
-    background: rgba(76, 175, 80, 0.1);
-    border-radius: 4px;
-}
-
+/* Botones y Selectores */
 .team-selectable {
     cursor: pointer;
     padding: 10px;
@@ -185,61 +67,58 @@
 }
 
 .team-selectable:hover {
-    background-color: #3a3a3a;
+    background-color: var(--input-bg); /* Color sutil al hover */
 }
 
-/* Cuando seleccionas que GANA un equipo */
+/* Ganador Seleccionado (Verde) */
 .selected-win {
-    background-color: rgba(76, 175, 80, 0.2); /* Verde transparente */
-    border-color: #4caf50;
-    transform: scale(1.05);
+    background-color: rgba(0, 200, 83, 0.15); /* Verde suave */
+    border-color: var(--accent-color);
 }
 
-.check-mark {
-    margin-top: 5px;
-    font-size: 0.8rem;
-    color: #4caf50;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-/* Columna del Medio (Empate) */
-.draw-col {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 10px;
-}
-
+/* Empate (Botón) */
 .btn-draw {
-    background-color: #333;
-    color: #aaa;
-    border: 1px solid #555;
+    background-color: var(--input-bg);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
     padding: 10px 15px;
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.2s;
 }
 
 .btn-draw:hover {
-    background-color: #444;
-    color: white;
+    border-color: var(--text-secondary);
 }
 
-/* Cuando seleccionas EMPATE */
+/* Empate Seleccionado (Amarillo) */
 .selected-draw {
-    background-color: #fbc02d; /* Amarillo */
-    color: black;
+    background-color: #fff9c4; /* Amarillo muy suave */
+    color: #fbc02d;            /* Amarillo oscuro texto */
     border-color: #fbc02d;
-    box-shadow: 0 0 10px rgba(251, 192, 45, 0.4);
+}
+/* En modo oscuro, ajustamos el amarillo para que no encandile */
+[data-theme='dark'] .selected-draw {
+    background-color: rgba(251, 192, 45, 0.2);
+    color: #fbc02d;
 }
 
-/* Estado Bloqueado (Ya votó) */
-.disabled {
-    cursor: default;
-    opacity: 0.8;
+/* Botón Guardar */
+.btn-save {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--accent-color);
+    color: white; /* Siempre blanco */
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
 }
-.team-selectable.disabled:hover {
-    background-color: transparent;
+.btn-save:hover {
+    opacity: 0.9;
+}
+.btn-save:disabled {
+    background-color: var(--border-color);
+    color: var(--text-secondary);
+    cursor: not-allowed;
 }
