@@ -100,9 +100,9 @@ app.post('/api/admin/sync-matches', authenticateToken, async (req, res) => {
     if (req.user.role !== 'Owner' && req.user.role !== 'Dev') {
         return res.status(403).json({ message: 'Acceso denegado.' });
     }
-
-   const LEAGUE_ID = 39; 
-    const SEASON = 2023;   
+    
+    const LEAGUE_ID = 128; 
+    const SEASON = 2026;   
     
     console.log(`🔄 Iniciando sync para Liga ${LEAGUE_ID}, Temp ${SEASON}...`);
     
