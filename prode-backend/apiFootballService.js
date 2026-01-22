@@ -1,23 +1,10 @@
 // prode-backend/apiFootballService.js
 const axios = require('axios');
 const path = require('path');
-
-// ⬇️ FORZAMOS LA RUTA AL ARCHIVO .ENV (Solución a prueba de balas)
-require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+require('dotenv').config(); // En Railway esto no hace daño, pero no es estrictamente necesario si usas variables de entorno
 
 const API_URL = 'https://v3.football.api-sports.io';
-
-// Recuperamos la clave del archivo
-const API_KEY = process.env.API_FOOTBALL_KEY; 
-
-// --- VERIFICACIÓN DE SEGURIDAD EN CONSOLA ---
-if (!API_KEY) {
-    console.error("❌ ERROR CRÍTICO: No se encontró API_FOOTBALL_KEY en el archivo .env");
-} else {
-    // Imprimimos solo los primeros 5 caracteres para verificar que la leyó, sin mostrarla toda
-    console.log(`🔒 API Key cargada correctamente: ${API_KEY.substring(0, 5)}...`);
-}
-// --------------------------------------------
+const API_KEY = process.env.API_FOOTBALL_KEY;
 
 const apiClient = axios.create({
     baseURL: API_URL,
@@ -27,23 +14,44 @@ const apiClient = axios.create({
 });
 
 async function obtenerPartidosDeAPI(leagueId, season) {
+    // 🛡️ 1. Validación de seguridad antes de llamar
+    if (!API_KEY) {
+        console.error("❌ ERROR CRÍTICO: Falta API_FOOTBALL_KEY en las variables de entorno.");
+        return []; // Retornamos vacío para no romper, pero avisamos
+    }
+
     try {
-        console.log(`📡 Consultando API: Liga ${leagueId}, Temporada ${season}`);
+        console.log(`📡 Consultando API Football: Liga ${leagueId}, Temporada ${season}`);
         
         const response = await apiClient.get('/fixtures', {
             params: {
                 league: leagueId,
                 season: season,
-                timezone: 'America/Argentina/Buenos_Aires' 
+                timezone: 'America/Argentina/Buenos_Aires'
             }
         });
-        
-        // Si quieres ver los resultados en consola para debug, descomenta esto:
-        // console.log("Partidos encontrados:", response.data.results);
-        
-        return response.data.response; 
+
+        // 🛡️ 2. Verificar si la API respondió con errores lógicos (ej: Key inválida)
+        if (response.data.errors && Object.keys(response.data.errors).length > 0) {
+            console.error("❌ La API respondió con errores:", response.data.errors);
+            return [];
+        }
+
+        // 🛡️ 3. Verificar si hay resultados
+        const partidos = response.data.response;
+        if (!partidos || partidos.length === 0) {
+            console.warn("⚠️ La API respondió OK, pero no trajo partidos (Array vacío).");
+            return [];
+        }
+
+        console.log(`✅ Se encontraron ${partidos.length} partidos.`);
+        return partidos;
+
     } catch (error) {
-        console.error("❌ Error conectando con API-Football:", error.message);
+        console.error("❌ Error de red conectando con API-Football:", error.message);
+        if (error.response) {
+            console.error("Datos del error:", error.response.data);
+        }
         return [];
     }
 }
