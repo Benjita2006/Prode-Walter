@@ -1,5 +1,5 @@
-// prode-oficial/src/components/MatchCreator.jsx (SOLUCIÓN FINAL)
 import React, { useState } from 'react';
+import { API_URL } from '../config'; // 👈 1. IMPORTANTE: Traer la config
 import './MatchCreator.css'; 
 
 function MatchCreator({ onMatchCreated }) {
@@ -41,15 +41,15 @@ function MatchCreator({ onMatchCreated }) {
         setStatus('loading');
         setMessage('');
 
-        // 1. RECUPERAR EL TOKEN
         const token = localStorage.getItem('token'); 
 
         try {
-            const response = await fetch('http://localhost:3000/api/admin/matches/bulk-create', {
+            // 👇 2. CORREGIDO: Usamos API_URL en lugar de localhost
+            const response = await fetch(`${API_URL}/api/admin/matches/bulk-create`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` // 2. INCLUIR EL TOKEN AQUÍ
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ matches: matchesToSend }),
             });
@@ -66,7 +66,6 @@ function MatchCreator({ onMatchCreated }) {
                 }
             } else {
                 setStatus('error');
-                // Mostrar el mensaje exacto del backend ayuda a depurar
                 setMessage(data.message || 'Error desconocido al crear los partidos.');
             }
 
