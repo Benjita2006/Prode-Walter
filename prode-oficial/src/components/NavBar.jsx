@@ -1,63 +1,70 @@
-// prode-oficial/src/components/NavBar.jsx (LIMPIO Y ORDENADO)
 import React from 'react';
-import './NavBar.css'; 
+import './Navbar.css'; // Asegúrate de importar el CSS
 
-function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentView }) { 
+function Navbar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentView }) {
     
-    // Definimos TODAS las opciones aquí para que se generen ordenadas
-    const menuOptions = [
-        // Opciones para TODOS
-        { name: 'Partidos', view: 'matches', roles: ['User', 'Owner', 'Dev'] },
-        { name: 'Ranking', view: 'ranking', roles: ['User', 'Owner', 'Dev'] },
-        { name: 'Chat', view: 'chat', roles: ['User', 'Owner', 'Dev'] },
-
-        // Opciones solo para ADMINS
-        // Acorté un poco los nombres para que entren mejor en celular
-        { name: 'Admin', view: 'admin-dashboard', roles: ['Owner', 'Dev'] },
-        { name: 'Crear', view: 'creator', roles: ['Owner', 'Dev'] },
-        { name: 'Usuarios', view: 'manage-users', roles: ['Dev', 'Owner'] },
+    // Definimos los menús con sus iconos para usarlos fácil en el HTML
+    const allMenuItems = [
+        { name: 'Partidos', view: 'matches', roles: ['User', 'Owner', 'Dev'], icon: '⚽' },
+        { name: 'Ranking', view: 'ranking', roles: ['User', 'Owner', 'Dev'], icon: '🏆' },
+        { name: 'Chat', view: 'chat', roles: ['User', 'Owner', 'Dev'], icon: '💬' },
+        { name: 'Admin', view: 'admin-dashboard', roles: ['Owner', 'Dev'], icon: '📊' },
+        { name: 'Crear', view: 'creator', roles: ['Owner', 'Dev'], icon: '✏️' },
+        { name: 'Usuarios', view: 'manage-users', roles: ['Dev', 'Owner'], icon: '👥' }
     ];
 
-    const visibleOptions = menuOptions.filter(option => 
-        option.roles.includes(userRole)
-    );
+    // Filtramos según el rol del usuario
+    const menuItems = allMenuItems.filter(item => item.roles.includes(userRole));
 
     return (
-        <nav className="navbar">
-            {/* LOGO IZQUIERDA */}
-            <div className="navbar-brand" onClick={() => onNavClick('matches')}>
-                <span className="logo-icon">⚽</span> 
-                <span className="logo-text">PRODE</span>
-            </div>
-            
-            {/* CENTRO: NAVEGACIÓN PRINCIPAL */}
-            <div className="navbar-center">
-                {visibleOptions.map((option) => (
+        <>
+            {/* --- BARRA SUPERIOR (TOP NAVBAR) --- */}
+            <nav className="navbar">
+                {/* Izquierda: Logo */}
+                <div className="navbar-brand" onClick={() => onNavClick('matches')}>
+                    <span className="logo-icon">⚽</span>
+                    <span className="logo-text">PRODE</span>
+                </div>
+
+                {/* Centro: Solo visible en Escritorio (Desktop) */}
+                <div className="navbar-center">
+                    {menuItems.map(item => (
+                        <button 
+                            key={item.view}
+                            onClick={() => onNavClick(item.view)}
+                            className={`nav-link ${currentView === item.view ? 'active' : ''}`}
+                        >
+                            {item.name}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Derecha: Tema y Salir (Siempre visibles, ajustados en móvil) */}
+                <div className="navbar-right">
+                    <button onClick={toggleTheme} className="theme-toggle" title="Cambiar Tema">
+                        {theme === 'light' ? '🌙' : '☀️'}
+                    </button>
+                    <button onClick={onLogout} className="btn-logout-minimal">
+                        Salir 🚪
+                    </button>
+                </div>
+            </nav>
+
+            {/* --- BARRA INFERIOR (BOTTOM NAV) - Solo visible en Móvil --- */}
+            <div className="bottom-nav">
+                {menuItems.map(item => (
                     <button 
-                        key={option.view} 
-                        onClick={() => onNavClick(option.view)} 
-                        className={`nav-link ${currentView === option.view ? 'active' : ''}`}
+                        key={item.view}
+                        onClick={() => onNavClick(item.view)}
+                        className={`bottom-nav-item ${currentView === item.view ? 'active' : ''}`}
                     >
-                        {option.name}
+                        <span className="bottom-nav-icon">{item.icon}</span>
+                        <span>{item.name}</span>
                     </button>
                 ))}
             </div>
-            
-            {/* DERECHA: UTILIDADES (TEMA Y SALIR) */}
-            <div className="navbar-right">
-                
-                {/* BOTÓN MODO OSCURO */}
-                <button onClick={toggleTheme} className="theme-toggle" title="Cambiar Tema">
-                    {theme === 'light' ? '🌙' : '☀️'}
-                </button>
-
-                {/* BOTÓN SALIR */}
-                <button onClick={onLogout} className="btn-logout-minimal">
-                    Salir
-                </button>
-            </div>
-        </nav>
+        </>
     );
 }
 
-export default NavBar;
+export default Navbar;
