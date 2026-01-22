@@ -40,30 +40,36 @@ async function obtenerPartidos(userId) {
 
 // --- 2. ESCRITURA: Crear MÚLTIPLES partidos (Admin) ---
 async function crearPartidos(matches) {
-    const conn = await db.getConnection(); 
-    let insertedCount = 0;
-
+    const conn = await db.getConnection();
     try {
-        await conn.beginTransaction(); 
+        await conn.beginTransaction();
+        let count = 0;
 
-        for (const match of matches) {
-            const { local, visitante, fecha } = match;
+        for (const m of matches) {
+            // Generamos un ID falso (negativo) para manuales, basado en timestamp para que sea único
+            const fakeApiId = -1 * (Date.now() + Math.floor(Math.random() * 1000));
+            
+            // Usamos los logos que vienen del frontend, o uno por defecto si no hay
+            const logoL = m.localLogo || 'https://media.api-sports.io/football/teams/default.png';
+            const logoV = m.visitanteLogo || 'https://media.api-sports.io/football/teams/default.png';
+
             await conn.execute(
-                'INSERT INTO matches (home_team, away_team, match_date, is_active) VALUES (?, ?, ?, 1)',
-                [local, visitante, fecha]
+                `INSERT INTO matches 
+                (api_id, home_team, home_logo, away_team, away_logo, match_date, status, is_active) 
+                VALUES (?, ?, ?, ?, ?, ?, 'NS', 1)`,
+                [fakeApiId, m.local, logoL, m.visitante, logoV, m.fecha]
             );
-            insertedCount++;
+            count++;
         }
 
-        await conn.commit(); 
-        return { success: true, count: insertedCount };
-
+        await conn.commit();
+        return { success: true, count };
     } catch (error) {
-        await conn.rollback(); 
-        console.error("❌ ERROR CRÍTICO creando partidos manuales:", error);
-        return { success: false, message: 'Error al insertar los partidos.' };
+        await conn.rollback();
+        console.error("Error creando partidos manuales:", error);
+        return { success: false, message: error.message };
     } finally {
-        conn.release(); 
+        conn.release();
     }
 }
 
