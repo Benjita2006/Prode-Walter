@@ -1,15 +1,18 @@
-// src/components/Login.jsx (DISEÑO GLASSMORPHISM)
+// src/components/Login.jsx
 import React, { useState } from 'react';
-import './Auth.css'; // 👈 Importamos el nuevo estilo compartido
-import { API_URL } from '../config';
+import { GoogleLogin } from '@react-oauth/google'; // 👈 Importamos la librería
+import { API_URL } from '../config'; 
+import './Login.css';
 
 function Login({ onLogin, onSwitchToRegister }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    
+    // 🛠️ CORRECCIÓN 1: Unificamos nombres (error y setError)
     const [error, setError] = useState('');
 
-    // Lógica ORIGINAL para Login con Email (Intacta)
+    // --- LÓGICA 1: LOGIN CON EMAIL (Clásico) ---
     const handleSubmit = async (e) => { 
         e.preventDefault();
         setError('');
@@ -32,23 +35,45 @@ function Login({ onLogin, onSwitchToRegister }) {
             }
 
         } catch (err) {
-            setError('Error de conexión con el servidor. Intenta más tarde.');
+            setError('Error de conexión con el servidor.');
             console.error('Fetch error:', err);
         } finally {
             setLoading(false);
         }
     };
 
-    // Lógica para Login con Google (Simulada - Intacta)
-    const handleGoogleLogin = () => {
-        alert("Iniciando conexión con Google (Simulación)...");
-        onLogin({username: 'Dueño Simulado', role: 'Owner'}); 
+    // --- LÓGICA 2: LOGIN CON GOOGLE (Real) ---
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setLoading(true);
+        setError('');
+        
+        try {
+            // Enviamos el token de Google a nuestro Backend para verificarlo
+            const res = await fetch(`${API_URL}/api/auth/google`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: credentialResponse.credential })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                localStorage.setItem('token', data.token);
+                onLogin(data.user);
+            } else {
+                setError(data.message || 'Fallo el inicio de sesión con Google');
+                setLoading(false);
+            }
+        } catch (err) {
+            console.error(err);
+            setError('Error de conexión con el servidor.');
+            setLoading(false);
+        }
     };
 
     return (
         <div className="auth-container">
             <div className="auth-card">
-                {/* Logo Animado */}
                 <div className="auth-logo-icon">⚽</div>
                 
                 <h2>Bienvenido de nuevo</h2>
@@ -85,6 +110,7 @@ function Login({ onLogin, onSwitchToRegister }) {
                         {loading ? 'Ingresando...' : 'Ingresar'}
                     </button>
                     
+                    {/* 🛠️ CORRECCIÓN 2: Ahora 'error' sí existe */}
                     {error && <div className="message-box msg-error">{error}</div>}
                 </form>
 
@@ -92,14 +118,18 @@ function Login({ onLogin, onSwitchToRegister }) {
                     <span>O continúa con</span>
                 </div>
 
-                <button type="button" className="google-button" onClick={handleGoogleLogin} disabled={loading}>
-                    <img 
-                        src="https://www.svgrepo.com/show/475656/google-color.svg" 
-                        alt="Google" 
-                        width="20" 
+                {/* 👇 BOTÓN REAL DE GOOGLE (Reemplaza al manual) */}
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                    <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => setError('Falló el inicio de sesión con Google')}
+                        theme="filled_black" 
+                        shape="pill"
+                        text="signin_with"
+                        locale="es"
+                        width="250"
                     />
-                    Ingresar con Google
-                </button>
+                </div>
 
                 <p className="switch-text">
                     ¿No tienes cuenta? 

@@ -2,6 +2,8 @@
 const db = require('./db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const SECRET_KEY = process.env.JWT_SECRET || 'secreto_super_seguro';
 // ID 3 es el rol 'User' (Usuario Estándar)
@@ -69,6 +71,62 @@ async function loginUser(email, password) {
         console.error("Error en login:", error);
         return { success: false, message: 'Error en el servidor durante el login.' };
     }
+// NUEVA FUNCIÓN: LOGIN CON GOOGLE
+async function googleLogin(token) {
+    try {
+        // 1. Verificar el token con Google
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        
+        const email = payload.email;
+        const googleId = payload.sub;
+        const name = payload.name || payload.given_name;
+
+        // 2. Verificar si el usuario ya existe en nuestra DB
+        const conn = await db.getConnection();
+        const [users] = await conn.execute('SELECT * FROM users WHERE email = ?', [email]);
+        let user = users[0];
+
+        // 3. Si no existe, lo creamos (Registro automático)
+        if (!user) {
+            // Generamos un nombre de usuario basado en el nombre de Google o el email
+            let username = name || email.split('@')[0];
+            
+            // Insertamos sin contraseña
+            const [result] = await conn.execute(
+                'INSERT INTO users (username, email, password, role) VALUES (?, ?, NULL, ?)',
+                [username, email, 'User']
+            );
+            
+            // Recuperamos el usuario recién creado
+            const [newUsers] = await conn.execute('SELECT * FROM users WHERE id = ?', [result.insertId]);
+            user = newUsers[0];
+        }
+
+        conn.release();
+
+        // 4. Generamos nuestro propio Token JWT (Igual que en el login normal)
+        const appToken = jwt.sign(
+            { id: user.id, username: user.username, role: user.role },
+            process.env.JWT_SECRET || 'secreto_super_seguro',
+            { expiresIn: '24h' }
+        );
+
+        return { 
+            success: true, 
+            token: appToken, 
+            user: { id: user.id, username: user.username, email: user.email, role: user.role } 
+        };
+
+    } catch (error) {
+        console.error("Error en Google Login:", error);
+        return { success: false, message: 'Token de Google inválido.' };
+    }
 }
 
-module.exports = { registerUser, loginUser };
+}
+
+module.exports = { registerUser, loginUser, googleLogin };
