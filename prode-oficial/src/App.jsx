@@ -298,7 +298,7 @@ function App() {
                 )}
             </div>
             
-            {appView !== 'chat' && <WhatsAppBtn />}
+
             {usuario && <TutorialOverlay username={usuario.username} />}
 
         </div>
