@@ -1,9 +1,10 @@
+// src/components/NavBar.jsx
 import React from 'react';
-import './Navbar.css'; // Asegúrate de importar el CSS
+import './NavBar.css'; // Asegúrate de que este archivo exista (o usa App.css si prefieres)
 
-function Navbar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentView }) {
+function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentView }) {
     
-    // Definimos los menús con sus iconos para usarlos fácil en el HTML
+    // Definimos los menús
     const allMenuItems = [
         { name: 'Partidos', view: 'matches', roles: ['User', 'Owner', 'Dev'], icon: '⚽' },
         { name: 'Ranking', view: 'ranking', roles: ['User', 'Owner', 'Dev'], icon: '🏆' },
@@ -13,20 +14,20 @@ function Navbar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentVie
         { name: 'Usuarios', view: 'manage-users', roles: ['Dev', 'Owner'], icon: '👥' }
     ];
 
-    // Filtramos según el rol del usuario
+    // Filtramos según el rol
     const menuItems = allMenuItems.filter(item => item.roles.includes(userRole));
 
     return (
         <>
-            {/* --- BARRA SUPERIOR (TOP NAVBAR) --- */}
+            {/* --- BARRA SUPERIOR (ESCRITORIO) --- */}
             <nav className="navbar">
-                {/* Izquierda: Logo */}
+                {/* Izquierda */}
                 <div className="navbar-brand" onClick={() => onNavClick('matches')}>
                     <span className="logo-icon">⚽</span>
                     <span className="logo-text">PRODE</span>
                 </div>
 
-                {/* Centro: Solo visible en Escritorio (Desktop) */}
+                {/* Centro (Se oculta en móvil gracias al CSS) */}
                 <div className="navbar-center">
                     {menuItems.map(item => (
                         <button 
@@ -39,18 +40,18 @@ function Navbar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentVie
                     ))}
                 </div>
 
-                {/* Derecha: Tema y Salir (Siempre visibles, ajustados en móvil) */}
+                {/* Derecha */}
                 <div className="navbar-right">
-                    <button onClick={toggleTheme} className="theme-toggle" title="Cambiar Tema">
+                    <button onClick={toggleTheme} className="theme-toggle">
                         {theme === 'light' ? '🌙' : '☀️'}
                     </button>
                     <button onClick={onLogout} className="btn-logout-minimal">
-                        Salir 🚪
+                        Salir
                     </button>
                 </div>
             </nav>
 
-            {/* --- BARRA INFERIOR (BOTTOM NAV) - Solo visible en Móvil --- */}
+            {/* --- BARRA INFERIOR (MÓVIL) - ESTO ES LO QUE FALTABA --- */}
             <div className="bottom-nav">
                 {menuItems.map(item => (
                     <button 
@@ -59,7 +60,7 @@ function Navbar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentVie
                         className={`bottom-nav-item ${currentView === item.view ? 'active' : ''}`}
                     >
                         <span className="bottom-nav-icon">{item.icon}</span>
-                        <span>{item.name}</span>
+                        <span style={{fontSize: '10px'}}>{item.name}</span>
                     </button>
                 ))}
             </div>
@@ -67,4 +68,4 @@ function Navbar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentVie
     );
 }
 
-export default Navbar;
+export default NavBar;

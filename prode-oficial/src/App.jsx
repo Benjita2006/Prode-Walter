@@ -86,6 +86,7 @@ function App() {
             fetchPartidos();
         }
     };
+    
     // --- LOGIN ---
     const handleLoginSuccess = (userObject) => {
         setUsuario(userObject);
