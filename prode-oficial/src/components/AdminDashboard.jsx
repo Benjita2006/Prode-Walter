@@ -1,18 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react'; // 👈 1. Importamos useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_URL } from '../config'; 
-import './MatchCreator.css'; 
+import './App.css'; // Asegúrate de importar App.css donde pusimos los estilos nuevos
 
 function AdminDashboard() {
-    // ❌ Eliminamos [pronosticos, setPronosticos] porque ya no se usa para renderizar.
     const [usuariosAgrupados, setUsuariosAgrupados] = useState([]);
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
     const [filtro, setFiltro] = useState('');
-    
-    // Estados de carga/acción
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
-    // 🧠 LÓGICA PARA AGRUPAR USUARIOS (La definimos antes para usarla en fetchData)
+    // LÓGICA PARA AGRUPAR USUARIOS
     const agruparPorUsuario = (data) => {
         const grupos = data.reduce((acc, curr) => {
             const user = curr.username;
@@ -26,13 +23,12 @@ function AdminDashboard() {
             }
             acc[user].predictions.push(curr);
             acc[user].total_pronosticos += 1;
-            acc[user].puntos_totales += (curr.points || 0);
+            acc[user].puntos_totales += (curr.points || 0); // Sumamos los puntos si existen
             return acc;
         }, {});
         setUsuariosAgrupados(Object.values(grupos));
     };
 
-    // 🔄 2. Envolvemos fetchData en useCallback para estabilizarla
     const fetchData = useCallback(async () => {
         const token = localStorage.getItem('token');
         try {
@@ -41,26 +37,23 @@ function AdminDashboard() {
             });
             if (res.ok) {
                 const data = await res.json();
-                // setPronosticos(data); // ❌ Borramos esta línea que causaba el error
                 agruparPorUsuario(data);
             }
         } catch (error) {
             console.error("Error cargando dashboard", error);
         }
-    }, []); // [] significa que esta función no cambia nunca
+    }, []);
 
-    // 3. Ahora useEffect tiene la dependencia correcta
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    // 🖼️ MANEJO DE IMÁGENES ROTAS
     const handleImageError = (e) => {
         e.target.src = 'https://cdn-icons-png.flaticon.com/512/16/16480.png'; 
         e.target.style.opacity = "0.5"; 
     };
 
-    // 🔄 SINCRONIZAR
+    // SINCRONIZAR
     const handleSyncMatches = async () => {
         setLoading(true); setMessage('⏳ Conectando...');
         const token = localStorage.getItem('token');
@@ -76,7 +69,7 @@ function AdminDashboard() {
         finally { setLoading(false); }
     };
 
-    // 🗑️ BORRAR TODO
+    // BORRAR TODO
     const handleDeleteAll = async () => {
         if(!confirm("⚠️ ¿ESTÁS SEGURO? Borrarás TODO.")) return;
         setLoading(true); setMessage('⏳ Eliminando...');
@@ -86,26 +79,25 @@ function AdminDashboard() {
             const data = await res.json();
             if (res.ok) { 
                 setMessage(`🗑️ ${data.message}`); 
-                // setPronosticos([]); // ❌ Borramos esto también
                 setUsuariosAgrupados([]); 
+                setUsuarioSeleccionado(null);
             } 
             else { setMessage(`❌ ${data.message}`); }
         } catch (error) { console.error(error); setMessage('❌ Error conexión.'); } 
         finally { setLoading(false); }
     };
 
-    // Lógica de filtrado
     const usuariosFiltrados = usuariosAgrupados.filter(u => 
         u.username.toLowerCase().includes(filtro.toLowerCase())
     );
 
     return (
-        <div className="match-creator-container">
-            <h2>⚙️ Panel de Control</h2>
+        <div className="admin-container" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+            <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>⚙️ Panel de Control</h2>
             
             {/* ZONA DE ACCIONES */}
-            <div style={{ backgroundColor: '#222', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #444', textAlign: 'center' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+            <div style={{ backgroundColor: 'var(--card-bg)', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #444', textAlign: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
                     <button onClick={handleSyncMatches} disabled={loading} style={{ backgroundColor: '#2196F3', color: 'white', padding: '10px', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
                         {loading ? '⏳' : '🔄 Sincronizar API'}
                     </button>
@@ -123,38 +115,37 @@ function AdminDashboard() {
                     <input 
                         type="text" 
                         placeholder="🔍 Buscar usuario..." 
-                        className="table-input"
-                        style={{marginBottom: '20px', padding: '10px', width: '100%'}}
+                        style={{marginBottom: '20px', padding: '10px', width: '100%', borderRadius: '5px', border: '1px solid #555', backgroundColor: '#333', color: 'white'}}
                         value={filtro}
                         onChange={(e) => setFiltro(e.target.value)}
                     />
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
                         {usuariosFiltrados.map((user) => (
                             <div 
                                 key={user.username} 
                                 onClick={() => setUsuarioSeleccionado(user)}
                                 style={{
-                                    backgroundColor: '#333',
-                                    padding: '20px',
+                                    backgroundColor: 'var(--card-bg)',
+                                    padding: '15px',
                                     borderRadius: '10px',
                                     cursor: 'pointer',
                                     border: '1px solid #444',
-                                    transition: 'transform 0.2s',
-                                    textAlign: 'center'
+                                    textAlign: 'center',
+                                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
                                 }}
-                                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
-                                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             >
-                                <div style={{fontSize: '2rem', marginBottom: '10px'}}>👤</div>
-                                <h3 style={{margin: '0 0 10px 0', color: '#4caf50'}}>{user.username}</h3>
-                                <p style={{margin: 0, color: '#aaa'}}>Pronósticos: <strong>{user.total_pronosticos}</strong></p>
+                                <div style={{fontSize: '2rem', marginBottom: '5px'}}>👤</div>
+                                <h4 style={{margin: '0 0 5px 0', color: '#4caf50', overflow: 'hidden', textOverflow: 'ellipsis'}}>{user.username}</h4>
+                                <small style={{color: '#aaa'}}>Pronósticos: {user.total_pronosticos}</small>
+                                <br/>
+                                <strong style={{color: '#ffd700'}}>Pts: {user.puntos_totales}</strong>
                             </div>
                         ))}
                     </div>
                 </>
             ) : (
-                /* VISTA 2: DETALLE DEL USUARIO */
+                /* VISTA 2: DETALLE DEL USUARIO (CON TABLA RESPONSIVE) */
                 <div>
                     <button 
                         onClick={() => setUsuarioSeleccionado(null)}
@@ -163,32 +154,48 @@ function AdminDashboard() {
                         ⬅ Volver a Usuarios
                     </button>
 
-                    <h3 style={{color: '#4caf50'}}>Pronósticos de: {usuarioSeleccionado.username}</h3>
+                    <h3 style={{color: '#4caf50', marginBottom: '10px'}}>Pronósticos de: {usuarioSeleccionado.username}</h3>
                     
-                    <div className="table-responsive">
-                        <table className="matches-table">
+                    {/* 👇 AQUÍ APLICAMOS LAS CLASES DEL CSS NUEVO */}
+                    <div className="table-responsive-admin">
+                        <table className="admin-table">
                             <thead>
                                 <tr>
                                     <th>Fecha</th>
                                     <th>Partido</th>
                                     <th>Pronóstico</th>
+                                    <th>Resultado</th>
+                                    <th>Pts</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {usuarioSeleccionado.predictions.map((p) => (
                                     <tr key={p.id}>
-                                        <td>{new Date(p.match_date).toLocaleDateString()}</td>
+                                        <td style={{fontSize: '0.85rem'}}>{new Date(p.match_date).toLocaleDateString(undefined, {month:'numeric', day:'numeric'})}</td>
                                         <td>
-                                            <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                                                <img src={p.home_logo} onError={handleImageError} style={{width:'20px', height:'20px', objectFit:'contain'}} alt="" />
-                                                <span>{p.home_team}</span>
-                                                <span style={{color:'#888', fontSize:'0.8em'}}>vs</span>
-                                                <span>{p.away_team}</span>
-                                                <img src={p.away_logo} onError={handleImageError} style={{width:'20px', height:'20px', objectFit:'contain'}} alt="" />
+                                            <div style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
+                                                <img src={p.home_logo} onError={handleImageError} className="mini-logo" alt="" />
+                                                <span style={{fontSize: '0.8rem'}}>vs</span>
+                                                <img src={p.away_logo} onError={handleImageError} className="mini-logo" alt="" />
                                             </div>
                                         </td>
-                                        <td style={{fontWeight: 'bold', textAlign: 'center', color: '#ffd700'}}>
-                                            {p.prediction_result || '-'}
+                                        <td>
+                                            <span style={{
+                                                backgroundColor: '#333', 
+                                                padding: '2px 6px', 
+                                                borderRadius: '4px',
+                                                color: p.prediction_result === 'home' ? '#4caf50' : p.prediction_result === 'away' ? '#2196f3' : '#ff9800',
+                                                fontWeight: 'bold',
+                                                fontSize: '0.8rem'
+                                            }}>
+                                                {p.prediction_result === 'home' ? 'L' : p.prediction_result === 'away' ? 'V' : 'E'}
+                                            </span>
+                                        </td>
+                                        <td style={{fontSize: '0.85rem'}}>
+                                            {p.status === 'FT' ? `${p.home_score}-${p.away_score}` : '⏳'}
+                                        </td>
+                                        <td style={{fontWeight: 'bold', color: p.points > 0 ? '#4caf50' : '#888'}}>
+                                            {p.status === 'FT' ? p.points : '-'}
                                         </td>
                                     </tr>
                                 ))}

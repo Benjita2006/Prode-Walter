@@ -263,5 +263,56 @@
         padding-bottom: 70px !important;
     }
 }
+.table-responsive-admin {
+    width: 100%;
+    overflow-x: auto; /* Magia para el celular */
+    margin-top: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px; /* Fuerza un ancho mínimo para que no se apriete */
+    background-color: var(--card-bg); /* Fondo según el tema */
+    color: var(--text-primary); /* Texto según el tema */
+}
+
+.admin-table th, .admin-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #444; /* Líneas separadoras sutiles */
+}
+
+.admin-table th {
+    background-color: #2c3e50; /* Cabecera oscura siempre */
+    color: #ffffff; /* Texto blanco en cabecera */
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+.admin-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.05); /* Efecto hover sutil */
+}
+
+/* Ajuste específico para imágenes pequeñas en la tabla */
+.mini-logo {
+    width: 25px;
+    height: 25px;
+    vertical-align: middle;
+    margin: 0 5px;
+}
+
+/* Modo Claro Forzado (Opcional, para asegurar contraste si el tema falla) */
+[data-theme='light'] .admin-table {
+    background-color: #ffffff;
+    color: #333333;
+    border: 1px solid #ddd;
+}
+[data-theme='light'] .admin-table th {
+    background-color: #4CAF50; /* Verde Prode */
+}
 
 @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
