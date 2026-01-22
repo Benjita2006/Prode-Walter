@@ -1,0 +1,228 @@
+/* src/components/AdminDashboard.css */
+
+/* --- CONTENEDOR PRINCIPAL --- */
+.admin-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.admin-title {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+/* --- BARRA DE ACCIONES (Sincronizar / Borrar) --- */
+.action-bar {
+    background-color: var(--card-bg);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #444;
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+    transition: opacity 0.2s;
+}
+
+.btn-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-sync {
+    background-color: #2196F3;
+}
+
+.btn-delete {
+    background-color: #f44336;
+}
+
+.action-message {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.msg-success { color: #00e676; }
+.msg-error { color: #ff4444; }
+
+/* --- INPUT DE BÚSQUEDA --- */
+.search-input {
+    margin-bottom: 20px;
+    padding: 10px;
+    width: 100%;
+    border-radius: 5px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: white;
+    font-size: 1rem;
+}
+
+/* --- GRID DE USUARIOS (TARJETAS) --- */
+.users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.user-card {
+    background-color: var(--card-bg);
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid #444;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.user-card:hover {
+    transform: translateY(-2px);
+    background-color: #2a2a2a; /* Ligeramente más claro al pasar mouse */
+}
+
+.user-avatar {
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.user-name {
+    margin: 0 0 5px 0;
+    color: #4caf50;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-stats {
+    color: #aaa;
+    font-size: 0.85rem;
+}
+
+.user-points {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* --- BOTÓN VOLVER --- */
+.btn-back {
+    margin-bottom: 20px;
+    padding: 8px 15px;
+    background-color: #555;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-back:hover {
+    background-color: #666;
+}
+
+/* --- TABLA DE DETALLES (Fix Responsive + Dark Mode) --- */
+.table-responsive-admin {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.admin-table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.admin-table th, 
+.admin-table td {
+    padding: 12px 10px;
+    text-align: left;
+    border-bottom: 1px solid #444;
+    vertical-align: middle;
+}
+
+.mini-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    vertical-align: middle;
+    margin: 0 4px;
+}
+
+.match-vs {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Etiqueta de Pronóstico (L/E/V) */
+.badge-prediction {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.8rem;
+    color: white;
+}
+
+/* COLORES ESPECÍFICOS MODO OSCURO */
+[data-theme='dark'] .admin-table {
+    background-color: #1e1e1e !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #333;
+}
+
+[data-theme='dark'] .admin-table th {
+    background-color: #2c2c2c !important;
+    color: #4caf50 !important;
+    text-transform: uppercase;
+    font-weight: bold;
+    border-bottom: 2px solid #444;
+}
+
+[data-theme='dark'] .admin-table tr:nth-child(even) {
+    background-color: #252525 !important;
+}
+
+[data-theme='dark'] .admin-table tr:hover {
+    background-color: #333 !important;
+}
+
+[data-theme='dark'] .admin-table td {
+    color: #ffffff !important;
+}
+
+/* COLORES ESPECÍFICOS MODO CLARO */
+[data-theme='light'] .admin-table {
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    border: 1px solid #ddd;
+}
+[data-theme='light'] .admin-table th {
+    background-color: #f4f4f4 !important;
+    color: #333 !important;
+    border-bottom: 2px solid #ddd;
+}
+[data-theme='light'] .admin-table tr:nth-child(even) {
+    background-color: #f9f9f9 !important;
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_URL } from '../config'; 
-import './App.css'; // Asegúrate de importar App.css donde pusimos los estilos nuevos
+import './AdminDashboard.css'; // 👈 IMPORTANTE: Ahora importamos su propio CSS
 
 function AdminDashboard() {
     const [usuariosAgrupados, setUsuariosAgrupados] = useState([]);
@@ -23,7 +23,7 @@ function AdminDashboard() {
             }
             acc[user].predictions.push(curr);
             acc[user].total_pronosticos += 1;
-            acc[user].puntos_totales += (curr.points || 0); // Sumamos los puntos si existen
+            acc[user].puntos_totales += (curr.points || 0);
             return acc;
         }, {});
         setUsuariosAgrupados(Object.values(grupos));
@@ -92,20 +92,24 @@ function AdminDashboard() {
     );
 
     return (
-        <div className="admin-container" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-            <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>⚙️ Panel de Control</h2>
+        <div className="admin-container">
+            <h2 className="admin-title">⚙️ Panel de Control</h2>
             
             {/* ZONA DE ACCIONES */}
-            <div style={{ backgroundColor: 'var(--card-bg)', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #444', textAlign: 'center' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                    <button onClick={handleSyncMatches} disabled={loading} style={{ backgroundColor: '#2196F3', color: 'white', padding: '10px', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+            <div className="action-bar">
+                <div className="action-buttons">
+                    <button onClick={handleSyncMatches} disabled={loading} className="btn-action btn-sync">
                         {loading ? '⏳' : '🔄 Sincronizar API'}
                     </button>
-                    <button onClick={handleDeleteAll} disabled={loading} style={{ backgroundColor: '#f44336', color: 'white', padding: '10px', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                    <button onClick={handleDeleteAll} disabled={loading} className="btn-action btn-delete">
                         🗑️ Borrar Todo
                     </button>
                 </div>
-                {message && <div style={{ marginTop: '10px', fontWeight: 'bold', color: message.includes('Error') || message.includes('❌') ? '#ff4444' : '#00e676' }}>{message}</div>}
+                {message && (
+                    <div className={`action-message ${message.includes('Error') || message.includes('❌') ? 'msg-error' : 'msg-success'}`}>
+                        {message}
+                    </div>
+                )}
             </div>
 
             {/* VISTA 1: LISTA DE USUARIOS (TARJETAS) */}
@@ -115,31 +119,23 @@ function AdminDashboard() {
                     <input 
                         type="text" 
                         placeholder="🔍 Buscar usuario..." 
-                        style={{marginBottom: '20px', padding: '10px', width: '100%', borderRadius: '5px', border: '1px solid #555', backgroundColor: '#333', color: 'white'}}
+                        className="search-input"
                         value={filtro}
                         onChange={(e) => setFiltro(e.target.value)}
                     />
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
+                    <div className="users-grid">
                         {usuariosFiltrados.map((user) => (
                             <div 
                                 key={user.username} 
                                 onClick={() => setUsuarioSeleccionado(user)}
-                                style={{
-                                    backgroundColor: 'var(--card-bg)',
-                                    padding: '15px',
-                                    borderRadius: '10px',
-                                    cursor: 'pointer',
-                                    border: '1px solid #444',
-                                    textAlign: 'center',
-                                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                                }}
+                                className="user-card"
                             >
-                                <div style={{fontSize: '2rem', marginBottom: '5px'}}>👤</div>
-                                <h4 style={{margin: '0 0 5px 0', color: '#4caf50', overflow: 'hidden', textOverflow: 'ellipsis'}}>{user.username}</h4>
-                                <small style={{color: '#aaa'}}>Pronósticos: {user.total_pronosticos}</small>
+                                <div className="user-avatar">👤</div>
+                                <h4 className="user-name">{user.username}</h4>
+                                <small className="user-stats">Pronósticos: {user.total_pronosticos}</small>
                                 <br/>
-                                <strong style={{color: '#ffd700'}}>Pts: {user.puntos_totales}</strong>
+                                <strong className="user-points">Pts: {user.puntos_totales}</strong>
                             </div>
                         ))}
                     </div>
@@ -149,14 +145,13 @@ function AdminDashboard() {
                 <div>
                     <button 
                         onClick={() => setUsuarioSeleccionado(null)}
-                        style={{ marginBottom: '20px', padding: '8px 15px', backgroundColor: '#555', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+                        className="btn-back"
                     >
                         ⬅ Volver a Usuarios
                     </button>
 
                     <h3 style={{color: '#4caf50', marginBottom: '10px'}}>Pronósticos de: {usuarioSeleccionado.username}</h3>
                     
-                    {/* 👇 AQUÍ APLICAMOS LAS CLASES DEL CSS NUEVO */}
                     <div className="table-responsive-admin">
                         <table className="admin-table">
                             <thead>
@@ -173,21 +168,19 @@ function AdminDashboard() {
                                     <tr key={p.id}>
                                         <td style={{fontSize: '0.85rem'}}>{new Date(p.match_date).toLocaleDateString(undefined, {month:'numeric', day:'numeric'})}</td>
                                         <td>
-                                            <div style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
+                                            <div className="match-vs">
                                                 <img src={p.home_logo} onError={handleImageError} className="mini-logo" alt="" />
                                                 <span style={{fontSize: '0.8rem'}}>vs</span>
                                                 <img src={p.away_logo} onError={handleImageError} className="mini-logo" alt="" />
                                             </div>
                                         </td>
                                         <td>
-                                            <span style={{
-                                                backgroundColor: '#333', 
-                                                padding: '2px 6px', 
-                                                borderRadius: '4px',
-                                                color: p.prediction_result === 'home' ? '#4caf50' : p.prediction_result === 'away' ? '#2196f3' : '#ff9800',
-                                                fontWeight: 'bold',
-                                                fontSize: '0.8rem'
-                                            }}>
+                                            <span 
+                                                className="badge-prediction"
+                                                style={{
+                                                    backgroundColor: p.prediction_result === 'home' ? '#4caf50' : p.prediction_result === 'away' ? '#2196f3' : '#ff9800',
+                                                }}
+                                            >
                                                 {p.prediction_result === 'home' ? 'L' : p.prediction_result === 'away' ? 'V' : 'E'}
                                             </span>
                                         </td>
