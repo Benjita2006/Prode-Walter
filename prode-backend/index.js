@@ -4,6 +4,7 @@ const cors = require('cors');
 const http = require('http'); 
 const { Server } = require("socket.io"); 
 const axios = require('axios');
+const path = require('path');
 require('dotenv').config(); 
 
 // --- IMPORTACIONES LOCALES ---
@@ -39,6 +40,7 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
+
 
 // ======================================================
 // 2. LÓGICA DEL CHAT (SOCKET.IO)

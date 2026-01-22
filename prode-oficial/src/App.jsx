@@ -81,11 +81,11 @@ function App() {
     // --- NAVEGACIÓN ---
     const handleNavClick = (viewName) => {
         setAppView(viewName);
-        if (viewName === 'matches') {
+        // Solo recarga si vamos a 'matches' Y la lista está vacía (o forzamos recarga)
+        if (viewName === 'matches' && partidos.length === 0) {
             fetchPartidos();
         }
     };
-
     // --- LOGIN ---
     const handleLoginSuccess = (userObject) => {
         setUsuario(userObject);
