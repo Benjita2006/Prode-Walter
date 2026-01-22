@@ -10,7 +10,7 @@ require('dotenv').config();
 // --- IMPORTACIONES LOCALES ---
 const authenticateToken = require('./authMiddleware'); 
 const db = require('./db'); 
-const { registerUser, loginUser } = require('./authController');
+const { registerUser, loginUser, googleLogin } = require('./authController'); // Agrega googleLogin
 
 const { 
     obtenerPartidos, 
@@ -247,6 +247,14 @@ app.get('/api/buscar-ligas', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+// RUTA LOGIN GOOGLE
+app.post('/api/auth/google', async (req, res) => {
+    const { token } = req.body;
+    const result = await googleLogin(token);
+    if (result.success) res.status(200).json(result);
+    else res.status(400).json(result);
 });
 
 // ======================================================

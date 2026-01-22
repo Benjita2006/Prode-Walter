@@ -1,80 +1,92 @@
-// prode-backend/authController.js (CÓDIGO COMPLETO Y ESTABLE)
+// prode-backend/src/authController.js
 const db = require('./db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { OAuth2Client } = require('google-auth-library');
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const { OAuth2Client } = require('google-auth-library'); // 👈 Importante
 
-const SECRET_KEY = process.env.JWT_SECRET || 'secreto_super_seguro';
-// ID 3 es el rol 'User' (Usuario Estándar)
-const DEFAULT_ROLE_ID = 3; 
+// Inicializamos el cliente de Google (Si no hay variable, usa un string vacío para no romper al inicio)
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || "");
 
-// --- FUNCIÓN DE REGISTRO ---
+// --- 1. REGISTRO NORMAL ---
 async function registerUser(username, email, password) {
+    if (!username || !email || !password) {
+        return { success: false, message: 'Faltan datos.' };
+    }
+
     try {
-        // 1. Verificar si el usuario ya existe
+        // Verificar si existe
         const [existing] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
         if (existing.length > 0) {
-            return { success: false, message: 'El correo ya está registrado.' };
+            return { success: false, message: 'El email ya está registrado.' };
         }
 
+        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const sql = `INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)`;
-        
-        // 👇 Fíjate que el cuarto valor es 'User' (texto), no un número
-        await db.execute(sql, [username, email, hashedPassword, 'User']);
+        // Insertar
+        // NOTA: Asignamos rol 'User' por defecto. El primero se cambia a mano en DB si es Owner.
+        const [result] = await db.execute(
+            'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)',
+            [username, email, hashedPassword, 'User']
+        );
 
-        return { success: true, message: 'Usuario registrado con éxito' };
+        return { success: true, message: 'Usuario registrado exitosamente.' };
 
     } catch (error) {
         console.error("Error en registro:", error);
-        return { success: false, message: 'Error en el servidor al registrar usuario.' };
+        return { success: false, message: 'Error en el servidor.' };
     }
 }
 
-module.exports = { registerUser, loginUser: require('./authController').loginUser || module.exports.loginUser }; 
-
-// --- FUNCIÓN DE LOGIN ---
+// --- 2. LOGIN NORMAL ---
 async function loginUser(email, password) {
+    if (!email || !password) {
+        return { success: false, message: 'Faltan datos.' };
+    }
+
     try {
-        // 👇 CORREGIDO: Seleccionamos directo de la tabla users (sin JOINs raros)
-        const [rows] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
-
-        if (rows.length === 0) {
-            return { success: false, message: 'Usuario no encontrado' };
-        }
-
-        const user = rows[0];
+        const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
         
-        // Verificamos la contraseña
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if (!isMatch) {
-            return { success: false, message: 'Contraseña incorrecta' };
+        if (users.length === 0) {
+            return { success: false, message: 'Usuario no encontrado.' };
         }
 
-        // 👇 CORREGIDO: Usamos user.role directamente, ya que ahora es texto ('User', 'Owner', etc.)
+        const user = users[0];
+
+        // Si el usuario se creó con Google, no tiene password
+        if (!user.password) {
+             return { success: false, message: 'Este usuario se registró con Google. Usa el botón de Google.' };
+        }
+
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) {
+            return { success: false, message: 'Contraseña incorrecta.' };
+        }
+
+        // Crear Token
         const token = jwt.sign(
             { id: user.id, username: user.username, role: user.role },
-            SECRET_KEY,
+            process.env.JWT_SECRET || 'secreto_super_seguro',
             { expiresIn: '24h' }
         );
 
-        return {
-            success: true,
-            token,
-            user: { id: user.id, username: user.username, role: user.role }
+        return { 
+            success: true, 
+            token, 
+            user: { id: user.id, username: user.username, email: user.email, role: user.role } 
         };
 
     } catch (error) {
         console.error("Error en login:", error);
-        return { success: false, message: 'Error en el servidor durante el login.' };
+        return { success: false, message: 'Error en el servidor.' };
     }
-// NUEVA FUNCIÓN: LOGIN CON GOOGLE
+}
+
+// --- 3. LOGIN CON GOOGLE (LA QUE FALTABA) ---
 async function googleLogin(token) {
     try {
-        // 1. Verificar el token con Google
+        // A. Verificar el token con Google
         const ticket = await client.verifyIdToken({
             idToken: token,
             audience: process.env.GOOGLE_CLIENT_ID,
@@ -82,20 +94,20 @@ async function googleLogin(token) {
         const payload = ticket.getPayload();
         
         const email = payload.email;
-        const googleId = payload.sub;
+        // const googleId = payload.sub; // ID único de google
         const name = payload.name || payload.given_name;
 
-        // 2. Verificar si el usuario ya existe en nuestra DB
+        // B. Verificar si el usuario ya existe en nuestra DB
         const conn = await db.getConnection();
         const [users] = await conn.execute('SELECT * FROM users WHERE email = ?', [email]);
         let user = users[0];
 
-        // 3. Si no existe, lo creamos (Registro automático)
+        // C. Si no existe, lo creamos (Registro automático)
         if (!user) {
-            // Generamos un nombre de usuario basado en el nombre de Google o el email
+            // Generamos un nombre de usuario basado en el nombre de Google
             let username = name || email.split('@')[0];
             
-            // Insertamos sin contraseña
+            // Insertamos sin contraseña (password NULL)
             const [result] = await conn.execute(
                 'INSERT INTO users (username, email, password, role) VALUES (?, ?, NULL, ?)',
                 [username, email, 'User']
@@ -108,7 +120,7 @@ async function googleLogin(token) {
 
         conn.release();
 
-        // 4. Generamos nuestro propio Token JWT (Igual que en el login normal)
+        // D. Generamos nuestro propio Token JWT para la App
         const appToken = jwt.sign(
             { id: user.id, username: user.username, role: user.role },
             process.env.JWT_SECRET || 'secreto_super_seguro',
@@ -123,10 +135,9 @@ async function googleLogin(token) {
 
     } catch (error) {
         console.error("Error en Google Login:", error);
-        return { success: false, message: 'Token de Google inválido.' };
+        return { success: false, message: 'Token de Google inválido o error de servidor.' };
     }
 }
 
-}
-
+// Exportamos las 3 funciones
 module.exports = { registerUser, loginUser, googleLogin };
