@@ -154,5 +154,114 @@
         padding-bottom: 80px !important;
     }
 }
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: var(--card-bg, #1a1a1a); /* Color de fondo */
+    border-bottom: 1px solid #333;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #4caf50;
+}
+
+.navbar-center {
+    display: flex;
+    gap: 20px;
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Ocultamos la barra inferior en escritorio */
+.bottom-nav {
+    display: none;
+}
+
+/* Estilos de botones generales */
+.nav-link {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: 0.3s;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+/* 2. ESTILOS MÓVIL (Solo se activan si la pantalla es chica) */
+@media (max-width: 768px) {
+    /* Ocultamos elementos de escritorio */
+    .navbar-center { display: none !important; }
+    .navbar-brand .logo-text { display: none !important; }
+    
+    /* Ajustamos la barra superior para móvil */
+    .navbar {
+        padding: 10px 15px;
+    }
+
+    /* Mostramos la barra inferior */
+    .bottom-nav {
+        display: flex !important; /* Forzamos que se vea */
+        justify-content: space-around;
+        align-items: center;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background-color: #222; /* Color fijo oscuro para probar */
+        border-top: 1px solid #444;
+        z-index: 9999;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Estilos de los botones de abajo */
+    .bottom-nav-item {
+        background: none;
+        border: none;
+        color: #888;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        width: 100%;
+        height: 100%;
+    }
+
+    .bottom-nav-item.active {
+        color: #4caf50;
+    }
+
+    .bottom-nav-icon {
+        font-size: 1.4rem;
+        margin-bottom: 2px;
+    }
+
+    /* Espacio extra para que el contenido no quede tapado */
+    .app-container {
+        padding-bottom: 70px !important;
+    }
+}
 
 @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
