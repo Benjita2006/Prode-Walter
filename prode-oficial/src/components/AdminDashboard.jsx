@@ -29,6 +29,20 @@ function AdminDashboard() {
         setUsuariosAgrupados(Object.values(grupos));
     };
 
+const traducirEstado = (status) => {
+    const diccionario = {
+        'NS': 'No Empezado',
+        'FT': 'Finalizado',
+        '1H': 'Primer Tiempo',
+        'HT': 'Entretiempo',
+        '2H': 'Segundo Tiempo',
+        'PST': 'Postergado',
+        'CANC': 'Cancelado',
+        'ABD': 'Abandonado'
+    };
+    return diccionario[status] || status; // Si no encuentra, devuelve el original (ej: "85'")
+};
+
     const fetchData = useCallback(async () => {
         const token = localStorage.getItem('token');
         try {
@@ -174,22 +188,26 @@ function AdminDashboard() {
                                                 <img src={p.away_logo} onError={handleImageError} className="mini-logo" alt="" />
                                             </div>
                                         </td>
-                                        <td>
-                                            <span 
-                                                className="badge-prediction"
-                                                style={{
-                                                    backgroundColor: p.prediction_result === 'home' ? '#4caf50' : p.prediction_result === 'away' ? '#2196f3' : '#ff9800',
-                                                }}
-                                            >
-                                                {p.prediction_result === 'home' ? 'L' : p.prediction_result === 'away' ? 'V' : 'E'}
-                                            </span>
+                                       <td>
+                                            {p.prediction_result ? (
+                                                <span 
+                                                    className="badge-prediction"
+                                                    style={{
+                                                        backgroundColor: p.prediction_result === 'home' ? '#4caf50' : p.prediction_result === 'away' ? '#2196f3' : '#ff9800',
+                                                    }}
+                                                >
+                                                    {p.prediction_result === 'home' ? 'L' : p.prediction_result === 'away' ? 'V' : 'E'}
+                                                </span>
+                                            ) : (
+                                                <span style={{color: '#666', fontStyle: 'italic'}}>Sin Voto</span>
+                                            )}
                                         </td>
                                         <td style={{fontSize: '0.85rem'}}>
-                                            {p.status === 'FT' ? `${p.home_score}-${p.away_score}` : '⏳'}
-                                        </td>
-                                        <td style={{fontWeight: 'bold', color: p.points > 0 ? '#4caf50' : '#888'}}>
-                                            {p.status === 'FT' ? p.points : '-'}
-                                        </td>
+                                        {p.status === 'FT' 
+                                            ? `${p.home_score} - ${p.away_score}` 
+                                            : <span style={{color: '#aaa'}}>{traducirEstado(p.status)}</span>
+                                        }
+                                    </td>
                                     </tr>
                                 ))}
                             </tbody>

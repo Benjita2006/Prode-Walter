@@ -297,8 +297,6 @@ function App() {
                     </>
                 )}
             </div>
-            
-
             {usuario && <TutorialOverlay username={usuario.username} />}
 
         </div>

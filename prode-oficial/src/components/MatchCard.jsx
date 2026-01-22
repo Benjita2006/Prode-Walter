@@ -1,4 +1,4 @@
-// src/components/MatchCard.jsx (RESTAURADO + FIX IMÁGENES)
+// src/components/MatchCard.jsx (CORREGIDO Y TRADUCIDO)
 import React, { useState } from 'react';
 import { API_URL } from '../config'; 
 import './MatchCard.css'; 
@@ -11,30 +11,43 @@ function MatchCard({
     yaGuardado 
 }) { 
     
-    // Estado de la selección ('HOME', 'DRAW', 'AWAY')
+    // Estado de la selección
     const [seleccion, setSeleccion] = useState(valorInicial || null);
     const [requestStatus, setRequestStatus] = useState(yaGuardado ? 'submitted' : null); 
 
-    // 🛡️ LÓGICA DE IMAGEN (NUEVO)
+    // 🛡️ LÓGICA DE IMAGEN
     const fallbackLogo = "https://cdn-icons-png.flaticon.com/512/16/16480.png";
     const handleImageError = (e) => {
         e.target.src = fallbackLogo;
         e.target.style.opacity = "0.5"; 
     };
 
-    // 🛡️ LÓGICA DE FECHA (NUEVO)
-    // Intentamos formatear la fecha solo si es válida
+    // 🛡️ LÓGICA DE FECHA
     let fechaFormateada = fecha;
     try {
         const d = new Date(fecha);
-        // Si la fecha es válida, la mostramos bonita. Si no, mostramos el texto original.
         if (!isNaN(d.getTime())) {
+            // Ejemplo: "20:00"
             fechaFormateada = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
     } catch (e) {
         console.warn("Fecha inválida:", fecha, e);
     }
 
+    // 🛡️ TRADUCTOR DE ESTADOS (NS -> No Empezado)
+    const traducirEstado = (st) => {
+        switch(st) {
+            case 'NS': return 'No Empezado';
+            case 'FT': return 'Finalizado';
+            case '1H': return '1er Tiempo';
+            case 'HT': return 'Entretiempo';
+            case '2H': return '2do Tiempo';
+            case 'PST': return 'Postergado';
+            case 'CANC': return 'Cancelado';
+            case 'ABD': return 'Abandonado';
+            default: return st; // Si está jugando (ej: "45'"), muestra el minuto
+        }
+    };
 
     const manejarEnvio = async () => {
         if (!seleccion) return; 
@@ -73,14 +86,13 @@ function MatchCard({
         <div className={`match-card ${requestStatus === 'submitted' ? 'card-voted' : ''}`}>
             
             <div className="card-header">
-                {/* Usamos la fecha corregida */}
+                {/* Hora del partido */}
                 <span className="match-date">⏰ {fechaFormateada}</span>
                 
-                {status === 'FT' ? (
-                     <span className="status-badge status-finished">FINALIZADO</span>
-                ) : (
-                     <span className="status-badge status-scheduled">{status}</span>
-                )}
+                {/* 👇 AQUÍ ESTÁ EL CAMBIO: Usamos traducirEstado(status) */}
+                <span className={`status-badge ${status === 'FT' ? 'status-finished' : 'status-scheduled'}`}>
+                    {traducirEstado(status)}
+                </span>
             </div>
 
             <div className="card-body">
@@ -91,7 +103,7 @@ function MatchCard({
                 >
                     <img 
                         src={logoA || fallbackLogo} 
-                        onError={handleImageError} // 🔥 APLICAMOS EL FIX AQUÍ
+                        onError={handleImageError} 
                         alt={equipoA} 
                         className="team-logo" 
                     />
@@ -117,7 +129,7 @@ function MatchCard({
                 >
                     <img 
                         src={logoB || fallbackLogo} 
-                        onError={handleImageError} // 🔥 APLICAMOS EL FIX AQUÍ
+                        onError={handleImageError} 
                         alt={equipoB} 
                         className="team-logo" 
                     />
