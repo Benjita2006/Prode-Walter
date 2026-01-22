@@ -101,56 +101,44 @@ app.post('/api/admin/sync-matches', authenticateToken, async (req, res) => {
         return res.status(403).json({ message: 'Acceso denegado.' });
     }
 
+    // 👇 CAMBIO CLAVE: Usamos 2025 para asegurar que haya datos
     const LEAGUE_ID = 128; 
-    const SEASON = 2024;   
+    const SEASON = 2025;   
+    
     console.log(`🔄 Iniciando sync para Liga ${LEAGUE_ID}, Temp ${SEASON}...`);
     
-    const apiMatches = await obtenerPartidosDeAPI(LEAGUE_ID, SEASON);
-
-    if (!apiMatches || apiMatches.length === 0) {
-        return res.status(500).json({ message: 'La API no devolvió partidos. Verifica la temporada.' });
-    }
-
-    let creados = 0;
-    let actualizados = 0;
-    let conn; 
-
     try {
-        // 2. Obtener datos de la API
         const apiMatches = await obtenerPartidosDeAPI(LEAGUE_ID, SEASON);
 
         if (!apiMatches || apiMatches.length === 0) {
-            // No es un error 500, es solo que no hay datos.
-            return res.status(404).json({ message: `No se encontraron partidos para la temporada ${SEASON}. Intenta con 2025.` });
+            return res.status(404).json({ message: `La API no devolvió partidos para el año ${SEASON}.` });
         }
 
         let creados = 0;
         let actualizados = 0;
-        const conn = await db.getConnection(); // Obtener conexión del pool
+        const conn = await db.getConnection(); 
 
         try {
-            await conn.beginTransaction(); // Iniciar transacción segura
+            await conn.beginTransaction(); 
 
             for (const data of apiMatches) {
-                // 3. Extracción Segura de Datos (Evita crashes por nulls)
                 const m = data.fixture;
                 const t = data.teams; 
                 const g = data.goals;
 
-                if (!m || !t || !m.date) continue; // Saltar si el partido está roto
+                if (!m || !t || !m.date) continue; 
 
-                // Formatear fecha para MySQL (YYYY-MM-DD HH:MM:SS)
+                // Formato de fecha SQL
                 const matchDate = new Date(m.date).toISOString().slice(0, 19).replace('T', ' ');
 
-                // 4. Verificar si ya existe
+                // Verificamos si existe
                 const [rows] = await conn.execute('SELECT id FROM matches WHERE api_id = ?', [m.id]);
 
-                // Valores seguros (si goles es null, ponemos null)
+                // Valores seguros para goles
                 const golesLocal = g.home !== null ? g.home : null;
                 const golesVisita = g.away !== null ? g.away : null;
 
                 if (rows.length === 0) {
-                    // INSERTAR NUEVO
                     await conn.execute(
                         `INSERT INTO matches 
                         (api_id, home_team, home_logo, away_team, away_logo, match_date, status, home_score, away_score, is_active) 
@@ -159,7 +147,6 @@ app.post('/api/admin/sync-matches', authenticateToken, async (req, res) => {
                     );
                     creados++;
                 } else {
-                    // ACTUALIZAR EXISTENTE
                     await conn.execute(
                         `UPDATE matches 
                         SET match_date = ?, status = ?, home_score = ?, away_score = ?, home_logo = ?, away_logo = ? 
@@ -170,25 +157,22 @@ app.post('/api/admin/sync-matches', authenticateToken, async (req, res) => {
                 }
             }
 
-            await conn.commit(); // Confirmar cambios
-            conn.release(); // Liberar conexión
+            await conn.commit(); 
+            conn.release();
             
-            console.log(`✅ Sync terminada: ${creados} nuevos, ${actualizados} actualizados.`);
-            res.json({ success: true, message: `Sincronización Exitosa: ${creados} nuevos, ${actualizados} actualizados.` });
+            res.json({ success: true, message: `¡Éxito! ${creados} nuevos, ${actualizados} actualizados.` });
 
         } catch (dbError) {
-            // Error dentro de la transacción
             await conn.rollback();
             conn.release();
-            console.error("❌ Error de Base de Datos durante Sync:", dbError);
-            // IMPORTANTE: Devolvemos el mensaje exacto del error para que sepas qué columna falla
-            res.status(500).json({ message: `Error SQL: ${dbError.sqlMessage || dbError.message}` });
+            console.error("❌ Error SQL:", dbError);
+            // 👇 ESTO ES LO IMPORTANTE: Enviamos el error real al frontend
+            res.status(500).json({ message: `Error Base de Datos: ${dbError.message}` });
         }
 
     } catch (apiError) {
-        // Error conectando a la API externa
-        console.error("❌ Error General en Sync:", apiError);
-        res.status(500).json({ message: 'Error conectando con la API de Fútbol.' });
+        console.error("❌ Error API:", apiError);
+        res.status(500).json({ message: `Error conectando a API: ${apiError.message}` });
     }
 });
 
