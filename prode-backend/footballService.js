@@ -131,8 +131,12 @@ async function obtenerTodosLosPronosticos() {
                 m.away_team,
                 m.away_logo,   
                 m.match_date,
-                p.prediction_result, /* Usamos result, no home/away */
-                p.points
+                m.round, /* 👈 AGREGAMOS ESTO (IMPORTANTE) */
+                p.prediction_result,
+                p.points,
+                m.status,
+                m.home_score,
+                m.away_score
             FROM predictions p
             JOIN users u ON p.user_id = u.id
             JOIN matches m ON p.match_id = m.id

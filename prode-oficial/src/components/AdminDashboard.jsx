@@ -1,6 +1,7 @@
+// src/components/AdminDashboard.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_URL } from '../config'; 
-import './AdminDashboard.css'; // 👈 IMPORTANTE: Ahora importamos su propio CSS
+import './AdminDashboard.css'; 
 
 function AdminDashboard() {
     const [usuariosAgrupados, setUsuariosAgrupados] = useState([]);
@@ -8,6 +9,16 @@ function AdminDashboard() {
     const [filtro, setFiltro] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+
+    // TRADUCTOR DE ESTADOS
+    const traducirEstado = (st) => {
+        const diccionario = {
+            'NS': 'No Empezado', 'FT': 'Finalizado', '1H': '1er Tiempo', 
+            'HT': 'Entretiempo', '2H': '2do Tiempo', 'PST': 'Postergado',
+            'CANC': 'Cancelado', 'ABD': 'Abandonado'
+        };
+        return diccionario[st] || st;
+    };
 
     // LÓGICA PARA AGRUPAR USUARIOS
     const agruparPorUsuario = (data) => {
@@ -28,20 +39,6 @@ function AdminDashboard() {
         }, {});
         setUsuariosAgrupados(Object.values(grupos));
     };
-
-const traducirEstado = (status) => {
-    const diccionario = {
-        'NS': 'No Empezado',
-        'FT': 'Finalizado',
-        '1H': 'Primer Tiempo',
-        'HT': 'Entretiempo',
-        '2H': 'Segundo Tiempo',
-        'PST': 'Postergado',
-        'CANC': 'Cancelado',
-        'ABD': 'Abandonado'
-    };
-    return diccionario[status] || status; // Si no encuentra, devuelve el original (ej: "85'")
-};
 
     const fetchData = useCallback(async () => {
         const token = localStorage.getItem('token');
@@ -67,7 +64,6 @@ const traducirEstado = (status) => {
         e.target.style.opacity = "0.5"; 
     };
 
-    // SINCRONIZAR
     const handleSyncMatches = async () => {
         setLoading(true); setMessage('⏳ Conectando...');
         const token = localStorage.getItem('token');
@@ -83,7 +79,6 @@ const traducirEstado = (status) => {
         finally { setLoading(false); }
     };
 
-    // BORRAR TODO
     const handleDeleteAll = async () => {
         if(!confirm("⚠️ ¿ESTÁS SEGURO? Borrarás TODO.")) return;
         setLoading(true); setMessage('⏳ Eliminando...');
@@ -109,7 +104,6 @@ const traducirEstado = (status) => {
         <div className="admin-container">
             <h2 className="admin-title">⚙️ Panel de Control</h2>
             
-            {/* ZONA DE ACCIONES */}
             <div className="action-bar">
                 <div className="action-buttons">
                     <button onClick={handleSyncMatches} disabled={loading} className="btn-action btn-sync">
@@ -126,7 +120,6 @@ const traducirEstado = (status) => {
                 )}
             </div>
 
-            {/* VISTA 1: LISTA DE USUARIOS (TARJETAS) */}
             {!usuarioSeleccionado ? (
                 <>
                     <h3>👥 Usuarios Activos ({usuariosAgrupados.length})</h3>
@@ -155,7 +148,6 @@ const traducirEstado = (status) => {
                     </div>
                 </>
             ) : (
-                /* VISTA 2: DETALLE DEL USUARIO (CON TABLA RESPONSIVE) */
                 <div>
                     <button 
                         onClick={() => setUsuarioSeleccionado(null)}
@@ -170,7 +162,7 @@ const traducirEstado = (status) => {
                         <table className="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Fecha</th>
+                                    <th>Fecha/Jornada</th> {/* 👈 COLUMNA NUEVA */}
                                     <th>Partido</th>
                                     <th>Pronóstico</th>
                                     <th>Resultado</th>
@@ -180,7 +172,16 @@ const traducirEstado = (status) => {
                             <tbody>
                                 {usuarioSeleccionado.predictions.map((p) => (
                                     <tr key={p.id}>
-                                        <td style={{fontSize: '0.85rem'}}>{new Date(p.match_date).toLocaleDateString(undefined, {month:'numeric', day:'numeric'})}</td>
+                                        {/* 📅 DATO DE FECHA (Nuevo) */}
+                                        <td>
+                                            <span style={{backgroundColor:'#444', color:'white', padding:'3px 6px', borderRadius:'4px', fontSize:'0.8rem', whiteSpace:'nowrap'}}>
+                                                {p.round || 'General'}
+                                            </span>
+                                            <div style={{fontSize:'0.75rem', color:'#aaa', marginTop:'2px'}}>
+                                                {new Date(p.match_date).toLocaleDateString(undefined, {day:'numeric', month:'numeric'})}
+                                            </div>
+                                        </td>
+
                                         <td>
                                             <div className="match-vs">
                                                 <img src={p.home_logo} onError={handleImageError} className="mini-logo" alt="" />
@@ -188,26 +189,29 @@ const traducirEstado = (status) => {
                                                 <img src={p.away_logo} onError={handleImageError} className="mini-logo" alt="" />
                                             </div>
                                         </td>
-                                       <td>
+                                        <td>
                                             {p.prediction_result ? (
                                                 <span 
                                                     className="badge-prediction"
                                                     style={{
-                                                        backgroundColor: p.prediction_result === 'home' ? '#4caf50' : p.prediction_result === 'away' ? '#2196f3' : '#ff9800',
+                                                        backgroundColor: p.prediction_result === 'HOME' ? '#4caf50' : p.prediction_result === 'AWAY' ? '#2196f3' : '#ff9800',
                                                     }}
                                                 >
-                                                    {p.prediction_result === 'home' ? 'L' : p.prediction_result === 'away' ? 'V' : 'E'}
+                                                    {p.prediction_result === 'HOME' ? 'L' : p.prediction_result === 'AWAY' ? 'V' : 'E'}
                                                 </span>
                                             ) : (
                                                 <span style={{color: '#666', fontStyle: 'italic'}}>Sin Voto</span>
                                             )}
                                         </td>
                                         <td style={{fontSize: '0.85rem'}}>
-                                        {p.status === 'FT' 
-                                            ? `${p.home_score} - ${p.away_score}` 
-                                            : <span style={{color: '#aaa'}}>{traducirEstado(p.status)}</span>
-                                        }
-                                    </td>
+                                            {p.status === 'FT' 
+                                                ? `${p.home_score} - ${p.away_score}` 
+                                                : <span style={{color:'#aaa'}}>{traducirEstado(p.status)}</span>
+                                            }
+                                        </td>
+                                        <td style={{fontWeight: 'bold', color: p.points > 0 ? '#4caf50' : '#888'}}>
+                                            {p.status === 'FT' ? p.points : '-'}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

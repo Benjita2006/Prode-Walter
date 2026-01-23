@@ -68,7 +68,7 @@ function App() {
                     setCurrentView('app');
                 }
             } catch (error) {
-                console.error(error); // 👈 CORRECCIÓN 1: Usamos la variable error
+                console.error(error); 
                 handleLogout();
             }
         }
@@ -107,12 +107,10 @@ function App() {
             });
             setMisPronosticosTemp(buffer);
             
-            // Abrir la primera fecha por defecto si no hay ninguna abierta
             if (!fechaAbierta && partidos[0]) {
                 setFechaAbierta(partidos[0].round || 'Fecha 1'); 
             }
         }
-        // 👇 CORRECCIÓN 2: Silenciamos la advertencia porque solo queremos que corra al cambiar 'partidos'
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [partidos]); 
 
@@ -189,7 +187,6 @@ function App() {
         setTimeout(() => setShowWelcome(false), 2500);
     };
 
-    // VISTAS DE LOGIN
     if (loading && !usuario) return <div className="loading-screen">Cargando...</div>;
     if (!usuario) {
         return currentView === 'register' 
@@ -214,7 +211,7 @@ function App() {
                 {appView === 'ranking' && <Ranking />}
                 {appView === 'chat' && <div className="chat-full-page"><ChatGlobal username={username} fullPage={true} /></div>}
 
-                {/* VISTA DE PARTIDOS (ACORDEÓN) */}
+                {/* VISTA DE PARTIDOS (ACORDEÓN MEJORADO) */}
                 {appView === 'matches' && (
                     <>
                         <h1 style={{textAlign: 'center', marginBottom: '15px'}}>🏆 Fixture</h1>
@@ -222,88 +219,89 @@ function App() {
                         {loading ? <p style={{textAlign:'center'}}>Cargando...</p> : 
                          Object.keys(partidosPorFecha).length === 0 ? <p style={{textAlign:'center'}}>No hay partidos.</p> : (
                             
-<div className="fechas-container" style={{paddingBottom: '100px', maxWidth: '800px', margin: '0 auto'}}>
-    {Object.keys(partidosPorFecha).map((nombreFecha) => (
-        <div key={nombreFecha} style={{marginBottom: '10px'}}> {/* Menos margen entre fechas */}
-            
-            {/* CABECERA FECHA (Estilo Barra Ancha) */}
-            <button 
-                onClick={() => setFechaAbierta(fechaAbierta === nombreFecha ? null : nombreFecha)}
-                style={{
-                    width: '100%', 
-                    padding: '15px 20px', // Un poco más de padding lateral
-                    backgroundColor: fechaAbierta === nombreFecha ? 'var(--card-bg)' : '#2c2c2c', // Color base un poco más claro
-                    borderLeft: fechaAbierta === nombreFecha ? '5px solid #4caf50' : '5px solid transparent', // Indicador visual a la izquierda
-                    borderTop: 'none', borderRight: 'none', borderBottom: '1px solid #444', // Bordes sutiles
-                    color: 'white', 
-                    borderRadius: '8px', // 👈 MENOS REDONDO (Antes era 50px o 10px)
-                    fontSize: '1.1rem', 
-                    fontWeight: 'bold', 
-                    cursor: 'pointer',
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    transition: 'background-color 0.2s'
-                }}
-            >
-                <span style={{textTransform: 'uppercase', letterSpacing: '1px'}}>{nombreFecha}</span>
-                <span style={{color: '#4caf50', fontSize: '1.2rem'}}>
-                    {fechaAbierta === nombreFecha ? '−' : '+'} {/* Signos más/menos se ven más limpios */}
-                </span>
-            </button>
+                            <div className="fechas-container" style={{paddingBottom: '100px', width: '100%'}}> {/* Ancho total */}
+                                {Object.keys(partidosPorFecha).map((nombreFecha) => (
+                                    <div key={nombreFecha} style={{marginBottom: '0'}}> {/* Sin margen, pegados como lista */}
+                                        
+                                        {/* CABECERA FECHA (Estilo Bloque Rectangular) */}
+                                        <button 
+                                            onClick={() => setFechaAbierta(fechaAbierta === nombreFecha ? null : nombreFecha)}
+                                            style={{
+                                                width: '100%', 
+                                                padding: '20px', // Más alto
+                                                backgroundColor: fechaAbierta === nombreFecha ? '#1f1f1f' : '#2c2c2c', // Diferencia visual sutil
+                                                border: 'none',
+                                                borderBottom: '1px solid #444', // Línea separadora
+                                                color: 'white', 
+                                                borderRadius: '0', // 👈 CERO CURVAS (Rectangular)
+                                                fontSize: '1.2rem', 
+                                                fontWeight: 'bold', 
+                                                cursor: 'pointer',
+                                                display: 'flex', 
+                                                justifyContent: 'space-between', 
+                                                alignItems: 'center',
+                                                textTransform: 'uppercase', // Mayúsculas
+                                                letterSpacing: '1px'
+                                            }}
+                                        >
+                                            <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                                                <span style={{color: '#4caf50'}}>📅</span>
+                                                <span>{nombreFecha}</span>
+                                            </div>
+                                            <span style={{color: '#888', fontSize: '1rem'}}>
+                                                {fechaAbierta === nombreFecha ? '▲' : '▼'}
+                                            </span>
+                                        </button>
 
-            {/* CONTENIDO FECHA */}
-            {fechaAbierta === nombreFecha && (
-                <div style={{marginTop: '0', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '0 0 8px 8px', padding: '15px'}}>
-                    <div className="matches-grid-container" style={{padding: '0', gap: '15px'}}>
-                        {partidosPorFecha[nombreFecha].map(p => (
-                            <MatchCard 
-                            key={p.id}
-                            matchId={p.id}
-                            equipoA={p.local} logoA={p.logoLocal}
-                            equipoB={p.visitante} logoB={p.logoVisitante}
-                            fecha={p.fecha} 
-                            status={p.status}
-                                
-                                /* 🔒 LÓGICA DE SEGURIDAD MEJORADA: 
-                                   Bloqueamos si NO es 'NS' (No Started) y NO es 'PST' (Postergado).
-                                   Es decir: 1H, 2H, HT, FT -> BLOQUEADOS.
-                                */
-                                bloqueado={ (p.status !== 'NS' && p.status !== 'PST') || p.miPronostico !== null }
-                                
-                                seleccionActual={misPronosticosTemp[p.id]}
-                                onSeleccionChange={handleSeleccionChange}
-                            />
-                        ))}
-                    </div>
+                                        {/* CONTENIDO FECHA */}
+                                        {fechaAbierta === nombreFecha && (
+                                            <div style={{backgroundColor: '#181818', padding: '15px 10px', borderBottom: '2px solid #4caf50'}}>
+                                                <div className="matches-grid-container" style={{padding: '0', gap: '15px'}}>
+                                                    {partidosPorFecha[nombreFecha].map(p => (
+                                                        <MatchCard 
+                                                            key={p.id}
+                                                            matchId={p.id}
+                                                            equipoA={p.local} logoA={p.logoLocal}
+                                                            equipoB={p.visitante} logoB={p.logoVisitante}
+                                                            fecha={p.fecha} 
+                                                            status={p.status}
+                                                            
+                                                            /* Lógica de bloqueo estricta */
+                                                            bloqueado={ (p.status !== 'NS' && p.status !== 'PST') || p.miPronostico !== null }
+                                                            
+                                                            seleccionActual={misPronosticosTemp[p.id]}
+                                                            onSeleccionChange={handleSeleccionChange}
+                                                        />
+                                                    ))}
+                                                </div>
 
-                    {/* BOTÓN GUARDAR FECHA (También más ancho y serio) */}
-                    <div style={{textAlign: 'center', marginTop: '25px', marginBottom: '10px'}}>
-                        <button 
-                            onClick={() => guardarFecha(nombreFecha)}
-                            disabled={guardando}
-                            style={{
-                                backgroundColor: '#2196F3', 
-                                color: 'white',
-                                padding: '15px 0', // Full height
-                                width: '100%', // 👈 OCUPA TODO EL ANCHO DISPONIBLE
-                                fontSize: '1rem', 
-                                fontWeight: 'bold',
-                                border: 'none', 
-                                borderRadius: '8px', // Igual que la cabecera
-                                boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
-                                cursor: guardando ? 'wait' : 'pointer',
-                                textTransform: 'uppercase'
-                            }}
-                        >
-                            {guardando ? 'Guardando...' : `💾 Guardar Pronósticos ${nombreFecha}`}
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-    ))}
-</div>
+                                                {/* BOTÓN GUARDAR (Full Width) */}
+                                                <div style={{marginTop: '25px', padding: '0 10px'}}>
+                                                    <button 
+                                                        onClick={() => guardarFecha(nombreFecha)}
+                                                        disabled={guardando}
+                                                        style={{
+                                                            backgroundColor: '#2196F3', 
+                                                            color: 'white',
+                                                            width: '100%', // Ancho total
+                                                            padding: '15px', 
+                                                            fontSize: '1.1rem', 
+                                                            fontWeight: 'bold',
+                                                            border: 'none', 
+                                                            borderRadius: '4px', // Levemente redondeado
+                                                            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+                                                            cursor: guardando ? 'wait' : 'pointer',
+                                                            textTransform: 'uppercase'
+                                                        }}
+                                                    >
+                                                        {guardando ? 'Guardando...' : `GUARDAR PRONÓSTICOS`}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </>
                 )}
