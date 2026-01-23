@@ -5,7 +5,7 @@ const http = require('http');
 const { Server } = require("socket.io"); 
 const axios = require('axios');
 const path = require('path');
-const { submitBulkPredictions } = require('./footballService'); // 👈 Importar arriba
+const { submitBulkPredictions } = require('./footballService'); 
 require('dotenv').config(); 
 
 // --- IMPORTACIONES LOCALES ---
@@ -17,9 +17,10 @@ const {
     obtenerPartidos, 
     crearPartidos, 
     submitPrediction, 
+    submitBulkPredictions,
     obtenerTodosLosPronosticos, 
     obtenerRanking 
-} = require('./footballService'); 
+} = require('./footballService');
 
 const { obtenerPartidosDeAPI } = require('./apiFootballService');
 
@@ -248,6 +249,22 @@ app.get('/api/buscar-ligas', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+// RUTA NUEVA: CARGA MASIVA
+app.post('/api/predictions/submit-bulk', authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+    const { predictions } = req.body; 
+    
+    // Validamos que llegue algo
+    if (!predictions || !Array.isArray(predictions)) {
+        return res.status(400).json({ success: false, message: 'Formato inválido' });
+    }
+
+    const result = await submitBulkPredictions(userId, predictions);
+    
+    if (result.success) res.status(201).json(result);
+    else res.status(500).json(result);
 });
 
 // RUTA LOGIN GOOGLE

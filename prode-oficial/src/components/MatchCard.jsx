@@ -1,4 +1,4 @@
-// src/components/MatchCard.jsx
+// src/components/MatchCard.jsx (CORREGIDO VISUALMENTE)
 import React from 'react';
 import './MatchCard.css'; 
 
@@ -12,38 +12,36 @@ function MatchCard({
     bloqueado 
 }) { 
     
-    // 🛡️ LÓGICA DE IMAGEN
+    // Fallback de imagen
     const fallbackLogo = "https://cdn-icons-png.flaticon.com/512/16/16480.png";
     const handleImageError = (e) => {
         e.target.src = fallbackLogo;
         e.target.style.opacity = "0.5"; 
     };
 
-    // 🛡️ FORMATEO DE HORA
-    let hora = "";
+    // FORMATEO DE HORA AMIGABLE
+    let horaDisplay = "--:--";
     try {
         const d = new Date(fecha);
+        // Ajuste manual simple para asegurar visualización
         if (!isNaN(d.getTime())) {
-            hora = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            // Extraemos hora y minutos. Ejemplo: "19:30"
+            const hours = d.getHours().toString().padStart(2, '0');
+            const minutes = d.getMinutes().toString().padStart(2, '0');
+            horaDisplay = `${hours}:${minutes} hs`;
         }
     } catch (e) {
-        console.error(e); // 👈 CORRECCIÓN: Usamos la variable 'e' en vez de dejar vacío
+        console.error("Error fecha:", e);
     }
 
-    // 🛡️ TRADUCTOR
     const traducirEstado = (st) => {
         switch(st) {
-            case 'NS': return 'No Empezado';
-            case 'FT': return 'Finalizado';
-            case '1H': return '1er Tiempo';
-            case 'HT': return 'Entretiempo';
-            case '2H': return '2do Tiempo';
-            case 'PST': return 'Postergado';
+            case 'NS': return 'Por Jugar'; // Texto más corto
+            case 'FT': return 'Final';
             default: return st;
         }
     };
 
-    // Manejador de clic
     const handleClick = (opcion) => {
         if (!bloqueado && onSeleccionChange) {
             onSeleccionChange(matchId, opcion);
@@ -53,10 +51,9 @@ function MatchCard({
     return (
         <div className={`match-card ${seleccionActual ? 'card-voted' : ''}`}>
             
-            {/* Cabecera Minimalista */}
-            <div className="card-header" style={{padding: '5px 10px', minHeight: 'auto'}}>
-                <span className="match-date" style={{fontSize: '0.8rem'}}>⏰ {hora}</span>
-                <span className={`status-badge ${status === 'FT' ? 'status-finished' : 'status-scheduled'}`} style={{fontSize: '0.7rem', padding: '2px 6px'}}>
+            <div className="card-header">
+                <span className="match-date">⏰ {horaDisplay}</span>
+                <span className={`status-badge ${status === 'FT' ? 'status-finished' : 'status-scheduled'}`}>
                     {traducirEstado(status)}
                 </span>
             </div>
@@ -72,14 +69,15 @@ function MatchCard({
                     {seleccionActual === 'HOME' && <div className="check-mark">✅</div>}
                 </div>
 
-                {/* EMPATE */}
+                {/* EMPATE (RESTITUÍDO) */}
                 <div className="draw-col">
                     <button 
                         className={`btn-draw ${seleccionActual === 'DRAW' ? 'selected-draw' : ''}`}
                         onClick={() => handleClick('DRAW')}
                         disabled={bloqueado}
+                        style={{fontSize: '0.75rem', fontWeight: 'bold'}} // Ajuste para que entre bien
                     >
-                        X
+                        EMPATE
                     </button>
                 </div>
 
