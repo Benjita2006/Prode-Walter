@@ -1,4 +1,4 @@
-// src/components/AdminDashboard.jsx
+// src/components/AdminDashboard.jsx (TAMAÑO AUMENTADO PARA MÓVIL)
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_URL } from '../config'; 
 import './AdminDashboard.css'; 
@@ -10,17 +10,15 @@ function AdminDashboard() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
-    // TRADUCTOR DE ESTADOS
     const traducirEstado = (st) => {
         const diccionario = {
-            'NS': 'No Empezado', 'FT': 'Finalizado', '1H': '1er Tiempo', 
-            'HT': 'Entretiempo', '2H': '2do Tiempo', 'PST': 'Postergado',
+            'NS': 'Por Jugar', 'FT': 'Final', '1H': '1er T', 
+            'HT': 'Entretiempo', '2H': '2do T', 'PST': 'Postergado',
             'CANC': 'Cancelado', 'ABD': 'Abandonado'
         };
         return diccionario[st] || st;
     };
 
-    // LÓGICA PARA AGRUPAR USUARIOS
     const agruparPorUsuario = (data) => {
         const grupos = data.reduce((acc, curr) => {
             const user = curr.username;
@@ -156,15 +154,17 @@ function AdminDashboard() {
                         ⬅ Volver a Usuarios
                     </button>
 
-                    <h3 style={{color: '#4caf50', marginBottom: '10px'}}>Pronósticos de: {usuarioSeleccionado.username}</h3>
+                    <h3 style={{color: '#4caf50', marginBottom: '15px', fontSize: '1.5rem'}}>
+                        Pronósticos de: {usuarioSeleccionado.username}
+                    </h3>
                     
                     <div className="table-responsive-admin">
                         <table className="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Fecha/Jornada</th> {/* 👈 COLUMNA NUEVA */}
+                                    <th>Fecha</th>
                                     <th>Partido</th>
-                                    <th>Pronóstico</th>
+                                    <th>Voto</th>
                                     <th>Resultado</th>
                                     <th>Pts</th>
                                 </tr>
@@ -172,23 +172,27 @@ function AdminDashboard() {
                             <tbody>
                                 {usuarioSeleccionado.predictions.map((p) => (
                                     <tr key={p.id}>
-                                        {/* 📅 DATO DE FECHA (Nuevo) */}
+                                        
+                                        {/* COLUMNA FECHA MEJORADA */}
                                         <td>
-                                            <span style={{backgroundColor:'#444', color:'white', padding:'3px 6px', borderRadius:'4px', fontSize:'0.8rem', whiteSpace:'nowrap'}}>
+                                            <span className="badge-date">
                                                 {p.round || 'General'}
                                             </span>
-                                            <div style={{fontSize:'0.75rem', color:'#aaa', marginTop:'2px'}}>
+                                            <div className="text-muted">
                                                 {new Date(p.match_date).toLocaleDateString(undefined, {day:'numeric', month:'numeric'})}
                                             </div>
                                         </td>
 
+                                        {/* COLUMNA PARTIDO CON ESCUDOS GRANDES */}
                                         <td>
                                             <div className="match-vs">
                                                 <img src={p.home_logo} onError={handleImageError} className="mini-logo" alt="" />
-                                                <span style={{fontSize: '0.8rem'}}>vs</span>
+                                                <span className="text-muted" style={{fontSize: '1rem'}}>vs</span>
                                                 <img src={p.away_logo} onError={handleImageError} className="mini-logo" alt="" />
                                             </div>
                                         </td>
+
+                                        {/* COLUMNA VOTO GRANDE */}
                                         <td>
                                             {p.prediction_result ? (
                                                 <span 
@@ -200,16 +204,20 @@ function AdminDashboard() {
                                                     {p.prediction_result === 'HOME' ? 'L' : p.prediction_result === 'AWAY' ? 'V' : 'E'}
                                                 </span>
                                             ) : (
-                                                <span style={{color: '#666', fontStyle: 'italic'}}>Sin Voto</span>
+                                                <span className="text-muted">Sin Voto</span>
                                             )}
                                         </td>
-                                        <td style={{fontSize: '0.85rem'}}>
+
+                                        {/* COLUMNA RESULTADO */}
+                                        <td>
                                             {p.status === 'FT' 
-                                                ? `${p.home_score} - ${p.away_score}` 
-                                                : <span style={{color:'#aaa'}}>{traducirEstado(p.status)}</span>
+                                                ? <strong style={{fontSize: '1.1rem'}}>{p.home_score} - {p.away_score}</strong> 
+                                                : <span className="text-muted">{traducirEstado(p.status)}</span>
                                             }
                                         </td>
-                                        <td style={{fontWeight: 'bold', color: p.points > 0 ? '#4caf50' : '#888'}}>
+
+                                        {/* COLUMNA PUNTOS */}
+                                        <td style={{fontWeight: 'bold', fontSize: '1.2rem', color: p.points > 0 ? '#4caf50' : '#888'}}>
                                             {p.status === 'FT' ? p.points : '-'}
                                         </td>
                                     </tr>
