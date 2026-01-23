@@ -9,7 +9,7 @@ function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentVie
         { name: 'Partidos', view: 'matches', roles: ['User', 'Owner', 'Dev'], icon: '⚽' },
         
         // 🟢 AQUÍ AGREGAMOS EL NUEVO BOTÓN
-        { name: 'Resultados', view: 'results', roles: ['User', 'Owner', 'Dev'], icon: '📊' },
+        { name: 'Promedio', view: 'results', roles: ['User', 'Owner', 'Dev'], icon: '📊' },
 
         { name: 'Ranking', view: 'ranking', roles: ['User', 'Owner', 'Dev'], icon: '🏆' },
         { name: 'Chat', view: 'chat', roles: ['User', 'Owner', 'Dev'], icon: '💬' },
