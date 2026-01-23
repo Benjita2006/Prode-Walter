@@ -338,8 +338,13 @@ function App() {
                                                             equipoB={p.visitante} logoB={p.logoVisitante}
                                                             fecha={p.fecha} 
                                                             status={p.status}
-                                                            bloqueado={true} // Siempre bloqueado en historial
-                                                            seleccionActual={p.miPronostico} // Mostramos lo que votó
+                                                            bloqueado={true}
+                                                            seleccionActual={p.miPronostico}
+                                                            
+                                                            /* 👇 AGREGAR ESTAS DOS LÍNEAS IMPORTANTES */
+                                                            golesA={p.home_score} 
+                                                            golesB={p.away_score}
+                                                            
                                                             onSeleccionChange={() => {}} 
                                                         />
                                                     ))}
