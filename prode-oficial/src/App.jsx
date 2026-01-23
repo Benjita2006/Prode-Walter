@@ -222,65 +222,88 @@ function App() {
                         {loading ? <p style={{textAlign:'center'}}>Cargando...</p> : 
                          Object.keys(partidosPorFecha).length === 0 ? <p style={{textAlign:'center'}}>No hay partidos.</p> : (
                             
-                            <div className="fechas-container" style={{paddingBottom: '100px', maxWidth: '800px', margin: '0 auto'}}>
-                                {Object.keys(partidosPorFecha).map((nombreFecha) => (
-                                    <div key={nombreFecha} style={{marginBottom: '15px', padding: '0 10px'}}>
-                                        
-                                        {/* CABECERA FECHA */}
-                                        <button 
-                                            onClick={() => setFechaAbierta(fechaAbierta === nombreFecha ? null : nombreFecha)}
-                                            style={{
-                                                width: '100%', padding: '15px', 
-                                                backgroundColor: fechaAbierta === nombreFecha ? 'var(--card-bg)' : '#333',
-                                                border: fechaAbierta === nombreFecha ? '1px solid #4caf50' : '1px solid #444',
-                                                color: 'white', borderRadius: '10px',
-                                                fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer',
-                                                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                                            }}
-                                        >
-                                            <span>📅 {nombreFecha}</span>
-                                            <span>{fechaAbierta === nombreFecha ? '▲' : '▼'}</span>
-                                        </button>
+<div className="fechas-container" style={{paddingBottom: '100px', maxWidth: '800px', margin: '0 auto'}}>
+    {Object.keys(partidosPorFecha).map((nombreFecha) => (
+        <div key={nombreFecha} style={{marginBottom: '10px'}}> {/* Menos margen entre fechas */}
+            
+            {/* CABECERA FECHA (Estilo Barra Ancha) */}
+            <button 
+                onClick={() => setFechaAbierta(fechaAbierta === nombreFecha ? null : nombreFecha)}
+                style={{
+                    width: '100%', 
+                    padding: '15px 20px', // Un poco más de padding lateral
+                    backgroundColor: fechaAbierta === nombreFecha ? 'var(--card-bg)' : '#2c2c2c', // Color base un poco más claro
+                    borderLeft: fechaAbierta === nombreFecha ? '5px solid #4caf50' : '5px solid transparent', // Indicador visual a la izquierda
+                    borderTop: 'none', borderRight: 'none', borderBottom: '1px solid #444', // Bordes sutiles
+                    color: 'white', 
+                    borderRadius: '8px', // 👈 MENOS REDONDO (Antes era 50px o 10px)
+                    fontSize: '1.1rem', 
+                    fontWeight: 'bold', 
+                    cursor: 'pointer',
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    transition: 'background-color 0.2s'
+                }}
+            >
+                <span style={{textTransform: 'uppercase', letterSpacing: '1px'}}>{nombreFecha}</span>
+                <span style={{color: '#4caf50', fontSize: '1.2rem'}}>
+                    {fechaAbierta === nombreFecha ? '−' : '+'} {/* Signos más/menos se ven más limpios */}
+                </span>
+            </button>
 
-                                        {/* CONTENIDO FECHA */}
-                                        {fechaAbierta === nombreFecha && (
-                                            <div style={{marginTop: '10px'}}>
-                                                <div className="matches-grid-container" style={{padding: '0'}}>
-                                                    {partidosPorFecha[nombreFecha].map(p => (
-                                                        <MatchCard 
-                                                            key={p.id}
-                                                            matchId={p.id}
-                                                            equipoA={p.local} logoA={p.logoLocal}
-                                                            equipoB={p.visitante} logoB={p.logoVisitante}
-                                                            fecha={p.fecha} status={p.status}
-                                                            bloqueado={p.status === 'FT'}
-                                                            seleccionActual={misPronosticosTemp[p.id]}
-                                                            onSeleccionChange={handleSeleccionChange}
-                                                        />
-                                                    ))}
-                                                </div>
+            {/* CONTENIDO FECHA */}
+            {fechaAbierta === nombreFecha && (
+                <div style={{marginTop: '0', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '0 0 8px 8px', padding: '15px'}}>
+                    <div className="matches-grid-container" style={{padding: '0', gap: '15px'}}>
+                        {partidosPorFecha[nombreFecha].map(p => (
+                            <MatchCard 
+                                key={p.id}
+                                matchId={p.id}
+                                equipoA={p.local} logoA={p.logoLocal}
+                                equipoB={p.visitante} logoB={p.logoVisitante}
+                                fecha={p.fecha} 
+                                status={p.status}
+                                
+                                /* 🔒 LÓGICA DE SEGURIDAD MEJORADA: 
+                                   Bloqueamos si NO es 'NS' (No Started) y NO es 'PST' (Postergado).
+                                   Es decir: 1H, 2H, HT, FT -> BLOQUEADOS.
+                                */
+                                bloqueado={p.status !== 'NS' && p.status !== 'PST'}
+                                
+                                seleccionActual={misPronosticosTemp[p.id]}
+                                onSeleccionChange={handleSeleccionChange}
+                            />
+                        ))}
+                    </div>
 
-                                                {/* BOTÓN GUARDAR FECHA */}
-                                                <div style={{textAlign: 'center', margin: '20px 0'}}>
-                                                    <button 
-                                                        onClick={() => guardarFecha(nombreFecha)}
-                                                        disabled={guardando}
-                                                        style={{
-                                                            backgroundColor: '#2196F3', color: 'white',
-                                                            padding: '12px 30px', fontSize: '1rem', fontWeight: 'bold',
-                                                            border: 'none', borderRadius: '50px',
-                                                            boxShadow: '0 4px 15px rgba(33, 150, 243, 0.4)',
-                                                            cursor: guardando ? 'wait' : 'pointer', width: '90%', maxWidth: '300px'
-                                                        }}
-                                                    >
-                                                        {guardando ? 'Guardando...' : `💾 Guardar ${nombreFecha}`}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
+                    {/* BOTÓN GUARDAR FECHA (También más ancho y serio) */}
+                    <div style={{textAlign: 'center', marginTop: '25px', marginBottom: '10px'}}>
+                        <button 
+                            onClick={() => guardarFecha(nombreFecha)}
+                            disabled={guardando}
+                            style={{
+                                backgroundColor: '#2196F3', 
+                                color: 'white',
+                                padding: '15px 0', // Full height
+                                width: '100%', // 👈 OCUPA TODO EL ANCHO DISPONIBLE
+                                fontSize: '1rem', 
+                                fontWeight: 'bold',
+                                border: 'none', 
+                                borderRadius: '8px', // Igual que la cabecera
+                                boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+                                cursor: guardando ? 'wait' : 'pointer',
+                                textTransform: 'uppercase'
+                            }}
+                        >
+                            {guardando ? 'Guardando...' : `💾 Guardar Pronósticos ${nombreFecha}`}
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    ))}
+</div>
                         )}
                     </>
                 )}
