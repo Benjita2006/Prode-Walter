@@ -12,7 +12,7 @@ async function buscarLigasArgentina() {
             headers: { 'x-apisports-key': API_KEY },
             params: {
                 country: 'Argentina',
-                season: 2025 // Si no sale nada, prueba 2025 (a veces tardan en abrir el año)
+                season: 2024 // Si no sale nada, prueba 2025 (a veces tardan en abrir el año)
             }
         };
 
