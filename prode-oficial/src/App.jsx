@@ -23,7 +23,10 @@ function App() {
     const [showWelcome, setShowWelcome] = useState(false); 
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
-    // ESTADOS NUEVOS PARA LA LÓGICA DE FECHAS
+    // 🟢 NUEVO: Estado GLOBAL para el chat (para que no se borre al cambiar de pestaña)
+    const [chatMessages, setChatMessages] = useState([]);
+
+    // ESTADOS PARA LA LÓGICA DE FECHAS
     const [misPronosticosTemp, setMisPronosticosTemp] = useState({});
     const [fechaAbierta, setFechaAbierta] = useState(null);
     const [guardando, setGuardando] = useState(false);
@@ -48,34 +51,10 @@ function App() {
         localStorage.removeItem('username'); 
         setUsuario(null);
         setCurrentView('login'); 
+        setPartidos([]); // Limpiamos partidos al salir
     }, []);
 
-    // --- PERSISTENCIA SESIÓN ---
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                const userDecoded = JSON.parse(jsonPayload);
-                if (userDecoded.exp * 1000 < Date.now()) {
-                    handleLogout();
-                } else {
-                    setUsuario(userDecoded);
-                    setCurrentView('app');
-                }
-            } catch (error) {
-                console.error(error); 
-                handleLogout();
-            }
-        }
-        setLoading(false);
-    }, [handleLogout]);
-
-    // --- CARGA DE PARTIDOS ---
+    // 🟢 DEFINIMOS FETCH PARTIDOS ANTES DEL USE-EFFECT DE PERSISTENCIA
     const fetchPartidos = useCallback(async () => {
         const token = localStorage.getItem('token'); 
         if (!token) return;
@@ -97,6 +76,36 @@ function App() {
             setLoading(false);
         }
     }, [handleLogout]); 
+
+    // --- PERSISTENCIA SESIÓN (AUTO-LOGIN F5) ---
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                const userDecoded = JSON.parse(jsonPayload);
+                
+                if (userDecoded.exp * 1000 < Date.now()) {
+                    handleLogout();
+                } else {
+                    setUsuario(userDecoded);
+                    setCurrentView('app');
+                    
+                    // 🟢 CORRECCIÓN CLAVE: ¡Llamamos a fetchPartidos aquí!
+                    // Así, al dar F5, carga los datos automáticamente.
+                    fetchPartidos(); 
+                }
+            } catch (error) {
+                console.error(error); 
+                handleLogout();
+            }
+        }
+        setLoading(false);
+    }, [handleLogout, fetchPartidos]); // Agregamos fetchPartidos a dependencias
 
     // --- GESTIÓN DE PRONÓSTICOS TEMPORALES ---
     useEffect(() => {
@@ -133,7 +142,6 @@ function App() {
     const guardarFecha = async (nombreFecha) => {
         setGuardando(true);
         const token = localStorage.getItem('token');
-        
         const partidosDeLaFecha = partidosPorFecha[nombreFecha];
         const payload = partidosDeLaFecha
             .filter(p => misPronosticosTemp[p.id]) 
@@ -151,13 +159,9 @@ function App() {
         try {
             const res = await fetch(`${API_URL}/api/predictions/submit-bulk`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${token}` 
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ predictions: payload })
             });
-            
             if (res.ok) {
                 alert(`✅ Pronósticos de ${nombreFecha} guardados con éxito!`);
                 fetchPartidos(); 
@@ -175,6 +179,7 @@ function App() {
     // --- NAVEGACIÓN ---
     const handleNavClick = (viewName) => {
         setAppView(viewName);
+        // Si vamos a partidos y está vacío, intentamos cargar de nuevo
         if (viewName === 'matches' && partidos.length === 0) fetchPartidos();
     };
     
@@ -209,39 +214,35 @@ function App() {
                 {appView === 'admin-dashboard' && isAdmin && <AdminDashboard />}
                 {appView === 'creator' && isAdmin && <MatchCreator onMatchCreated={() => handleNavClick('matches')} />}
                 {appView === 'ranking' && <Ranking />}
-                {appView === 'chat' && <div className="chat-full-page"><ChatGlobal username={username} fullPage={true} /></div>}
+                
+                {/* 🟢 PASAMOS EL ESTADO GLOBAL AL CHAT */}
+                {appView === 'chat' && (
+                    <div className="chat-full-page">
+                        <ChatGlobal 
+                            username={username} 
+                            fullPage={true} 
+                            messages={chatMessages} 
+                            setMessages={setChatMessages} 
+                        />
+                    </div>
+                )}
 
-                {/* VISTA DE PARTIDOS (ACORDEÓN MEJORADO) */}
+                {/* VISTA DE PARTIDOS */}
                 {appView === 'matches' && (
                     <>
                         <h1 style={{textAlign: 'center', marginBottom: '15px'}}>🏆 Fixture</h1>
-                        
                         {loading ? <p style={{textAlign:'center'}}>Cargando...</p> : 
-                         Object.keys(partidosPorFecha).length === 0 ? <p style={{textAlign:'center'}}>No hay partidos.</p> : (
-                            
-                            <div className="fechas-container" style={{paddingBottom: '100px', width: '100%'}}> {/* Ancho total */}
+                         Object.keys(partidosPorFecha).length === 0 ? <p style={{textAlign:'center'}}>No hay partidos cargados.</p> : (
+                            <div className="fechas-container" style={{paddingBottom: '100px', width: '100%'}}>
                                 {Object.keys(partidosPorFecha).map((nombreFecha) => (
-                                    <div key={nombreFecha} style={{marginBottom: '0'}}> {/* Sin margen, pegados como lista */}
-                                        
-                                        {/* CABECERA FECHA (Estilo Bloque Rectangular) */}
+                                    <div key={nombreFecha} style={{marginBottom: '0'}}>
                                         <button 
                                             onClick={() => setFechaAbierta(fechaAbierta === nombreFecha ? null : nombreFecha)}
                                             style={{
-                                                width: '100%', 
-                                                padding: '20px', // Más alto
-                                                backgroundColor: fechaAbierta === nombreFecha ? '#1f1f1f' : '#2c2c2c', // Diferencia visual sutil
-                                                border: 'none',
-                                                borderBottom: '1px solid #444', // Línea separadora
-                                                color: 'white', 
-                                                borderRadius: '0', // 👈 CERO CURVAS (Rectangular)
-                                                fontSize: '1.2rem', 
-                                                fontWeight: 'bold', 
-                                                cursor: 'pointer',
-                                                display: 'flex', 
-                                                justifyContent: 'space-between', 
-                                                alignItems: 'center',
-                                                textTransform: 'uppercase', // Mayúsculas
-                                                letterSpacing: '1px'
+                                                width: '100%', padding: '20px', backgroundColor: fechaAbierta === nombreFecha ? '#1f1f1f' : '#2c2c2c',
+                                                border: 'none', borderBottom: '1px solid #444', color: 'white', borderRadius: '0',
+                                                fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', 
+                                                justifyContent: 'space-between', alignItems: 'center', textTransform: 'uppercase', letterSpacing: '1px'
                                             }}
                                         >
                                             <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
@@ -252,46 +253,24 @@ function App() {
                                                 {fechaAbierta === nombreFecha ? '▲' : '▼'}
                                             </span>
                                         </button>
-
-                                        {/* CONTENIDO FECHA */}
                                         {fechaAbierta === nombreFecha && (
                                             <div style={{backgroundColor: '#181818', padding: '15px 10px', borderBottom: '2px solid #4caf50'}}>
                                                 <div className="matches-grid-container" style={{padding: '0', gap: '15px'}}>
                                                     {partidosPorFecha[nombreFecha].map(p => (
                                                         <MatchCard 
-                                                            key={p.id}
-                                                            matchId={p.id}
-                                                            equipoA={p.local} logoA={p.logoLocal}
-                                                            equipoB={p.visitante} logoB={p.logoVisitante}
-                                                            fecha={p.fecha} 
-                                                            status={p.status}
-                                                            
-                                                            /* Lógica de bloqueo estricta */
+                                                            key={p.id} matchId={p.id} equipoA={p.local} logoA={p.logoLocal}
+                                                            equipoB={p.visitante} logoB={p.logoVisitante} fecha={p.fecha} status={p.status}
                                                             bloqueado={ (p.status !== 'NS' && p.status !== 'PST') || p.miPronostico !== null }
-                                                            
-                                                            seleccionActual={misPronosticosTemp[p.id]}
-                                                            onSeleccionChange={handleSeleccionChange}
+                                                            seleccionActual={misPronosticosTemp[p.id]} onSeleccionChange={handleSeleccionChange}
                                                         />
                                                     ))}
                                                 </div>
-
-                                                {/* BOTÓN GUARDAR (Full Width) */}
                                                 <div style={{marginTop: '25px', padding: '0 10px'}}>
-                                                    <button 
-                                                        onClick={() => guardarFecha(nombreFecha)}
-                                                        disabled={guardando}
+                                                    <button onClick={() => guardarFecha(nombreFecha)} disabled={guardando}
                                                         style={{
-                                                            backgroundColor: '#2196F3', 
-                                                            color: 'white',
-                                                            width: '100%', // Ancho total
-                                                            padding: '15px', 
-                                                            fontSize: '1.1rem', 
-                                                            fontWeight: 'bold',
-                                                            border: 'none', 
-                                                            borderRadius: '4px', // Levemente redondeado
-                                                            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-                                                            cursor: guardando ? 'wait' : 'pointer',
-                                                            textTransform: 'uppercase'
+                                                            backgroundColor: '#2196F3', color: 'white', width: '100%', padding: '15px', 
+                                                            fontSize: '1.1rem', fontWeight: 'bold', border: 'none', borderRadius: '4px',
+                                                            boxShadow: '0 4px 6px rgba(0,0,0,0.3)', cursor: guardando ? 'wait' : 'pointer', textTransform: 'uppercase'
                                                         }}
                                                     >
                                                         {guardando ? 'Guardando...' : `GUARDAR PRONÓSTICOS`}
@@ -306,7 +285,6 @@ function App() {
                     </>
                 )}
             </div>
-            
             {usuario && <TutorialOverlay username={usuario.username} />}
         </div>
     );

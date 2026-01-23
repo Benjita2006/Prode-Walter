@@ -1,117 +1,88 @@
+// src/components/ChatGlobal.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import { API_URL } from '../config';
 import './ChatGlobal.css';
 
-// Conectamos el socket fuera del componente para evitar reconexiones múltiples
+// 🟢 Conectamos el socket FUERA del componente para que no se reconecte en cada render
 const socket = io(API_URL);
 
-function ChatGlobal({ username, fullPage = false }) {
-    // Inicializamos el estado basándonos en si es fullPage o no.
-    const [isOpen, setIsOpen] = useState(fullPage);
-    const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState([]);
-    const [isConnected, setIsConnected] = useState(socket.connected);
+// 🟢 Recibimos messages y setMessages como PROPS desde App.jsx
+function ChatGlobal({ username, fullPage, messages, setMessages }) {
+    const [newMessage, setNewMessage] = useState("");
     const messagesEndRef = useRef(null);
 
-    // --- CORRECCIÓN AQUÍ ---
     useEffect(() => {
-        // 1. Eliminamos la línea "if (fullPage) setIsOpen(true)" que daba error.
-        //    No es necesaria porque la lógica de abajo (el return) ya maneja esto.
-
-        // Listeners del Socket
-        socket.on('connect', () => setIsConnected(true));
-        socket.on('disconnect', () => setIsConnected(false));
-
-        socket.on('chat_message', (data) => {
-            setMessages((prev) => [...prev, data]);
+        // Escuchar mensajes entrantes
+        socket.on('chat_message', (msg) => {
+            // Usamos la versión callback de setMessages para asegurar el estado más reciente
+            setMessages((prev) => [...prev, msg]);
         });
 
-        // Limpieza al desmontar
         return () => {
-            socket.off('connect');
-            socket.off('disconnect');
             socket.off('chat_message');
         };
-    }, []); // 👈 2. Array vacío: Esto se ejecuta solo una vez al montar el componente.
+    }, [setMessages]);
 
-    // Auto-scroll al fondo cuando llegan mensajes o se abre el chat
+    // Auto-scroll al fondo
     useEffect(() => {
-        if (isOpen || fullPage) { // Agregamos fullPage aquí para asegurar el scroll
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        }
-    }, [messages, isOpen, fullPage]);
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
-    const sendMessage = (e) => {
+    const handleSendMessage = (e) => {
         e.preventDefault();
-        if (message.trim()) {
+        if (newMessage.trim()) {
             const msgData = {
                 user: username,
-                text: message,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                id: Date.now()
+                text: newMessage,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
             socket.emit('chat_message', msgData);
-            setMessage('');
+            setNewMessage("");
         }
     };
 
-    // LÓGICA DE RENDERIZADO:
-    // Si NO es pantalla completa Y NO está abierto manualmente -> Muestra Botón Flotante
-    if (!fullPage && !isOpen) {
-        return (
-            <button 
-                className="chat-toggle-btn" 
-                onClick={() => setIsOpen(true)}
-            >
-                💬
-            </button>
-        );
-    }
-
-    // Si es fullPage O está abierto -> Muestra el Chat completo
     return (
-        <div className={`chat-container ${fullPage ? 'full-mode' : 'floating-mode'}`}>
+        <div className={`chat-container ${fullPage ? 'chat-full' : ''}`}>
             
-            {/* ENCABEZADO */}
             <div className="chat-header">
-                <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                    <span className={`status-dot ${isConnected ? 'online' : 'offline'}`}></span>
-                    <h3>Chat General {fullPage ? '' : '💬'}</h3>
-                </div>
-                
-                {/* Solo mostramos la X de cerrar si es modo flotante */}
-                {!fullPage && (
-                    <button className="close-chat" onClick={() => setIsOpen(false)}>✖</button>
-                )}
+                <span className="status-dot"></span> Chat General
             </div>
 
-            {/* CUERPO MENSAJES */}
+            {/* 🟢 ÁREA DE MENSAJES (Ocupará todo el espacio disponible) */}
             <div className="chat-messages">
-                {messages.map((msg) => (
-                    <div 
-                        key={msg.id} 
-                        className={`message ${msg.user === username ? 'my-message' : 'other-message'}`}
-                    >
-                        <div className="msg-content">
-                            <small className="msg-user">{msg.user}</small>
-                            <p>{msg.text}</p>
-                            <span className="msg-time">{msg.time}</span>
-                        </div>
+                {messages.length === 0 ? (
+                    <div className="welcome-chat">
+                        <p>💬 ¡Bienvenido al chat!</p>
+                        <small>Sé el primero en escribir.</small>
                     </div>
-                ))}
+                ) : (
+                    messages.map((msg, index) => (
+                        <div 
+                            key={index} 
+                            className={`message-bubble ${msg.user === username ? 'my-message' : 'other-message'}`}
+                        >
+                            <div className="msg-user">{msg.user}</div>
+                            <div className="msg-text">{msg.text}</div>
+                            <div className="msg-time">{msg.time}</div>
+                        </div>
+                    ))
+                )}
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* INPUT */}
-            <form className="chat-input-area" onSubmit={sendMessage}>
+            {/* 🟢 ÁREA DE INPUT (Fija abajo) */}
+            <form className="chat-input-area" onSubmit={handleSendMessage}>
                 <input
                     type="text"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Escribe un mensaje..."
+                    className="chat-input"
                 />
-                <button type="submit">Enviar</button>
+                <button type="submit" className="chat-send-btn">
+                    Enviar
+                </button>
             </form>
         </div>
     );
