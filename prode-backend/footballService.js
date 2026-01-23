@@ -7,12 +7,13 @@ async function obtenerPartidos(userId) {
         const sql = `
             SELECT 
                 m.id, m.home_team, m.home_logo, m.away_team, m.away_logo, 
-                m.match_date, m.status, m.round, /* 👈 AGREGAMOS m.round AQUÍ */
+                m.match_date, m.status, m.round, 
+                m.home_score, m.away_score, /* 👈 ¡FALTABAN ESTOS DOS! */
                 p.prediction_result
             FROM matches m
             LEFT JOIN predictions p ON m.id = p.match_id AND p.user_id = ?
             WHERE m.is_active = TRUE
-            AND m.status NOT IN ('CANC') -- Mostramos todo menos cancelados
+            AND m.status NOT IN ('CANC') 
             ORDER BY m.match_date ASC
         `;
 
@@ -24,9 +25,14 @@ async function obtenerPartidos(userId) {
             logoLocal: row.home_logo,
             visitante: row.away_team,
             logoVisitante: row.away_logo,
-            fecha: row.match_date, // Dejamos la fecha cruda para que React la formatee
+            fecha: row.match_date, 
             status: row.status,
-            round: row.round,      // 👈 AGREGAMOS ESTO para que el Frontend sepa la fecha
+            round: row.round,
+            
+            // 👇 AHORA SÍ ENVIAMOS LOS GOLES AL FRONTEND
+            home_score: row.home_score, 
+            away_score: row.away_score,
+
             miPronostico: row.prediction_result, 
             yaJugo: row.prediction_result !== null 
         }));
