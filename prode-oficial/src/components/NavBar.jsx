@@ -1,15 +1,19 @@
 // src/components/NavBar.jsx
 import React from 'react';
-import './NavBar.css'; // Asegúrate de que este archivo exista (o usa App.css si prefieres)
+import './NavBar.css'; 
 
 function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentView }) {
     
     // Definimos los menús
     const allMenuItems = [
         { name: 'Partidos', view: 'matches', roles: ['User', 'Owner', 'Dev'], icon: '⚽' },
+        
+        // 🟢 AQUÍ AGREGAMOS EL NUEVO BOTÓN
+        { name: 'Resultados', view: 'results', roles: ['User', 'Owner', 'Dev'], icon: '📊' },
+
         { name: 'Ranking', view: 'ranking', roles: ['User', 'Owner', 'Dev'], icon: '🏆' },
         { name: 'Chat', view: 'chat', roles: ['User', 'Owner', 'Dev'], icon: '💬' },
-        { name: 'Admin', view: 'admin-dashboard', roles: ['Owner', 'Dev'], icon: '📊' },
+        { name: 'Admin', view: 'admin-dashboard', roles: ['Owner', 'Dev'], icon: '⚙️' }, // Cambié icono Admin a engranaje para diferenciar
         { name: 'Crear', view: 'creator', roles: ['Owner', 'Dev'], icon: '✏️' },
         { name: 'Usuarios', view: 'manage-users', roles: ['Dev', 'Owner'], icon: '👥' }
     ];
@@ -51,7 +55,7 @@ function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentVie
                 </div>
             </nav>
 
-            {/* --- BARRA INFERIOR (MÓVIL) - ESTO ES LO QUE FALTABA --- */}
+            {/* --- BARRA INFERIOR (MÓVIL) --- */}
             <div className="bottom-nav">
                 {menuItems.map(item => (
                     <button 

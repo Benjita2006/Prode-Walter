@@ -23,7 +23,7 @@ function App() {
     const [showWelcome, setShowWelcome] = useState(false); 
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
-    // 🟢 NUEVO: Estado GLOBAL para el chat (para que no se borre al cambiar de pestaña)
+    // Estado GLOBAL para el chat
     const [chatMessages, setChatMessages] = useState([]);
 
     // ESTADOS PARA LA LÓGICA DE FECHAS
@@ -51,10 +51,10 @@ function App() {
         localStorage.removeItem('username'); 
         setUsuario(null);
         setCurrentView('login'); 
-        setPartidos([]); // Limpiamos partidos al salir
+        setPartidos([]); 
     }, []);
 
-    // 🟢 DEFINIMOS FETCH PARTIDOS ANTES DEL USE-EFFECT DE PERSISTENCIA
+    // FETCH PARTIDOS
     const fetchPartidos = useCallback(async () => {
         const token = localStorage.getItem('token'); 
         if (!token) return;
@@ -77,7 +77,7 @@ function App() {
         }
     }, [handleLogout]); 
 
-    // --- PERSISTENCIA SESIÓN (AUTO-LOGIN F5) ---
+    // --- PERSISTENCIA SESIÓN ---
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -94,9 +94,6 @@ function App() {
                 } else {
                     setUsuario(userDecoded);
                     setCurrentView('app');
-                    
-                    // 🟢 CORRECCIÓN CLAVE: ¡Llamamos a fetchPartidos aquí!
-                    // Así, al dar F5, carga los datos automáticamente.
                     fetchPartidos(); 
                 }
             } catch (error) {
@@ -105,7 +102,7 @@ function App() {
             }
         }
         setLoading(false);
-    }, [handleLogout, fetchPartidos]); // Agregamos fetchPartidos a dependencias
+    }, [handleLogout, fetchPartidos]);
 
     // --- GESTIÓN DE PRONÓSTICOS TEMPORALES ---
     useEffect(() => {
@@ -116,12 +113,13 @@ function App() {
             });
             setMisPronosticosTemp(buffer);
             
-            if (!fechaAbierta && partidos[0]) {
+            // Solo abrimos fecha por defecto si estamos en la vista de partidos
+            if (!fechaAbierta && partidos[0] && appView === 'matches') {
                 setFechaAbierta(partidos[0].round || 'Fecha 1'); 
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [partidos]); 
+    }, [partidos, appView]); // Agregué appView para que recalcule si cambia de vista
 
     // Agrupar partidos por "round"
     const partidosPorFecha = partidos.reduce((acc, partido) => {
@@ -179,8 +177,7 @@ function App() {
     // --- NAVEGACIÓN ---
     const handleNavClick = (viewName) => {
         setAppView(viewName);
-        // Si vamos a partidos y está vacío, intentamos cargar de nuevo
-        if (viewName === 'matches' && partidos.length === 0) fetchPartidos();
+        if ((viewName === 'matches' || viewName === 'results') && partidos.length === 0) fetchPartidos();
     };
     
     const handleLoginSuccess = (userObject) => {
@@ -215,7 +212,6 @@ function App() {
                 {appView === 'creator' && isAdmin && <MatchCreator onMatchCreated={() => handleNavClick('matches')} />}
                 {appView === 'ranking' && <Ranking />}
                 
-                {/* 🟢 PASAMOS EL ESTADO GLOBAL AL CHAT */}
                 {appView === 'chat' && (
                     <div className="chat-full-page">
                         <ChatGlobal 
@@ -227,7 +223,7 @@ function App() {
                     </div>
                 )}
 
-                {/* VISTA DE PARTIDOS */}
+                {/* --- VISTA: FIXTURE (Partidos por jugar) --- */}
                 {appView === 'matches' && (
                     <>
                         <h1 style={{textAlign: 'center', marginBottom: '15px'}}>🏆 Fixture</h1>
@@ -284,6 +280,79 @@ function App() {
                         )}
                     </>
                 )}
+
+                {/* --- 🟢 VISTA NUEVA: RESULTADOS / HISTORIAL --- */}
+                {appView === 'results' && (
+                    <>
+                        <h1 style={{textAlign: 'center', marginBottom: '15px'}}>📊 Resultados</h1>
+                        
+                        {(() => {
+                            // Filtramos solo los partidos terminados (FT)
+                            const partidosTerminados = partidos.filter(p => p.status === 'FT');
+                            
+                            if (partidosTerminados.length === 0) {
+                                return (
+                                    <div style={{textAlign: 'center', marginTop: '50px', opacity: 0.7}}>
+                                        <p style={{fontSize: '3rem'}}>⚽💤</p>
+                                        <p>Aún no hay partidos terminados.</p>
+                                    </div>
+                                );
+                            }
+
+                            // Agrupamos por fecha
+                            const resultadosPorFecha = partidosTerminados.reduce((acc, partido) => {
+                                const fechaNombre = partido.round || 'Varios'; 
+                                if (!acc[fechaNombre]) acc[fechaNombre] = [];
+                                acc[fechaNombre].push(partido);
+                                return acc;
+                            }, {});
+
+                            const fechasOrdenadas = Object.keys(resultadosPorFecha);
+
+                            return (
+                                <div className="fechas-container" style={{paddingBottom: '100px', width: '100%'}}>
+                                    {fechasOrdenadas.map((nombreFecha) => (
+                                        <div key={nombreFecha} style={{marginBottom: '0'}}>
+                                            
+                                            {/* Cabecera Resultados (Siempre abierta) */}
+                                            <div style={{
+                                                padding: '15px 20px',
+                                                backgroundColor: '#222',
+                                                borderBottom: '1px solid #4caf50',
+                                                color: '#4caf50',
+                                                fontWeight: 'bold',
+                                                textTransform: 'uppercase',
+                                                fontSize: '1.1rem',
+                                                letterSpacing: '1px'
+                                            }}>
+                                                🏁 {nombreFecha}
+                                            </div>
+
+                                            <div style={{backgroundColor: 'rgba(0,0,0,0.3)', padding: '15px 10px'}}>
+                                                <div className="matches-grid-container" style={{padding: '0', gap: '15px'}}>
+                                                    {resultadosPorFecha[nombreFecha].map(p => (
+                                                        <MatchCard 
+                                                            key={p.id}
+                                                            matchId={p.id}
+                                                            equipoA={p.local} logoA={p.logoLocal}
+                                                            equipoB={p.visitante} logoB={p.logoVisitante}
+                                                            fecha={p.fecha} 
+                                                            status={p.status}
+                                                            bloqueado={true} // Siempre bloqueado en historial
+                                                            seleccionActual={p.miPronostico} // Mostramos lo que votó
+                                                            onSeleccionChange={() => {}} 
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
+                    </>
+                )}
+
             </div>
             {usuario && <TutorialOverlay username={usuario.username} />}
         </div>
