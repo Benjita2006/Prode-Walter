@@ -10,8 +10,8 @@ function MatchCard({
     seleccionActual, 
     onSeleccionChange, 
     bloqueado,
-    golesA, // 👈 NUEVO: Recibimos goles Local
-    golesB  // 👈 NUEVO: Recibimos goles Visita
+    golesA, // Goles del local
+    golesB  // Goles del visitante
 }) { 
     
     const fallbackLogo = "https://cdn-icons-png.flaticon.com/512/16/16480.png";
@@ -20,18 +20,27 @@ function MatchCard({
         e.target.style.opacity = "0.5"; 
     };
 
-    // FORMATEO DE FECHA
+    // --- FORMATEO DE FECHA (CON CORRECCIÓN DE ZONA HORARIA) ---
     let infoFecha = "--/--";
     let infoHora = "--:--";
+
     try {
         const d = new Date(fecha);
+        
         if (!isNaN(d.getTime())) {
+            // 👇 CORRECCIÓN: Ajustamos la zona horaria para que no reste 3 horas
+            d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+
             infoFecha = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+            
             const hours = d.getHours().toString().padStart(2, '0');
             const minutes = d.getMinutes().toString().padStart(2, '0');
             infoHora = `${hours}:${minutes}`;
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error("Error al formatear fecha:", e); 
+    }
+    // -----------------------------------------------------------
 
     const traducirEstado = (st) => {
         switch(st) {
@@ -51,14 +60,16 @@ function MatchCard({
     // 🏆 LÓGICA DE RESULTADO
     const esFinal = status === 'FT';
     // Determinamos quién ganó para pintarlo de verde
-    const ganaA = esFinal && golesA > golesB;
-    const ganaB = esFinal && golesB > golesA;
+    // (Solo si los goles son números válidos y no null/undefined)
+    const scoreValido = esFinal && golesA != null && golesB != null;
+    const ganaA = scoreValido && Number(golesA) > Number(golesB);
+    const ganaB = scoreValido && Number(golesB) > Number(golesA);
 
     return (
         <div className={`match-card ${seleccionActual ? 'card-voted' : ''} ${bloqueado ? 'card-locked' : ''}`}>
             
             <div className="card-header">
-                {/* Si terminó, mostramos "RESULTADO FINAL", si no, la fecha */}
+                {/* Si terminó, mostramos "Resultado Final", si no, la fecha */}
                 <span className="match-date">
                     {esFinal ? '🏁 Resultado Final' : `📅 ${infoFecha} | ⏰ ${infoHora} hs`}
                 </span>
@@ -89,9 +100,9 @@ function MatchCard({
                     {esFinal ? (
                         /* 🟢 SI TERMINÓ: Mostramos el marcador GRANDE */
                         <div className="score-display">
-                            <span className="score-number">{golesA}</span>
+                            <span className="score-number">{golesA ?? '-'}</span>
                             <span className="score-divider">-</span>
-                            <span className="score-number">{golesB}</span>
+                            <span className="score-number">{golesB ?? '-'}</span>
                         </div>
                     ) : (
                         /* ⚪ SI NO TERMINÓ: Mostramos el botón de EMPATE */
