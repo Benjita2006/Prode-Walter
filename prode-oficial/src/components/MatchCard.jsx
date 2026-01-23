@@ -1,4 +1,4 @@
-// src/components/MatchCard.jsx (CORREGIDO VISUALMENTE)
+// src/components/MatchCard.jsx
 import React from 'react';
 import './MatchCard.css'; 
 
@@ -19,40 +19,51 @@ function MatchCard({
         e.target.style.opacity = "0.5"; 
     };
 
-    // FORMATEO DE HORA AMIGABLE
-    let horaDisplay = "--:--";
+    // 📅 FORMATEO DE FECHA Y HORA
+    // Queremos que se vea así: "22/01 - 19:00 hs"
+    let infoFecha = "--/--";
+    let infoHora = "--:--";
+
     try {
         const d = new Date(fecha);
-        // Ajuste manual simple para asegurar visualización
         if (!isNaN(d.getTime())) {
-            // Extraemos hora y minutos. Ejemplo: "19:30"
+            // Formato Fecha: 22/01
+            infoFecha = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+            // Formato Hora: 19:00
             const hours = d.getHours().toString().padStart(2, '0');
             const minutes = d.getMinutes().toString().padStart(2, '0');
-            horaDisplay = `${hours}:${minutes} hs`;
+            infoHora = `${hours}:${minutes}`;
         }
     } catch (e) {
-        console.error("Error fecha:", e);
+        console.error(e);
     }
 
     const traducirEstado = (st) => {
         switch(st) {
-            case 'NS': return 'Por Jugar'; // Texto más corto
+            case 'NS': return 'Por Jugar';
             case 'FT': return 'Final';
-            default: return st;
+            case 'PST': return 'Postergado';
+            default: return st; // Muestra minutos (ej: 45')
         }
     };
 
     const handleClick = (opcion) => {
+        // Si está bloqueado (ya votó o ya empezó), no hacemos nada
         if (!bloqueado && onSeleccionChange) {
             onSeleccionChange(matchId, opcion);
         }
     };
 
     return (
-        <div className={`match-card ${seleccionActual ? 'card-voted' : ''}`}>
+        // Si está bloqueado, le agregamos la clase 'card-locked' para bajarle opacidad visualmente
+        <div className={`match-card ${seleccionActual ? 'card-voted' : ''} ${bloqueado ? 'card-locked' : ''}`}>
             
             <div className="card-header">
-                <span className="match-date">⏰ {horaDisplay}</span>
+                {/* 📅 AQUÍ MOSTRAMOS LA FECHA Y LA HORA JUNTAS */}
+                <span className="match-date">
+                     {infoFecha} <span style={{opacity: 0.5, margin: '0 5px'}}>|</span>  {infoHora} hs
+                </span>
+                
                 <span className={`status-badge ${status === 'FT' ? 'status-finished' : 'status-scheduled'}`}>
                     {traducirEstado(status)}
                 </span>
@@ -69,13 +80,13 @@ function MatchCard({
                     {seleccionActual === 'HOME' && <div className="check-mark">✅</div>}
                 </div>
 
-                {/* EMPATE (RESTITUÍDO) */}
+                {/* EMPATE */}
                 <div className="draw-col">
                     <button 
                         className={`btn-draw ${seleccionActual === 'DRAW' ? 'selected-draw' : ''}`}
                         onClick={() => handleClick('DRAW')}
                         disabled={bloqueado}
-                        style={{fontSize: '0.75rem', fontWeight: 'bold'}} // Ajuste para que entre bien
+                        style={{fontSize: '0.75rem', fontWeight: 'bold'}}
                     >
                         EMPATE
                     </button>

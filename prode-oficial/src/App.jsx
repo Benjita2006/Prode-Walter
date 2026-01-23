@@ -258,18 +258,18 @@ function App() {
                     <div className="matches-grid-container" style={{padding: '0', gap: '15px'}}>
                         {partidosPorFecha[nombreFecha].map(p => (
                             <MatchCard 
-                                key={p.id}
-                                matchId={p.id}
-                                equipoA={p.local} logoA={p.logoLocal}
-                                equipoB={p.visitante} logoB={p.logoVisitante}
-                                fecha={p.fecha} 
-                                status={p.status}
+                            key={p.id}
+                            matchId={p.id}
+                            equipoA={p.local} logoA={p.logoLocal}
+                            equipoB={p.visitante} logoB={p.logoVisitante}
+                            fecha={p.fecha} 
+                            status={p.status}
                                 
                                 /* 🔒 LÓGICA DE SEGURIDAD MEJORADA: 
                                    Bloqueamos si NO es 'NS' (No Started) y NO es 'PST' (Postergado).
                                    Es decir: 1H, 2H, HT, FT -> BLOQUEADOS.
                                 */
-                                bloqueado={p.status !== 'NS' && p.status !== 'PST'}
+                                bloqueado={ (p.status !== 'NS' && p.status !== 'PST') || p.miPronostico !== null }
                                 
                                 seleccionActual={misPronosticosTemp[p.id]}
                                 onSeleccionChange={handleSeleccionChange}
