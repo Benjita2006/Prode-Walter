@@ -5,7 +5,6 @@ const http = require('http');
 const { Server } = require("socket.io"); 
 const axios = require('axios');
 const path = require('path');
-const { submitBulkPredictions } = require('./footballService'); 
 require('dotenv').config(); 
 
 // --- IMPORTACIONES LOCALES ---
@@ -256,7 +255,6 @@ app.post('/api/predictions/submit-bulk', authenticateToken, async (req, res) => 
     const userId = req.user.id;
     const { predictions } = req.body; 
     
-    // Validamos que llegue algo
     if (!predictions || !Array.isArray(predictions)) {
         return res.status(400).json({ success: false, message: 'Formato inválido' });
     }
