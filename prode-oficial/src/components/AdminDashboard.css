@@ -154,18 +154,21 @@
 
 /* Logos y Elementos Visuales */
 .mini-logo {
-    width: 35px; /* Logos grandes */
-    height: 35px;
-    object-fit: contain;
+    width: 50px; 
+    height: 50px; 
+    object-fit: contain; 
     vertical-align: middle;
-    margin: 0 8px;
+    margin: 0 4px; 
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
 }
 
 .match-vs {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center; /* Centramos los escudos en su celda */
+    gap: 8px; /* Espacio entre escudo y el 'vs' */
     font-weight: bold;
+    min-width: 140px; /* 👈 Forzamos ancho mínimo para que la columna no los aplaste */
 }
 
 /* Etiquetas (Chips) */
