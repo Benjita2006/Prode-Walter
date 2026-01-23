@@ -1,7 +1,7 @@
 // src/components/MatchCard.jsx (CORREGIDO Y TRADUCIDO)
 import React, { useState } from 'react';
 import { API_URL } from '../config'; 
-import './MatchCard.css'; 
+import './MatchCard.css';
 
 function MatchCard({ 
     equipoA, logoA, 

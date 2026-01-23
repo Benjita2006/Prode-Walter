@@ -104,7 +104,7 @@ app.post('/api/admin/sync-matches', authenticateToken, async (req, res) => {
     }
 
     const LEAGUE_ID = 128; 
-    const SEASON = 2025;   
+    const SEASON = 2026;   
     
     console.log(`🔄 Iniciando sync para Liga ${LEAGUE_ID}, Temp ${SEASON}...`);
     
