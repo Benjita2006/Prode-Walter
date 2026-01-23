@@ -1,34 +1,48 @@
 /* src/components/ChatGlobal.css */
 
-/* CONTENEDOR PRINCIPAL: Usa Flexbox Vertical */
+/* CONTENEDOR PRINCIPAL */
 .chat-container {
     background-color: #1a1a1a;
     border-radius: 12px;
-    display: flex;       /* 👈 CLAVE */
-    flex-direction: column; /* 👈 CLAVE */
-    height: 100%;        /* Ocupa todo el alto disponible */
-    overflow: hidden;    /* Evita scroll doble */
+    display: flex;
+    flex-direction: column;
+    height: 100%;        
+    overflow: hidden;    
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     border: 1px solid #333;
 }
 
+/* --- 🔴 AQUÍ ESTÁ EL ARREGLO DEL ESPACIO --- */
 /* Modo Pantalla Completa (Mobile) */
 .chat-full {
-    height: calc(100vh - 80px); /* Restamos el navbar */
+    position: fixed; /* Lo sacamos del flujo normal para pegarlo a la pantalla */
+    top: 0;          /* Empieza arriba del todo */
+    left: 0;
+    right: 0;
+    
+    /* 👇 LA CLAVE: */
+    /* Le decimos que termine 60px (aprox) antes del final de la pantalla */
+    /* Esto deja el espacio justo para tu NavBar */
+    bottom: 65px; 
+    
+    height: auto; /* Ya no usamos calc(), dejamos que top y bottom definan el alto */
+    width: 100%;
+    
     border-radius: 0;
     border: none;
+    z-index: 50; /* Aseguramos que tape todo el contenido de atrás */
 }
 
 /* CABECERA */
 .chat-header {
-    background-color: #00897b; /* Verde Teal */
+    background-color: #00897b;
     color: white;
     padding: 15px;
     font-weight: bold;
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-shrink: 0; /* No se achica */
+    flex-shrink: 0; 
 }
 
 .status-dot {
@@ -40,16 +54,18 @@
     box-shadow: 0 0 5px #00e676;
 }
 
-/* ÁREA DE MENSAJES (Flex Grow) */
+/* ÁREA DE MENSAJES */
 .chat-messages {
-    flex-grow: 1; /* 👈 ESTO ES LA MAGIA: Ocupa todo el espacio sobrante */
+    flex-grow: 1; 
     padding: 15px;
-    overflow-y: auto; /* Scroll solo en los mensajes */
+    overflow-y: auto; 
     display: flex;
     flex-direction: column;
     gap: 10px;
-    background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); /* Textura sutil opcional */
     background-color: #121212;
+    /* Opcional: Patrón de fondo sutil */
+    background-image: radial-gradient(#222 1px, transparent 1px);
+    background-size: 20px 20px;
 }
 
 .welcome-chat {
@@ -58,7 +74,7 @@
     margin-top: 50px;
 }
 
-/* BURBUJAS DE MENSAJE */
+/* BURBUJAS */
 .message-bubble {
     max-width: 80%;
     padding: 10px 14px;
@@ -75,14 +91,14 @@
 }
 
 .my-message {
-    align-self: flex-end; /* A la derecha */
+    align-self: flex-end;
     background-color: #00897b;
     color: white;
     border-bottom-right-radius: 2px;
 }
 
 .other-message {
-    align-self: flex-start; /* A la izquierda */
+    align-self: flex-start;
     background-color: #333;
     color: #e0e0e0;
     border-bottom-left-radius: 2px;
@@ -92,16 +108,12 @@
     font-size: 0.75rem;
     font-weight: bold;
     margin-bottom: 2px;
-    color: #b2dfdb; /* Verde claro */
+    color: #b2dfdb; 
 }
 
-.other-message .msg-user {
-    color: #ffab40; /* Naranja para otros */
-}
+.other-message .msg-user { color: #ffab40; }
 
-.msg-text {
-    line-height: 1.4;
-}
+.msg-text { line-height: 1.4; }
 
 .msg-time {
     font-size: 0.7rem;
@@ -110,13 +122,13 @@
     opacity: 0.7;
 }
 
-/* ÁREA DE INPUT (Pegada abajo) */
+/* ÁREA DE INPUT */
 .chat-input-area {
     display: flex;
     padding: 10px;
     background-color: #1e1e1e;
     border-top: 1px solid #333;
-    flex-shrink: 0; /* No se achica */
+    flex-shrink: 0; 
 }
 
 .chat-input {
@@ -130,9 +142,7 @@
     font-size: 1rem;
 }
 
-.chat-input:focus {
-    border-color: #00897b;
-}
+.chat-input:focus { border-color: #00897b; }
 
 .chat-send-btn {
     background-color: #00897b;
@@ -146,6 +156,4 @@
     transition: background-color 0.2s;
 }
 
-.chat-send-btn:hover {
-    background-color: #00796b;
-}
+.chat-send-btn:hover { background-color: #00796b; }
