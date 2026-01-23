@@ -1,20 +1,17 @@
-// src/components/MatchCard.jsx (CORREGIDO Y TRADUCIDO)
-import React, { useState } from 'react';
-import { API_URL } from '../config'; 
-import './MatchCard.css';
+// src/components/MatchCard.jsx
+import React from 'react';
+import './MatchCard.css'; 
 
 function MatchCard({ 
     equipoA, logoA, 
     equipoB, logoB, 
     fecha, status, 
-    matchId, valorInicial, 
-    yaGuardado 
+    matchId, 
+    seleccionActual, 
+    onSeleccionChange, 
+    bloqueado 
 }) { 
     
-    // Estado de la selección
-    const [seleccion, setSeleccion] = useState(valorInicial || null);
-    const [requestStatus, setRequestStatus] = useState(yaGuardado ? 'submitted' : null); 
-
     // 🛡️ LÓGICA DE IMAGEN
     const fallbackLogo = "https://cdn-icons-png.flaticon.com/512/16/16480.png";
     const handleImageError = (e) => {
@@ -22,19 +19,18 @@ function MatchCard({
         e.target.style.opacity = "0.5"; 
     };
 
-    // 🛡️ LÓGICA DE FECHA
-    let fechaFormateada = fecha;
+    // 🛡️ FORMATEO DE HORA
+    let hora = "";
     try {
         const d = new Date(fecha);
         if (!isNaN(d.getTime())) {
-            // Ejemplo: "20:00"
-            fechaFormateada = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            hora = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
     } catch (e) {
-        console.warn("Fecha inválida:", fecha, e);
+        console.error(e); // 👈 CORRECCIÓN: Usamos la variable 'e' en vez de dejar vacío
     }
 
-    // 🛡️ TRADUCTOR DE ESTADOS (NS -> No Empezado)
+    // 🛡️ TRADUCTOR
     const traducirEstado = (st) => {
         switch(st) {
             case 'NS': return 'No Empezado';
@@ -43,54 +39,24 @@ function MatchCard({
             case 'HT': return 'Entretiempo';
             case '2H': return '2do Tiempo';
             case 'PST': return 'Postergado';
-            case 'CANC': return 'Cancelado';
-            case 'ABD': return 'Abandonado';
-            default: return st; // Si está jugando (ej: "45'"), muestra el minuto
+            default: return st;
         }
     };
 
-    const manejarEnvio = async () => {
-        if (!seleccion) return; 
-
-        setRequestStatus('loading');
-        const token = localStorage.getItem('token');
-
-        try {
-            const response = await fetch(`${API_URL}/api/predictions/submit`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ matchId, result: seleccion }),
-            });
-            
-            const data = await response.json();
-            if (response.ok && data.success) {
-                setRequestStatus('submitted'); 
-            } else { 
-                setRequestStatus(null); 
-                alert(data.message || "Error al guardar"); 
-            }
-
-        } catch (error) {
-            setRequestStatus(null);
-            console.error(error);
-            alert("Error de conexión");
+    // Manejador de clic
+    const handleClick = (opcion) => {
+        if (!bloqueado && onSeleccionChange) {
+            onSeleccionChange(matchId, opcion);
         }
     };
-
-    const bloqueado = requestStatus === 'submitted' || requestStatus === 'loading' || status === 'FT';
 
     return (
-        <div className={`match-card ${requestStatus === 'submitted' ? 'card-voted' : ''}`}>
+        <div className={`match-card ${seleccionActual ? 'card-voted' : ''}`}>
             
-            <div className="card-header">
-                {/* Hora del partido */}
-                <span className="match-date">⏰ {fechaFormateada}</span>
-                
-                {/* 👇 AQUÍ ESTÁ EL CAMBIO: Usamos traducirEstado(status) */}
-                <span className={`status-badge ${status === 'FT' ? 'status-finished' : 'status-scheduled'}`}>
+            {/* Cabecera Minimalista */}
+            <div className="card-header" style={{padding: '5px 10px', minHeight: 'auto'}}>
+                <span className="match-date" style={{fontSize: '0.8rem'}}>⏰ {hora}</span>
+                <span className={`status-badge ${status === 'FT' ? 'status-finished' : 'status-scheduled'}`} style={{fontSize: '0.7rem', padding: '2px 6px'}}>
                     {traducirEstado(status)}
                 </span>
             </div>
@@ -98,60 +64,34 @@ function MatchCard({
             <div className="card-body">
                 {/* LOCAL */}
                 <div 
-                    className={`team-col team-selectable ${seleccion === 'HOME' ? 'selected-win' : ''} ${bloqueado ? 'disabled' : ''}`}
-                    onClick={() => !bloqueado && setSeleccion('HOME')}
+                    className={`team-col team-selectable ${seleccionActual === 'HOME' ? 'selected-win' : ''} ${bloqueado ? 'disabled' : ''}`}
+                    onClick={() => handleClick('HOME')}
                 >
-                    <img 
-                        src={logoA || fallbackLogo} 
-                        onError={handleImageError} 
-                        alt={equipoA} 
-                        className="team-logo" 
-                    />
+                    <img src={logoA || fallbackLogo} onError={handleImageError} alt={equipoA} className="team-logo" />
                     <span className="team-name">{equipoA}</span>
-                    {seleccion === 'HOME' && <div className="check-mark">✅ GANA</div>}
+                    {seleccionActual === 'HOME' && <div className="check-mark">✅</div>}
                 </div>
 
                 {/* EMPATE */}
                 <div className="draw-col">
                     <button 
-                        className={`btn-draw ${seleccion === 'DRAW' ? 'selected-draw' : ''}`}
-                        onClick={() => !bloqueado && setSeleccion('DRAW')}
+                        className={`btn-draw ${seleccionActual === 'DRAW' ? 'selected-draw' : ''}`}
+                        onClick={() => handleClick('DRAW')}
                         disabled={bloqueado}
                     >
-                        EMPATE
+                        X
                     </button>
                 </div>
 
                 {/* VISITANTE */}
                 <div 
-                    className={`team-col team-selectable ${seleccion === 'AWAY' ? 'selected-win' : ''} ${bloqueado ? 'disabled' : ''}`}
-                    onClick={() => !bloqueado && setSeleccion('AWAY')}
+                    className={`team-col team-selectable ${seleccionActual === 'AWAY' ? 'selected-win' : ''} ${bloqueado ? 'disabled' : ''}`}
+                    onClick={() => handleClick('AWAY')}
                 >
-                    <img 
-                        src={logoB || fallbackLogo} 
-                        onError={handleImageError} 
-                        alt={equipoB} 
-                        className="team-logo" 
-                    />
+                    <img src={logoB || fallbackLogo} onError={handleImageError} alt={equipoB} className="team-logo" />
                     <span className="team-name">{equipoB}</span>
-                    {seleccion === 'AWAY' && <div className="check-mark">✅ GANA</div>}
+                    {seleccionActual === 'AWAY' && <div className="check-mark">✅</div>}
                 </div>
-            </div>
-
-            <div className="card-footer">
-                {requestStatus === 'submitted' ? (
-                    <div className="success-msg">✅ Pronóstico Guardado</div>
-                ) : (
-                    status !== 'FT' && (
-                        <button 
-                            onClick={manejarEnvio} 
-                            className="btn-save"
-                            disabled={requestStatus === 'loading' || !seleccion}
-                        >
-                            {requestStatus === 'loading' ? 'Guardando...' : 'Confirmar Pronóstico'}
-                        </button>
-                    )
-                )}
             </div>
         </div>
     );

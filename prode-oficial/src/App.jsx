@@ -1,4 +1,4 @@
-// prode-oficial/src/App.jsx (VERSIÓN FINAL: PERSISTENCIA + BACK BUTTON)
+// prode-oficial/src/App.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import MatchCard from './components/MatchCard';
 import Login from './components/Login';
@@ -17,16 +17,20 @@ function App() {
     // 1. ESTADOS
     const [usuario, setUsuario] = useState(null); 
     const [partidos, setPartidos] = useState([]); 
-    const [loading, setLoading] = useState(true); // Iniciamos cargando para verificar token
+    const [loading, setLoading] = useState(true);
     const [currentView, setCurrentView] = useState('login'); 
     const [appView, setAppView] = useState('matches'); 
     const [showWelcome, setShowWelcome] = useState(false); 
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
-    // Nombre de usuario para el chat
+    // ESTADOS NUEVOS PARA LA LÓGICA DE FECHAS
+    const [misPronosticosTemp, setMisPronosticosTemp] = useState({});
+    const [fechaAbierta, setFechaAbierta] = useState(null);
+    const [guardando, setGuardando] = useState(false);
+
     const username = localStorage.getItem('username') || (usuario ? usuario.username : "Anónimo");
 
-    // --- LÓGICA DEL TEMA ---
+    // --- TEMA ---
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
@@ -36,7 +40,6 @@ function App() {
         setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
     };
 
-    // --- ROLES Y LOGOUT ---
     const userRole = usuario ? usuario.role : null;
     const isAdmin = userRole === 'Owner' || userRole === 'Dev';
 
@@ -47,90 +50,34 @@ function App() {
         setCurrentView('login'); 
     }, []);
 
-    // =========================================================
-    // 🟢 NUEVO: PERSISTENCIA DE SESIÓN (AUTO-LOGIN)
-    // =========================================================
+    // --- PERSISTENCIA SESIÓN ---
     useEffect(() => {
         const token = localStorage.getItem('token');
-        
         if (token) {
             try {
-                // Decodificamos el token manualmente para evitar instalar librerías extra
-                // El token tiene 3 partes: header.payload.signature. Queremos el payload.
                 const base64Url = token.split('.')[1];
                 const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
                 const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                 }).join(''));
-
                 const userDecoded = JSON.parse(jsonPayload);
-
-                // Verificar si expiró
                 if (userDecoded.exp * 1000 < Date.now()) {
-                    console.log("Sesión expirada");
                     handleLogout();
                 } else {
-                    // Restauramos al usuario
                     setUsuario(userDecoded);
-                    setCurrentView('app'); // Saltamos el login
+                    setCurrentView('app');
                 }
             } catch (error) {
-                console.error("Token inválido", error);
+                console.error(error); // 👈 CORRECCIÓN 1: Usamos la variable error
                 handleLogout();
             }
         }
-        setLoading(false); // Terminó la verificación
+        setLoading(false);
     }, [handleLogout]);
 
-    // =========================================================
-    // 🟠 NUEVO: MANEJO DEL BOTÓN ATRÁS (ANDROID/IOS)
-    // =========================================================
-    useEffect(() => {
-        // Solo activamos esta "trampa" si el usuario está dentro de la app
-        if (currentView === 'app') {
-            
-            // 1. Empujamos un estado al historial para que el botón atrás tenga algo que "sacar"
-            window.history.pushState({ page: 'app_trap' }, '', window.location.pathname);
-
-            const handleBackButton = (event) => {
-                // Prevenir comportamiento default momentáneamente
-                event.preventDefault();
-
-                if (appView !== 'matches') {
-                    // SI ESTAMOS EN OTRA PESTAÑA (Ranking, Chat, etc) -> VOLVER A 'PARTIDOS'
-                    setAppView('matches');
-                    // Volvemos a poner la trampa para el siguiente click
-                    window.history.pushState({ page: 'app_trap' }, '', window.location.pathname);
-                } else {
-                    // SI ESTAMOS EN 'PARTIDOS' (Home) -> PREGUNTAR SALIDA
-                    // Usamos confirm porque bloquea la ejecución hasta que el usuario elige
-                    const salir = window.confirm("¿Quieres cerrar sesión y salir de la aplicación?");
-                    
-                    if (salir) {
-                        handleLogout(); // Cerramos sesión
-                        // Dejamos que el historial retroceda naturalmente (salir de la app)
-                        window.history.back(); 
-                    } else {
-                        // Si dice "Cancelar", restauramos la trampa
-                        window.history.pushState({ page: 'app_trap' }, '', window.location.pathname);
-                    }
-                }
-            };
-
-            // Escuchamos el evento 'popstate' (cuando se presiona Atrás)
-            window.addEventListener('popstate', handleBackButton);
-
-            return () => {
-                window.removeEventListener('popstate', handleBackButton);
-            };
-        }
-    }, [currentView, appView, handleLogout]);
-
-
-    // --- FUNCIÓN DE CARGA DE PARTIDOS ---
+    // --- CARGA DE PARTIDOS ---
     const fetchPartidos = useCallback(async () => {
         const token = localStorage.getItem('token'); 
-        // Pequeño chequeo de seguridad
         if (!token) return;
 
         setLoading(true);
@@ -138,167 +85,208 @@ function App() {
             const respuesta = await fetch(`${API_URL}/api/partidos`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
             if (respuesta.status === 401 || respuesta.status === 403) {
-                handleLogout();
-                return;
+                handleLogout(); return;
             }
-
             const datos = await respuesta.json();
             setPartidos(datos);
         } catch (error) {
-            console.error("Error conectando al servidor:", error);
+            console.error("Error:", error);
             setPartidos([]); 
         } finally {
             setLoading(false);
         }
     }, [handleLogout]); 
 
-    // --- NAVEGACIÓN INTERNA ---
-    const handleNavClick = (viewName) => {
-        setAppView(viewName);
-        // Optimización: Solo recargar si no hay partidos y vamos a la vista de partidos
-        if (viewName === 'matches' && partidos.length === 0) {
-            fetchPartidos();
+    // --- GESTIÓN DE PRONÓSTICOS TEMPORALES ---
+    useEffect(() => {
+        if (partidos.length > 0) {
+            const buffer = {};
+            partidos.forEach(p => {
+                if (p.miPronostico) buffer[p.id] = p.miPronostico;
+            });
+            setMisPronosticosTemp(buffer);
+            
+            // Abrir la primera fecha por defecto si no hay ninguna abierta
+            if (!fechaAbierta && partidos[0]) {
+                setFechaAbierta(partidos[0].round || 'Fecha 1'); 
+            }
+        }
+        // 👇 CORRECCIÓN 2: Silenciamos la advertencia porque solo queremos que corra al cambiar 'partidos'
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [partidos]); 
+
+    // Agrupar partidos por "round"
+    const partidosPorFecha = partidos.reduce((acc, partido) => {
+        const fechaNombre = partido.round || 'Fecha General'; 
+        if (!acc[fechaNombre]) acc[fechaNombre] = [];
+        acc[fechaNombre].push(partido);
+        return acc;
+    }, {});
+
+    const handleSeleccionChange = (matchId, seleccion) => {
+        setMisPronosticosTemp(prev => ({
+            ...prev,
+            [matchId]: seleccion
+        }));
+    };
+
+    // GUARDAR FECHA COMPLETA
+    const guardarFecha = async (nombreFecha) => {
+        setGuardando(true);
+        const token = localStorage.getItem('token');
+        
+        const partidosDeLaFecha = partidosPorFecha[nombreFecha];
+        const payload = partidosDeLaFecha
+            .filter(p => misPronosticosTemp[p.id]) 
+            .map(p => ({
+                matchId: p.id,
+                result: misPronosticosTemp[p.id]
+            }));
+
+        if (payload.length === 0) {
+            alert("No has seleccionado ningún resultado para esta fecha.");
+            setGuardando(false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/api/predictions/submit-bulk`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ predictions: payload })
+            });
+            
+            if (res.ok) {
+                alert(`✅ Pronósticos de ${nombreFecha} guardados con éxito!`);
+                fetchPartidos(); 
+            } else {
+                alert("Hubo un error al guardar.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error de conexión.");
+        } finally {
+            setGuardando(false);
         }
     };
 
-    // --- LOGIN EXITOSO ---
+    // --- NAVEGACIÓN ---
+    const handleNavClick = (viewName) => {
+        setAppView(viewName);
+        if (viewName === 'matches' && partidos.length === 0) fetchPartidos();
+    };
+    
     const handleLoginSuccess = (userObject) => {
         setUsuario(userObject);
         localStorage.setItem('username', userObject.username); 
         setCurrentView('app');
         setShowWelcome(true); 
-        fetchPartidos(); // Cargar partidos inmediatamente al entrar
-        
-        setTimeout(() => {
-            setShowWelcome(false);
-        }, 2500);
+        fetchPartidos();
+        setTimeout(() => setShowWelcome(false), 2500);
     };
 
-
-    // --- RENDERIZADO CONDICIONAL: LOGIN / REGISTER ---
-    if (loading && !usuario) {
-        return <div className="loading-screen">Cargando Prode...</div>; // Pantalla de carga inicial
-    }
-
+    // VISTAS DE LOGIN
+    if (loading && !usuario) return <div className="loading-screen">Cargando...</div>;
     if (!usuario) {
-        if (currentView === 'register') {
-            return (
-                <Register 
-                    onRegisterSuccess={() => setCurrentView('login')}
-                    onSwitchToLogin={() => setCurrentView('login')}
-                />
-            );
-        }
-        return (
-            <Login 
-                onLogin={handleLoginSuccess} 
-                onSwitchToRegister={() => setCurrentView('register')} 
-            />
-        );
+        return currentView === 'register' 
+            ? <Register onRegisterSuccess={() => setCurrentView('login')} onSwitchToLogin={() => setCurrentView('login')} />
+            : <Login onLogin={handleLoginSuccess} onSwitchToRegister={() => setCurrentView('register')} />;
     }
 
-    // --- RENDERIZADO PRINCIPAL: LA APP ---
     return (
         <div className="app-container">
-            
-            {/* PANTALLA DE BIENVENIDA */}
             {showWelcome && (
                 <div className="welcome-overlay">
                     <h1 className="welcome-text">⚽ Bienvenido, {usuario.username} ⚽</h1>
-                    <p>Cargando tus partidos...</p>
                 </div>
             )}
 
-            {/* BARRA DE NAVEGACIÓN */}
-            <NavBar 
-                userRole={userRole || 'Guest'} 
-                onLogout={handleLogout} 
-                onNavClick={handleNavClick} 
-                theme={theme}
-                toggleTheme={toggleTheme}
-                currentView={appView} 
-            /> 
+            <NavBar userRole={userRole || 'Guest'} onLogout={handleLogout} onNavClick={handleNavClick} theme={theme} toggleTheme={toggleTheme} currentView={appView} /> 
             
-            {/* CONTENIDO PRINCIPAL */}
             <div className="main-content-wrapper">
-                
-                {appView === 'manage-users' && isAdmin && (
-                    <UsersManagement /> 
-                )}
+                {appView === 'manage-users' && isAdmin && <UsersManagement />}
+                {appView === 'admin-dashboard' && isAdmin && <AdminDashboard />}
+                {appView === 'creator' && isAdmin && <MatchCreator onMatchCreated={() => handleNavClick('matches')} />}
+                {appView === 'ranking' && <Ranking />}
+                {appView === 'chat' && <div className="chat-full-page"><ChatGlobal username={username} fullPage={true} /></div>}
 
-                {appView === 'admin-dashboard' && isAdmin && (
-                    <AdminDashboard />
-                )}
-
-                {appView === 'creator' && isAdmin && (
-                    <MatchCreator onMatchCreated={() => handleNavClick('matches')} />
-                )}
-
-                {appView === 'ranking' && (
-                    <Ranking />
-                )}
-
-                {appView === 'chat' && (
-                    <div className="chat-full-page">
-                        <ChatGlobal username={username} fullPage={true} />
-                    </div>
-                )}
-
-                {/* VISTA: LISTA DE PARTIDOS (DEFAULT) */}
+                {/* VISTA DE PARTIDOS (ACORDEÓN) */}
                 {appView === 'matches' && (
                     <>
-                        <h1 style={{textAlign: 'center', marginBottom: '15px'}}>🏆 Prode</h1>
-                        <small style={{display: 'block', textAlign: 'center', marginBottom: '30px', color: 'var(--text-secondary)'}}>
-                            Hola, {usuario?.username}! Próximos partidos:
-                        </small>
-                    
-                        {loading ? (
-                            <p style={{textAlign: 'center', fontSize: '1.2rem', marginTop: '50px'}}>Cargando partidos... ⏳</p>
-                        ) : partidos.length === 0 ? (
-                            <p style={{textAlign: 'center', fontSize: '1.2rem', color: '#ff4444', marginTop: '50px'}}>No hay partidos disponibles por ahora.</p>
-                        ) : (
-                            <div className="table-responsive-predictions">
-                                <div className="predictions-table">
-                                    <div className="matches-grid-container"> 
-                                    
-                                    {(() => {
-                                        let ultimaFecha = null;
-                                        return partidos.map((p) => {
-                                            const fechaActual = p.fecha.split(',')[0]; 
-                                            const mostrarHeader = fechaActual !== ultimaFecha;
-                                            ultimaFecha = fechaActual;
+                        <h1 style={{textAlign: 'center', marginBottom: '15px'}}>🏆 Fixture</h1>
+                        
+                        {loading ? <p style={{textAlign:'center'}}>Cargando...</p> : 
+                         Object.keys(partidosPorFecha).length === 0 ? <p style={{textAlign:'center'}}>No hay partidos.</p> : (
+                            
+                            <div className="fechas-container" style={{paddingBottom: '100px', maxWidth: '800px', margin: '0 auto'}}>
+                                {Object.keys(partidosPorFecha).map((nombreFecha) => (
+                                    <div key={nombreFecha} style={{marginBottom: '15px', padding: '0 10px'}}>
+                                        
+                                        {/* CABECERA FECHA */}
+                                        <button 
+                                            onClick={() => setFechaAbierta(fechaAbierta === nombreFecha ? null : nombreFecha)}
+                                            style={{
+                                                width: '100%', padding: '15px', 
+                                                backgroundColor: fechaAbierta === nombreFecha ? 'var(--card-bg)' : '#333',
+                                                border: fechaAbierta === nombreFecha ? '1px solid #4caf50' : '1px solid #444',
+                                                color: 'white', borderRadius: '10px',
+                                                fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer',
+                                                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                                            }}
+                                        >
+                                            <span>📅 {nombreFecha}</span>
+                                            <span>{fechaAbierta === nombreFecha ? '▲' : '▼'}</span>
+                                        </button>
 
-                                            return (
-                                                <React.Fragment key={p.id}>
-                                                    {mostrarHeader && (
-                                                        <div className="date-separator">📅 {fechaActual}</div>
-                                                    )}
-                                                    <MatchCard 
-                                                        matchId={p.id}
-                                                        fecha={p.fecha}
-                                                        status={p.status}
-                                                        equipoA={p.local}
-                                                        logoA={p.logoLocal}
-                                                        equipoB={p.visitante}
-                                                        logoB={p.logoVisitante}
-                                                        valorInicial={p.miPronostico} 
-                                                        yaGuardado={p.yaJugo}
-                                                    />
-                                                </React.Fragment>
-                                            );
-                                        });
-                                    })()}
+                                        {/* CONTENIDO FECHA */}
+                                        {fechaAbierta === nombreFecha && (
+                                            <div style={{marginTop: '10px'}}>
+                                                <div className="matches-grid-container" style={{padding: '0'}}>
+                                                    {partidosPorFecha[nombreFecha].map(p => (
+                                                        <MatchCard 
+                                                            key={p.id}
+                                                            matchId={p.id}
+                                                            equipoA={p.local} logoA={p.logoLocal}
+                                                            equipoB={p.visitante} logoB={p.logoVisitante}
+                                                            fecha={p.fecha} status={p.status}
+                                                            bloqueado={p.status === 'FT'}
+                                                            seleccionActual={misPronosticosTemp[p.id]}
+                                                            onSeleccionChange={handleSeleccionChange}
+                                                        />
+                                                    ))}
+                                                </div>
+
+                                                {/* BOTÓN GUARDAR FECHA */}
+                                                <div style={{textAlign: 'center', margin: '20px 0'}}>
+                                                    <button 
+                                                        onClick={() => guardarFecha(nombreFecha)}
+                                                        disabled={guardando}
+                                                        style={{
+                                                            backgroundColor: '#2196F3', color: 'white',
+                                                            padding: '12px 30px', fontSize: '1rem', fontWeight: 'bold',
+                                                            border: 'none', borderRadius: '50px',
+                                                            boxShadow: '0 4px 15px rgba(33, 150, 243, 0.4)',
+                                                            cursor: guardando ? 'wait' : 'pointer', width: '90%', maxWidth: '300px'
+                                                        }}
+                                                    >
+                                                        {guardando ? 'Guardando...' : `💾 Guardar ${nombreFecha}`}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
+                                ))}
                             </div>
                         )}
                     </>
                 )}
             </div>
+            
             {usuario && <TutorialOverlay username={usuario.username} />}
-
         </div>
     );
 }

@@ -5,6 +5,7 @@ const http = require('http');
 const { Server } = require("socket.io"); 
 const axios = require('axios');
 const path = require('path');
+const { submitBulkPredictions } = require('./footballService'); // 👈 Importar arriba
 require('dotenv').config(); 
 
 // --- IMPORTACIONES LOCALES ---

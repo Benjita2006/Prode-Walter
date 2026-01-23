@@ -185,12 +185,58 @@ async function obtenerRanking() {
         return { success: false, message: error.message };
     }
 }
+// --- 6. ESCRITURA: Guardado Masivo (BULK SUBMIT) ---
+async function submitBulkPredictions(userId, predictionsArray) {
+    if (!userId || !predictionsArray || predictionsArray.length === 0) {
+        return { success: false, message: 'No hay pronósticos para guardar.' };
+    }
 
+    const conn = await db.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        for (const pred of predictionsArray) {
+            const { matchId, result } = pred;
+
+            // Verificamos si ya existe
+            const [existing] = await conn.execute(
+                'SELECT id FROM predictions WHERE user_id = ? AND match_id = ?',
+                [userId, matchId]
+            );
+
+            if (existing.length > 0) {
+                // Actualizar
+                await conn.execute(
+                    'UPDATE predictions SET prediction_result = ? WHERE id = ?',
+                    [result, existing[0].id]
+                );
+            } else {
+                // Insertar
+                await conn.execute(
+                    'INSERT INTO predictions (user_id, match_id, prediction_result) VALUES (?, ?, ?)',
+                    [userId, matchId, result]
+                );
+            }
+        }
+
+        await conn.commit();
+        return { success: true, message: '¡Pronósticos guardados correctamente!' };
+
+    } catch (error) {
+        await conn.rollback();
+        console.error("Error bulk save:", error);
+        return { success: false, message: 'Error al guardar pronósticos.' };
+    } finally {
+        conn.release();
+    }
+}
 // Exportamos solo lo que usamos en index.js
 module.exports = { 
     obtenerPartidos, 
     crearPartidos, 
     submitPrediction, 
     obtenerTodosLosPronosticos, 
-    obtenerRanking
+    obtenerRanking,
+    submitBulkPredictions
+
 };
