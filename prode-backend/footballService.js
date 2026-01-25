@@ -243,16 +243,17 @@ async function submitBulkPredictions(userId, predictionsArray) {
 
 
 // --- 7. EDICIÓN: Actualizar Partido y Recalcular Puntos (Admin) ---
+// --- 7. EDICIÓN: Actualizar Partido y Recalcular Puntos (Admin) ---
 async function updateMatch(matchId, home_score, away_score, status, match_date) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
-        // 1. Sanitizar los goles: Si viene vacío, lo guardamos como NULL
+        // 1. Sanitizar goles
         const hScore = (home_score === '' || home_score === null || home_score === undefined) ? null : parseInt(home_score);
         const aScore = (away_score === '' || away_score === null || away_score === undefined) ? null : parseInt(away_score);
 
-        // 2. Actualizar la tabla matches
+        // 2. Actualizar partido
         await conn.execute(
             `UPDATE matches 
              SET home_score = ?, away_score = ?, status = ?, match_date = ? 
@@ -260,21 +261,17 @@ async function updateMatch(matchId, home_score, away_score, status, match_date) 
             [hScore, aScore, status, match_date, matchId]
         );
 
-        // 3. RECALCULAR PUNTOS (Solo si el partido se marca como 'FT')
+        // 3. Recalcular puntos si es FT
         if (status === 'FT') {
             console.log(`🔄 Recalculando puntos para el partido ID: ${matchId}...`);
-            
             const sqlRecalculate = `
                 UPDATE predictions p
                 JOIN matches m ON p.match_id = m.id
                 SET p.points = (
                     CASE 
                         WHEN m.status != 'FT' THEN 0
-                        -- Acierto LOCAL (Gana Local y predijo Local)
                         WHEN m.home_score > m.away_score AND p.prediction_result = 'HOME' THEN 1
-                        -- Acierto VISITANTE (Gana Visita y predijo Visita)
                         WHEN m.away_score > m.home_score AND p.prediction_result = 'AWAY' THEN 1
-                        -- Acierto EMPATE (Empatan y predijo Empate)
                         WHEN m.home_score = m.away_score AND p.prediction_result = 'DRAW' THEN 1
                         ELSE 0
                     END
@@ -283,16 +280,15 @@ async function updateMatch(matchId, home_score, away_score, status, match_date) 
             `;
             await conn.execute(sqlRecalculate, [matchId]);
         } else {
-            // Si el admin cambia de 'FT' a 'NS' (corrección de error), quitamos los puntos
             await conn.execute('UPDATE predictions SET points = 0 WHERE match_id = ?', [matchId]);
         }
 
         await conn.commit();
-        return { success: true, message: 'Partido actualizado y ranking recalculado.' };
+        return { success: true, message: 'Partido actualizado.' };
 
     } catch (error) {
         await conn.rollback();
-        console.error("Error en updateMatch:", error);
+        console.error("Error updateMatch:", error);
         return { success: false, message: error.message };
     } finally {
         conn.release();
@@ -308,5 +304,5 @@ module.exports = {
     obtenerRanking,
     submitBulkPredictions,
     updateMatch 
-    
+
 };
