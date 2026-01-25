@@ -92,17 +92,6 @@ function App() {
         }
     }, [partidos]);
 
-    // BUG FIX: ABRIR FECHA SOLO UNA VEZ AL INICIAR
-    useEffect(() => {
-        if (partidos.length > 0 && appView === 'matches' && !initializedRef.current) {
-            // Buscamos la primera fecha que tenga partidos pendientes
-            const partidosPendientes = partidos.filter(p => p.status !== 'FT');
-            const fechaPorDefecto = partidosPendientes.length > 0 ? partidosPendientes[0].round : (partidos[0].round || 'Fecha 1');
-            setFechaAbierta(fechaPorDefecto);
-            initializedRef.current = true; // Marcamos como inicializado
-        }
-    }, [partidos, appView]);
-
     // --- LÓGICA DE FILTRADO PARA FIXTURE ---
     // Filtramos partidos que NO sean 'FT' (Finalizados)
     const partidosActivos = partidos.filter(p => p.status !== 'FT');
