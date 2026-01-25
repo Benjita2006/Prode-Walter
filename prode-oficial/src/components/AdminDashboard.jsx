@@ -1,15 +1,16 @@
-// src/components/AdminDashboard.jsx (TAMAÑO AUMENTADO PARA MÓVIL)
+// src/components/AdminDashboard.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_URL } from '../config'; 
 import './AdminDashboard.css'; 
 
-function AdminDashboard() {
+function AdminDashboard({ onUpdate }) { // 👈 RECIBIMOS LA PROP onUpdate
     const [usuariosAgrupados, setUsuariosAgrupados] = useState([]);
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
     const [filtro, setFiltro] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
+    // ... (Mantén tu función traducirEstado y agruparPorUsuario igual) ...
     const traducirEstado = (st) => {
         const diccionario = {
             'NS': 'Por Jugar', 'FT': 'Final', '1H': '1er T', 
@@ -71,8 +72,11 @@ function AdminDashboard() {
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
             });
             const data = await res.json();
-            if (res.ok) { setMessage(`✅ ${data.message}`); fetchData(); } 
-            else { setMessage(`❌ ${data.message}`); }
+            if (res.ok) { 
+                setMessage(`✅ ${data.message}`); 
+                fetchData(); 
+                if (onUpdate) onUpdate(); // 👈 ACTUALIZAMOS LA APP PRINCIPAL
+            } else { setMessage(`❌ ${data.message}`); }
         } catch (error) { console.error(error); setMessage('❌ Error conexión.'); } 
         finally { setLoading(false); }
     };
@@ -88,12 +92,14 @@ function AdminDashboard() {
                 setMessage(`🗑️ ${data.message}`); 
                 setUsuariosAgrupados([]); 
                 setUsuarioSeleccionado(null);
+                if (onUpdate) onUpdate(); // 👈 ESTO ES CLAVE: Limpia los partidos de la vista principal
             } 
             else { setMessage(`❌ ${data.message}`); }
         } catch (error) { console.error(error); setMessage('❌ Error conexión.'); } 
         finally { setLoading(false); }
     };
 
+    // ... (RESTO DEL RENDERIZADO IGUAL QUE ANTES) ...
     const usuariosFiltrados = usuariosAgrupados.filter(u => 
         u.username.toLowerCase().includes(filtro.toLowerCase())
     );
@@ -104,6 +110,7 @@ function AdminDashboard() {
             
             <div className="action-bar">
                 <div className="action-buttons">
+                    {/* Botón Sincronizar (Aunque ahora usamos manual, lo dejamos por si acaso) */}
                     <button onClick={handleSyncMatches} disabled={loading} className="btn-action btn-sync">
                         {loading ? '⏳' : '🔄 Sincronizar API'}
                     </button>
@@ -118,6 +125,7 @@ function AdminDashboard() {
                 )}
             </div>
 
+            {/* ... Resto del componente (Lista de usuarios, etc.) es igual ... */}
             {!usuarioSeleccionado ? (
                 <>
                     <h3>👥 Usuarios Activos ({usuariosAgrupados.length})</h3>
@@ -147,13 +155,9 @@ function AdminDashboard() {
                 </>
             ) : (
                 <div>
-                    <button 
-                        onClick={() => setUsuarioSeleccionado(null)}
-                        className="btn-back"
-                    >
+                    <button onClick={() => setUsuarioSeleccionado(null)} className="btn-back">
                         ⬅ Volver a Usuarios
                     </button>
-
                     <h3 style={{color: '#4caf50', marginBottom: '15px', fontSize: '1.5rem'}}>
                         Pronósticos de: {usuarioSeleccionado.username}
                     </h3>
@@ -172,18 +176,12 @@ function AdminDashboard() {
                             <tbody>
                                 {usuarioSeleccionado.predictions.map((p) => (
                                     <tr key={p.id}>
-                                        
-                                        {/* COLUMNA FECHA MEJORADA */}
                                         <td>
-                                            <span className="badge-date">
-                                                {p.round || 'General'}
-                                            </span>
+                                            <span className="badge-date">{p.round || 'General'}</span>
                                             <div className="text-muted">
                                                 {new Date(p.match_date).toLocaleDateString(undefined, {day:'numeric', month:'numeric'})}
                                             </div>
                                         </td>
-
-                                        {/* COLUMNA PARTIDO CON ESCUDOS GRANDES */}
                                         <td>
                                             <div className="match-vs">
                                                 <img src={p.home_logo} onError={handleImageError} className="mini-logo" alt="" />
@@ -191,32 +189,21 @@ function AdminDashboard() {
                                                 <img src={p.away_logo} onError={handleImageError} className="mini-logo" alt="" />
                                             </div>
                                         </td>
-
-                                        {/* COLUMNA VOTO GRANDE */}
                                         <td>
                                             {p.prediction_result ? (
-                                                <span 
-                                                    className="badge-prediction"
-                                                    style={{
-                                                        backgroundColor: p.prediction_result === 'HOME' ? '#4caf50' : p.prediction_result === 'AWAY' ? '#2196f3' : '#ff9800',
-                                                    }}
-                                                >
+                                                <span className="badge-prediction" style={{
+                                                    backgroundColor: p.prediction_result === 'HOME' ? '#4caf50' : p.prediction_result === 'AWAY' ? '#2196f3' : '#ff9800',
+                                                }}>
                                                     {p.prediction_result === 'HOME' ? 'L' : p.prediction_result === 'AWAY' ? 'V' : 'E'}
                                                 </span>
-                                            ) : (
-                                                <span className="text-muted">Sin Voto</span>
-                                            )}
+                                            ) : <span className="text-muted">Sin Voto</span>}
                                         </td>
-
-                                        {/* COLUMNA RESULTADO */}
                                         <td>
                                             {p.status === 'FT' 
                                                 ? <strong style={{fontSize: '1.1rem'}}>{p.home_score} - {p.away_score}</strong> 
                                                 : <span className="text-muted">{traducirEstado(p.status)}</span>
                                             }
                                         </td>
-
-                                        {/* COLUMNA PUNTOS */}
                                         <td style={{fontWeight: 'bold', fontSize: '1.2rem', color: p.points > 0 ? '#4caf50' : '#888'}}>
                                             {p.status === 'FT' ? p.points : '-'}
                                         </td>

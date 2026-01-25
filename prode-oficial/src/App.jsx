@@ -5,13 +5,14 @@ import Login from './components/Login';
 import Register from './components/Register';
 import NavBar from './components/NavBar'; 
 import MatchCreator from './components/MatchCreator'; 
+import MatchResultEditor from './components/MatchResultEditor'; // 👈 IMPORTADO
 import AdminDashboard from './components/AdminDashboard'; 
 import UsersManagement from './components/UsersManagement'; 
 import ChatGlobal from './components/ChatGlobal';
 import Ranking from './components/Ranking';
 import { API_URL } from './config'; 
 import TutorialOverlay from './components/TutorialOverlay';
-import MatchResultEditor from './components/MatchResultEditor';
+
 import './App.css';
 
 function App() {
@@ -23,6 +24,9 @@ function App() {
     const [appView, setAppView] = useState('matches'); 
     const [showWelcome, setShowWelcome] = useState(false); 
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+    // 🟢 NUEVO: Estado para pestañas dentro del Admin Panel
+    const [adminTab, setAdminTab] = useState('dashboard'); // 'dashboard', 'create', 'edit'
 
     // Estado GLOBAL para el chat
     const [chatMessages, setChatMessages] = useState([]);
@@ -55,7 +59,7 @@ function App() {
         setPartidos([]); 
     }, []);
 
-    // FETCH PARTIDOS
+    // FETCH PARTIDOS (Memorizado para pasarlo a hijos)
     const fetchPartidos = useCallback(async () => {
         const token = localStorage.getItem('token'); 
         if (!token) return;
@@ -113,14 +117,15 @@ function App() {
                 if (p.miPronostico) buffer[p.id] = p.miPronostico;
             });
             setMisPronosticosTemp(buffer);
-            
-            // Solo abrimos fecha por defecto si estamos en la vista de partidos
-            if (!fechaAbierta && partidos[0] && appView === 'matches') {
-                setFechaAbierta(partidos[0].round || 'Fecha 1'); 
-            }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [partidos, appView]); // Agregué appView para que recalcule si cambia de vista
+    }, [partidos]); // Solo se ejecuta si cambian los partidos de la BD
+
+    // 2. Efecto: Abrir la primera fecha por defecto (Solo si no hay ninguna seleccionada)
+    useEffect(() => {
+        if (partidos.length > 0 && appView === 'matches' && !fechaAbierta) {
+            setFechaAbierta(partidos[0].round || 'Fecha 1'); 
+        }
+    }, [partidos, appView, fechaAbierta]);
 
     // Agrupar partidos por "round"
     const partidosPorFecha = partidos.reduce((acc, partido) => {
@@ -209,8 +214,42 @@ function App() {
             
             <div className="main-content-wrapper">
                 {appView === 'manage-users' && isAdmin && <UsersManagement />}
-                {appView === 'admin-dashboard' && isAdmin && <AdminDashboard />}
-                {appView === 'creator' && isAdmin && <MatchCreator onMatchCreated={() => handleNavClick('matches')} />}
+                
+                {/* 🟢 UNIFICACIÓN DEL PANEL ADMIN CON PESTAÑAS */}
+                {appView === 'admin-dashboard' && isAdmin && (
+                    <div style={{width: '100%', maxWidth: '800px', margin: '0 auto'}}>
+                        {/* BOTONES DE PESTAÑAS */}
+                        <div style={{display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px', flexWrap: 'wrap'}}>
+                            <button 
+                                onClick={() => setAdminTab('dashboard')}
+                                className={adminTab === 'dashboard' ? 'btn-tab-active' : 'btn-tab'}
+                                style={{padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer', background: adminTab === 'dashboard' ? '#4caf50' : '#333', color: 'white', fontWeight: 'bold'}}
+                            >
+                                📊 Dashboard
+                            </button>
+                            <button 
+                                onClick={() => setAdminTab('create')}
+                                className={adminTab === 'create' ? 'btn-tab-active' : 'btn-tab'}
+                                style={{padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer', background: adminTab === 'create' ? '#2196f3' : '#333', color: 'white', fontWeight: 'bold'}}
+                            >
+                                ➕ Crear Partidos
+                            </button>
+                            <button 
+                                onClick={() => setAdminTab('edit')}
+                                className={adminTab === 'edit' ? 'btn-tab-active' : 'btn-tab'}
+                                style={{padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer', background: adminTab === 'edit' ? '#ff9800' : '#333', color: 'white', fontWeight: 'bold'}}
+                            >
+                                ✏️ Editar/Cargar
+                            </button>
+                        </div>
+
+                        {/* CONTENIDO SEGÚN PESTAÑA */}
+                        {adminTab === 'dashboard' && <AdminDashboard onUpdate={fetchPartidos} />}
+                        {adminTab === 'create' && <MatchCreator onMatchCreated={fetchPartidos} />}
+                        {adminTab === 'edit' && <MatchResultEditor />}
+                    </div>
+                )}
+
                 {appView === 'ranking' && <Ranking />}
                 
                 {appView === 'chat' && (
@@ -229,7 +268,7 @@ function App() {
                     <>
                         <h1 style={{textAlign: 'center', marginBottom: '15px'}}>🏆 Fixture</h1>
                         {loading ? <p style={{textAlign:'center'}}>Cargando...</p> : 
-                         Object.keys(partidosPorFecha).length === 0 ? <p style={{textAlign:'center'}}>No hay partidos cargados.</p> : (
+                        Object.keys(partidosPorFecha).length === 0 ? <p style={{textAlign:'center'}}>No hay partidos cargados.</p> : (
                             <div className="fechas-container" style={{paddingBottom: '100px', width: '100%'}}>
                                 {Object.keys(partidosPorFecha).map((nombreFecha) => (
                                     <div key={nombreFecha} style={{marginBottom: '0'}}>
@@ -282,13 +321,12 @@ function App() {
                     </>
                 )}
 
-                {/* --- 🟢 VISTA NUEVA: RESULTADOS / HISTORIAL --- */}
+                {/* --- VISTA: RESULTADOS --- */}
                 {appView === 'results' && (
                     <>
                         <h1 style={{textAlign: 'center', marginBottom: '15px'}}>📊 Resultados</h1>
                         
                         {(() => {
-                            // Filtramos solo los partidos terminados (FT)
                             const partidosTerminados = partidos.filter(p => p.status === 'FT');
                             
                             if (partidosTerminados.length === 0) {
@@ -300,7 +338,6 @@ function App() {
                                 );
                             }
 
-                            // Agrupamos por fecha
                             const resultadosPorFecha = partidosTerminados.reduce((acc, partido) => {
                                 const fechaNombre = partido.round || 'Varios'; 
                                 if (!acc[fechaNombre]) acc[fechaNombre] = [];
@@ -314,17 +351,9 @@ function App() {
                                 <div className="fechas-container" style={{paddingBottom: '100px', width: '100%'}}>
                                     {fechasOrdenadas.map((nombreFecha) => (
                                         <div key={nombreFecha} style={{marginBottom: '0'}}>
-                                            
-                                            {/* Cabecera Resultados (Siempre abierta) */}
                                             <div style={{
-                                                padding: '15px 20px',
-                                                backgroundColor: '#222',
-                                                borderBottom: '1px solid #4caf50',
-                                                color: '#4caf50',
-                                                fontWeight: 'bold',
-                                                textTransform: 'uppercase',
-                                                fontSize: '1.1rem',
-                                                letterSpacing: '1px'
+                                                padding: '15px 20px', backgroundColor: '#222', borderBottom: '1px solid #4caf50',
+                                                color: '#4caf50', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '1.1rem', letterSpacing: '1px'
                                             }}>
                                                 🏁 {nombreFecha}
                                             </div>
@@ -333,19 +362,10 @@ function App() {
                                                 <div className="matches-grid-container" style={{padding: '0', gap: '15px'}}>
                                                     {resultadosPorFecha[nombreFecha].map(p => (
                                                         <MatchCard 
-                                                            key={p.id}
-                                                            matchId={p.id}
-                                                            equipoA={p.local} logoA={p.logoLocal}
-                                                            equipoB={p.visitante} logoB={p.logoVisitante}
-                                                            fecha={p.fecha} 
-                                                            status={p.status}
-                                                            bloqueado={true}
-                                                            seleccionActual={p.miPronostico}
-                                                            
-                                                            /* 👇 AGREGAR ESTAS DOS LÍNEAS IMPORTANTES */
-                                                            golesA={p.home_score} 
-                                                            golesB={p.away_score}
-                                                            
+                                                            key={p.id} matchId={p.id} equipoA={p.local} logoA={p.logoLocal}
+                                                            equipoB={p.visitante} logoB={p.logoVisitante} fecha={p.fecha} status={p.status}
+                                                            bloqueado={true} seleccionActual={p.miPronostico}
+                                                            golesA={p.home_score} golesB={p.away_score}
                                                             onSeleccionChange={() => {}} 
                                                         />
                                                     ))}
