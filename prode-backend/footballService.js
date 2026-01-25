@@ -307,6 +307,6 @@ module.exports = {
     obtenerTodosLosPronosticos, 
     obtenerRanking,
     submitBulkPredictions,
-    updateMatch
-
+    updateMatch 
+    
 };
