@@ -18,7 +18,8 @@ const {
     submitPrediction, 
     submitBulkPredictions,
     obtenerTodosLosPronosticos, 
-    obtenerRanking 
+    obtenerRanking,
+    updateMatch 
 } = require('./footballService');
 
 const { obtenerPartidosDeAPI } = require('./apiFootballService');
@@ -96,6 +97,22 @@ app.post('/api/admin/matches/bulk-create', authenticateToken, async (req, res) =
     const creationResult = await crearPartidos(matches); 
     if (creationResult.success) res.status(201).json({ success: true, message: `Se publicaron ${creationResult.count} partidos.`, count: creationResult.count });
     else res.status(500).json(creationResult);
+});
+
+// RUTA: ACTUALIZAR PARTIDO (EDITAR GOLES/HORA)
+app.put('/api/admin/matches/:id', authenticateToken, async (req, res) => {
+    // Verificamos permisos (Solo Owner o Dev)
+    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') {
+        return res.status(403).json({ message: 'Acceso denegado.' });
+    }
+
+    const matchId = req.params.id;
+    const { home_score, away_score, status, match_date } = req.body;
+
+    const result = await updateMatch(matchId, home_score, away_score, status, match_date);
+
+    if (result.success) res.json(result);
+    else res.status(500).json(result);
 });
 
 // RUTA 2: SINCRONIZAR PARTIDOS (POST)

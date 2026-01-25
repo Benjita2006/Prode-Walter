@@ -11,6 +11,7 @@ import ChatGlobal from './components/ChatGlobal';
 import Ranking from './components/Ranking';
 import { API_URL } from './config'; 
 import TutorialOverlay from './components/TutorialOverlay';
+import MatchResultEditor from './components/MatchResultEditor';
 import './App.css';
 
 function App() {
