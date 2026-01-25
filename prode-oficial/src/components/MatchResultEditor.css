@@ -1,0 +1,139 @@
+/* src/components/MatchResultEditor.css */
+
+.editor-container {
+    padding: 20px 0;
+    max-width: 800px;
+    margin: 0 auto;
+    color: white;
+}
+
+.editor-title {
+    text-align: center;
+    color: #4caf50;
+    margin-bottom: 20px;
+}
+
+.fecha-group {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.fecha-header {
+    background-color: #333;
+    color: #4caf50;
+    padding: 12px 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #444;
+}
+
+.editor-table-wrapper {
+    overflow-x: auto;
+}
+
+.editor-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 500px; /* Evita que se aplaste en móvil */
+}
+
+.editor-table th {
+    text-align: center;
+    padding: 10px;
+    font-size: 0.85rem;
+    color: #aaa;
+    border-bottom: 1px solid #444;
+}
+
+.editor-table td {
+    padding: 12px 8px;
+    vertical-align: middle;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+/* --- INPUTS FORZADOS A MODO OSCURO --- */
+.editor-input {
+    background-color: #2b2b2b !important;
+    color: white !important;
+    border: 1px solid #555 !important;
+    padding: 6px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.editor-input:focus {
+    border-color: #4caf50 !important;
+}
+
+/* Inputs de fecha */
+.input-date {
+    width: 135px;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+/* Inputs de goles */
+.score-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.input-score {
+    width: 45px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1rem;
+    color: #4caf50 !important; /* Verde para los goles */
+}
+
+/* Select de estado */
+.input-status {
+    width: 80px;
+    cursor: pointer;
+    text-align: center;
+}
+
+/* Botón Guardar */
+.btn-save-match {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s;
+}
+
+.btn-save-match:hover {
+    background-color: #0056b3;
+}
+
+.btn-save-match:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+/* Texto de equipos */
+.team-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+.team-local { text-align: right; }
+.team-visit { text-align: left; }
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .team-name { font-size: 0.8rem; }
+    .input-date { width: 110px; font-size: 0.7rem; }
+}

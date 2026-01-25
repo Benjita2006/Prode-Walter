@@ -1,7 +1,7 @@
 // src/components/MatchResultEditor.jsx
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../config';
-import './MatchCreator.css'; // Reutilizamos estilos base
+import './MatchResultEditor.css'; // 👈 Importamos el nuevo CSS dedicado
 
 function MatchResultEditor() {
     const [partidos, setPartidos] = useState([]);
@@ -34,13 +34,12 @@ function MatchResultEditor() {
         const token = localStorage.getItem('token');
         let newStatus = partido.status;
         
-        // Si hay goles, auto-cambiar a FT si está en NS
+        // Automatización: Si pone goles y estaba en NS, pasamos a FT
         if (partido.home_score !== '' && partido.away_score !== '' && partido.status === 'NS') {
              newStatus = 'FT'; 
         }
 
         try {
-            // URL CORRECTA: aseguramos que partido.id existe y se envía en la URL
             const response = await fetch(`${API_URL}/api/admin/matches/${partido.id}`, {
                 method: 'PUT',
                 headers: { 
@@ -51,22 +50,26 @@ function MatchResultEditor() {
                     home_score: partido.home_score,
                     away_score: partido.away_score,
                     status: newStatus,
-                    match_date: partido.fecha
+                    match_date: partido.fecha // Backend se encargará de formatearlo
                 })
             });
 
             if (response.ok) {
-                alert("✅ Actualizado");
+                alert("✅ Actualizado correctamente");
                 fetchPartidos(); 
             } else {
-                alert("❌ Error al guardar (ver consola)");
-                console.error(await response.json());
+                const err = await response.json();
+                alert(`❌ Error: ${err.message || 'Desconocido'}`);
+                console.error(err);
             }
-        } catch (error) { console.error(error); alert("Error de conexión"); } 
+        } catch (error) { 
+            console.error(error); 
+            alert("Error de conexión"); 
+        } 
         finally { setSavingId(null); }
     };
 
-    // Agrupar por fechas para mostrar ordenado
+    // Agrupar por fechas
     const partidosPorFecha = partidos.reduce((acc, p) => {
         const f = p.round || 'Varios';
         if (!acc[f]) acc[f] = [];
@@ -74,87 +77,89 @@ function MatchResultEditor() {
         return acc;
     }, {});
 
-    if (loading) return <p style={{textAlign:'center'}}>Cargando...</p>;
-
-    // Estilos inline para modo oscuro en inputs
-    const inputStyle = {
-        background: '#222', color: 'white', border: '1px solid #555', 
-        padding: '5px', borderRadius: '4px', textAlign: 'center'
-    };
+    if (loading) return <p style={{textAlign:'center', marginTop:'20px'}}>Cargando editor...</p>;
 
     return (
-        <div className="match-creator-container">
-            <h2>⚙️ Editar Resultados</h2>
+        <div className="editor-container">
+            <h2 className="editor-title">⚙️ Editar Resultados</h2>
             
             {Object.keys(partidosPorFecha).map(fecha => (
-                <div key={fecha} style={{marginBottom: '30px', border: '1px solid #444', borderRadius: '8px', overflow:'hidden'}}>
-                    <div style={{background: '#333', color: '#fff', padding: '10px', fontWeight: 'bold'}}>
-                        {fecha}
+                <div key={fecha} className="fecha-group">
+                    <div className="fecha-header">
+                        📅 {fecha}
                     </div>
-                    <div className="table-responsive">
-                        <table className="matches-table">
+                    <div className="editor-table-wrapper">
+                        <table className="editor-table">
                             <thead>
                                 <tr>
-                                    <th>Fecha</th>
-                                    <th style={{textAlign:'right'}}>Local</th>
-                                    <th style={{textAlign:'center'}}>Goles</th>
-                                    <th style={{textAlign:'left'}}>Visita</th>
+                                    <th style={{width:'140px'}}>Fecha/Hora</th>
+                                    <th>Local</th>
+                                    <th style={{width:'120px'}}>Resultado</th>
+                                    <th>Visita</th>
                                     <th>Estado</th>
-                                    <th></th>
+                                    <th style={{width:'60px'}}></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {partidosPorFecha[fecha].map((p) => (
-                                    <tr key={p.id} style={{borderBottom: '1px solid #333'}}>
+                                    <tr key={p.id}>
+                                        {/* Fecha */}
                                         <td>
                                             <input 
                                                 type="datetime-local"
-                                                style={{...inputStyle, width: '130px', fontSize: '0.8rem'}}
+                                                className="editor-input input-date"
                                                 value={p.fecha ? p.fecha.substring(0, 16) : ''}
                                                 onChange={(e) => handleChange(p.id, 'fecha', e.target.value)}
                                             />
                                         </td>
-                                        <td style={{textAlign: 'right', fontWeight: 'bold'}}>{p.local}</td>
-                                        <td style={{textAlign:'center'}}>
-                                            <div style={{display:'flex', gap:'5px', justifyContent:'center'}}>
+                                        
+                                        {/* Equipo Local */}
+                                        <td className="team-name team-local">{p.local}</td>
+                                        
+                                        {/* Goles */}
+                                        <td>
+                                            <div className="score-wrapper">
                                                 <input 
                                                     type="number" 
-                                                    style={{...inputStyle, width:'50px', fontWeight:'bold', color: '#4caf50'}}
+                                                    className="editor-input input-score"
                                                     value={p.home_score !== null ? p.home_score : ''}
                                                     placeholder="-"
                                                     onChange={(e) => handleChange(p.id, 'home_score', e.target.value)}
                                                 />
-                                                <span>:</span>
+                                                <span>-</span>
                                                 <input 
                                                     type="number" 
-                                                    style={{...inputStyle, width:'50px', fontWeight:'bold', color: '#4caf50'}}
+                                                    className="editor-input input-score"
                                                     value={p.away_score !== null ? p.away_score : ''}
                                                     placeholder="-"
                                                     onChange={(e) => handleChange(p.id, 'away_score', e.target.value)}
                                                 />
                                             </div>
                                         </td>
-                                        <td style={{textAlign: 'left', fontWeight: 'bold'}}>{p.visitante}</td>
+
+                                        {/* Equipo Visita */}
+                                        <td className="team-name team-visit">{p.visitante}</td>
+
+                                        {/* Estado */}
                                         <td>
                                             <select 
                                                 value={p.status}
                                                 onChange={(e) => handleChange(p.id, 'status', e.target.value)}
-                                                style={{...inputStyle, width: '80px'}}
+                                                className="editor-input input-status"
                                             >
                                                 <option value="NS">⏳ NS</option>
                                                 <option value="FT">✅ FT</option>
                                                 <option value="PST">⚠️ PST</option>
                                             </select>
                                         </td>
+
+                                        {/* Botón Guardar */}
                                         <td style={{textAlign:'center'}}>
                                             <button 
                                                 onClick={() => handleSave(p)}
                                                 disabled={savingId === p.id}
-                                                style={{
-                                                    background: savingId === p.id ? '#555' : '#007bff',
-                                                    color: 'white', border: 'none', padding: '8px 15px', 
-                                                    borderRadius: '4px', cursor: 'pointer'
-                                                }}
+                                                className="btn-save-match"
+                                                title="Guardar cambios"
                                             >
                                                 {savingId === p.id ? '...' : '💾'}
                                             </button>

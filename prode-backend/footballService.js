@@ -215,18 +215,29 @@ async function updateMatch(matchId, home_score, away_score, status, match_date) 
     try {
         await conn.beginTransaction();
 
+        // 1. Sanitizar Goles
         const hScore = (home_score === '' || home_score === null || home_score === undefined) ? null : parseInt(home_score);
         const aScore = (away_score === '' || away_score === null || away_score === undefined) ? null : parseInt(away_score);
 
+        // 2. 🛠️ CORRECCIÓN DE FECHA: Convertir ISO (T/Z) a MySQL (Espacio)
+        let fechaSQL = match_date;
+        if (match_date) {
+            // Si viene con formato javascript completo, lo limpiamos
+            fechaSQL = new Date(match_date).toISOString().slice(0, 19).replace('T', ' ');
+        }
+
+        // 3. Actualizar la tabla matches
         await conn.execute(
             `UPDATE matches 
              SET home_score = ?, away_score = ?, status = ?, match_date = ? 
              WHERE id = ?`,
-            [hScore, aScore, status, match_date, matchId]
+            [hScore, aScore, status, fechaSQL, matchId]
         );
 
+        // 4. RECALCULAR PUNTOS (Solo si el partido se marca como 'FT')
         if (status === 'FT') {
             console.log(`🔄 Recalculando puntos para el partido ID: ${matchId}...`);
+            
             const sqlRecalculate = `
                 UPDATE predictions p
                 JOIN matches m ON p.match_id = m.id
@@ -243,6 +254,7 @@ async function updateMatch(matchId, home_score, away_score, status, match_date) 
             `;
             await conn.execute(sqlRecalculate, [matchId]);
         } else {
+            // Si deja de ser FT, quitamos los puntos
             await conn.execute('UPDATE predictions SET points = 0 WHERE match_id = ?', [matchId]);
         }
 
