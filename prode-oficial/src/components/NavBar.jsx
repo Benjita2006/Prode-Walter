@@ -7,14 +7,13 @@ function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentVie
     // Definimos los menús
     const allMenuItems = [
         { name: 'Partidos', view: 'matches', roles: ['User', 'Owner', 'Dev'], icon: '⚽' },
-        
-        // 🟢 AQUÍ AGREGAMOS EL NUEVO BOTÓN
-        { name: 'Promedio', view: 'results', roles: ['User', 'Owner', 'Dev'], icon: '📊' },
-
+        { name: 'Resultados', view: 'results', roles: ['User', 'Owner', 'Dev'], icon: '📊' }, // Cambié "Promedio" por Resultados que es más claro
         { name: 'Ranking', view: 'ranking', roles: ['User', 'Owner', 'Dev'], icon: '🏆' },
         { name: 'Chat', view: 'chat', roles: ['User', 'Owner', 'Dev'], icon: '💬' },
-        { name: 'Admin', view: 'admin-dashboard', roles: ['Owner', 'Dev'], icon: '⚙️' }, // Cambié icono Admin a engranaje para diferenciar
-        { name: 'Crear', view: 'creator', roles: ['Owner', 'Dev'], icon: '✏️' },
+        
+        // 👇 SOLUCIÓN: Quitamos el botón "Crear" de aquí. 
+        // Ahora todo se maneja desde "Admin".
+        { name: 'Admin', view: 'admin-dashboard', roles: ['Owner', 'Dev'], icon: '⚙️' },
         { name: 'Usuarios', view: 'manage-users', roles: ['Dev', 'Owner'], icon: '👥' }
     ];
 
@@ -25,13 +24,11 @@ function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentVie
         <>
             {/* --- BARRA SUPERIOR (ESCRITORIO) --- */}
             <nav className="navbar">
-                {/* Izquierda */}
                 <div className="navbar-brand" onClick={() => onNavClick('matches')}>
                     <span className="logo-icon">⚽</span>
                     <span className="logo-text">PRODE</span>
                 </div>
 
-                {/* Centro (Se oculta en móvil gracias al CSS) */}
                 <div className="navbar-center">
                     {menuItems.map(item => (
                         <button 
@@ -44,7 +41,6 @@ function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentVie
                     ))}
                 </div>
 
-                {/* Derecha */}
                 <div className="navbar-right">
                     <button onClick={toggleTheme} className="theme-toggle">
                         {theme === 'light' ? '🌙' : '☀️'}
