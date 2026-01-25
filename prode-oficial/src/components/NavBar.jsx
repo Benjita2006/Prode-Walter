@@ -2,19 +2,19 @@
 import React from 'react';
 import './NavBar.css'; 
 
-function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentView }) {
+// 👇 SOLUCIÓN: Eliminamos 'theme' y 'toggleTheme' de los paréntesis porque ya no los usamos aquí
+function NavBar({ userRole, onLogout, onNavClick, currentView }) {
     
     // Definimos los menús
     const allMenuItems = [
         { name: 'Partidos', view: 'matches', roles: ['User', 'Owner', 'Dev'], icon: '⚽' },
-        { name: 'Resultados', view: 'results', roles: ['User', 'Owner', 'Dev'], icon: '📊' }, // Cambié "Promedio" por Resultados que es más claro
+        { name: 'Resultados', view: 'results', roles: ['User', 'Owner', 'Dev'], icon: '📊' },
         { name: 'Ranking', view: 'ranking', roles: ['User', 'Owner', 'Dev'], icon: '🏆' },
         { name: 'Chat', view: 'chat', roles: ['User', 'Owner', 'Dev'], icon: '💬' },
-        
-        // 👇 SOLUCIÓN: Quitamos el botón "Crear" de aquí. 
-        // Ahora todo se maneja desde "Admin".
         { name: 'Admin', view: 'admin-dashboard', roles: ['Owner', 'Dev'], icon: '⚙️' },
-        { name: 'Usuarios', view: 'manage-users', roles: ['Dev', 'Owner'], icon: '👥' }
+        
+        // Botón Salir en la barra inferior
+        { name: 'Salir', view: 'logout', roles: ['User', 'Owner', 'Dev'], icon: '🚪' }
     ];
 
     // Filtramos según el rol
@@ -22,41 +22,12 @@ function NavBar({ userRole, onLogout, onNavClick, theme, toggleTheme, currentVie
 
     return (
         <>
-            {/* --- BARRA SUPERIOR (ESCRITORIO) --- */}
-            <nav className="navbar">
-                <div className="navbar-brand" onClick={() => onNavClick('matches')}>
-                    <span className="logo-icon">⚽</span>
-                    <span className="logo-text">PRODE</span>
-                </div>
-
-                <div className="navbar-center">
-                    {menuItems.map(item => (
-                        <button 
-                            key={item.view}
-                            onClick={() => onNavClick(item.view)}
-                            className={`nav-link ${currentView === item.view ? 'active' : ''}`}
-                        >
-                            {item.name}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="navbar-right">
-                    <button onClick={toggleTheme} className="theme-toggle">
-                        {theme === 'light' ? '🌙' : '☀️'}
-                    </button>
-                    <button onClick={onLogout} className="btn-logout-minimal">
-                        Salir
-                    </button>
-                </div>
-            </nav>
-
             {/* --- BARRA INFERIOR (MÓVIL) --- */}
             <div className="bottom-nav">
                 {menuItems.map(item => (
                     <button 
-                        key={item.view}
-                        onClick={() => onNavClick(item.view)}
+                        key={item.name}
+                        onClick={() => item.view === 'logout' ? onLogout() : onNavClick(item.view)}
                         className={`bottom-nav-item ${currentView === item.view ? 'active' : ''}`}
                     >
                         <span className="bottom-nav-icon">{item.icon}</span>

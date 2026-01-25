@@ -7,7 +7,7 @@ import NavBar from './components/NavBar';
 import MatchCreator from './components/MatchCreator'; 
 import MatchResultEditor from './components/MatchResultEditor';
 import AdminDashboard from './components/AdminDashboard'; 
-import UsersManagement from './components/UsersManagement'; 
+import UsersManagement from './components/UsersManagement'; // 👈 Se queda aquí
 import ChatGlobal from './components/ChatGlobal';
 import Ranking from './components/Ranking';
 import { API_URL } from './config'; 
@@ -15,7 +15,6 @@ import TutorialOverlay from './components/TutorialOverlay';
 import './App.css';
 
 function App() {
-    // ESTADOS
     const [usuario, setUsuario] = useState(null); 
     const [partidos, setPartidos] = useState([]); 
     const [loading, setLoading] = useState(true);
@@ -23,17 +22,16 @@ function App() {
     const [appView, setAppView] = useState('matches'); 
     const [showWelcome, setShowWelcome] = useState(false); 
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-    const [adminTab, setAdminTab] = useState('dashboard');
-    const [chatMessages, setChatMessages] = useState([]);
+    
+    // 🟢 Agregamos 'users' a las pestañas del admin
+    const [adminTab, setAdminTab] = useState('dashboard'); 
 
-    // ESTADOS DE LÓGICA
+    const [chatMessages, setChatMessages] = useState([]);
     const [misPronosticosTemp, setMisPronosticosTemp] = useState({});
-    const [fechaAbierta, setFechaAbierta] = useState(null);
+    const [fechaAbierta, setFechaAbierta] = useState(null); // Iniciamos en NULL
     const [guardando, setGuardando] = useState(false);
     
-    // REF PARA SOLUCIONAR BUG DE APERTURA INFINITA
     const initializedRef = useRef(false);
-
     const username = localStorage.getItem('username') || (usuario ? usuario.username : "Anónimo");
 
     useEffect(() => {
@@ -51,7 +49,7 @@ function App() {
         setUsuario(null);
         setCurrentView('login'); 
         setPartidos([]); 
-        initializedRef.current = false; // Resetear ref al salir
+        initializedRef.current = false;
     }, []);
 
     const fetchPartidos = useCallback(async () => {
@@ -70,7 +68,6 @@ function App() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            // ... (Tu lógica de decodificación de token igual que antes) ...
             try {
                 const base64Url = token.split('.')[1];
                 const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -78,7 +75,9 @@ function App() {
                 const userDecoded = JSON.parse(jsonPayload);
                 if (userDecoded.exp * 1000 < Date.now()) handleLogout();
                 else { setUsuario(userDecoded); setCurrentView('app'); fetchPartidos(); }
-            } catch { handleLogout(); }
+            } catch (error){
+                console.error("Error decodificando token:", error); handleLogout();
+            }
         }
         setLoading(false);
     }, [handleLogout, fetchPartidos]);
@@ -92,8 +91,9 @@ function App() {
         }
     }, [partidos]);
 
-    // --- LÓGICA DE FILTRADO PARA FIXTURE ---
-    // Filtramos partidos que NO sean 'FT' (Finalizados)
+    // ❌ AQUÍ BORRÉ EL EFECTO QUE ABRÍA LA FECHA AUTOMÁTICAMENTE ❌
+    // Ahora fechaAbierta se mantiene en null hasta que tú hagas clic.
+
     const partidosActivos = partidos.filter(p => p.status !== 'FT');
     
     const partidosPorFechaFixture = partidosActivos.reduce((acc, p) => {
@@ -108,7 +108,6 @@ function App() {
     const guardarFecha = async (nombreFecha) => {
         setGuardando(true);
         const token = localStorage.getItem('token');
-        // Usamos partidosActivos para buscar
         const partidosDeLaFecha = partidosPorFechaFixture[nombreFecha];
         const payload = partidosDeLaFecha.filter(p => misPronosticosTemp[p.id]).map(p => ({ matchId: p.id, result: misPronosticosTemp[p.id] }));
 
@@ -122,9 +121,10 @@ function App() {
             });
             if (res.ok) { alert(`✅ Guardado!`); fetchPartidos(); } 
             else alert("Error al guardar.");
-        } catch (e) { alert("Error conexión.");
-            console.error("Error al guardar pronósticos:", e);
-         } 
+        } catch (e) { 
+            console.error("Error al guardar:", e);
+            alert("Error conexión."); 
+        } 
         finally { setGuardando(false); }
     };
 
@@ -147,26 +147,32 @@ function App() {
     return (
         <div className="app-container">
             {showWelcome && <div className="welcome-overlay"><h1 className="welcome-text">⚽ Hola, {usuario.username}</h1></div>}
+            
             <NavBar userRole={userRole || 'Guest'} onLogout={handleLogout} onNavClick={handleNavClick} theme={theme} toggleTheme={toggleTheme} currentView={appView} />
             
             <div className="main-content-wrapper">
-                {appView === 'manage-users' && isAdmin && <UsersManagement />}
+                
+                {/* 🟢 ADMIN DASHBOARD CON PESTAÑA DE USUARIOS AÑADIDA */}
                 {appView === 'admin-dashboard' && isAdmin && (
                     <div style={{width: '100%', maxWidth: '800px', margin: '0 auto'}}>
-                        <div style={{display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px', flexWrap: 'wrap'}}>
-                            <button onClick={() => setAdminTab('dashboard')} className={adminTab === 'dashboard' ? 'btn-tab-active' : 'btn-tab'}>📊 Dashboard</button>
+                        <div style={{display: 'flex', justifyContent: 'center', gap: '5px', marginBottom: '20px', flexWrap: 'wrap'}}>
+                            <button onClick={() => setAdminTab('dashboard')} className={adminTab === 'dashboard' ? 'btn-tab-active' : 'btn-tab'}>📊 Dash</button>
                             <button onClick={() => setAdminTab('create')} className={adminTab === 'create' ? 'btn-tab-active' : 'btn-tab'}>➕ Crear</button>
-                            <button onClick={() => setAdminTab('edit')} className={adminTab === 'edit' ? 'btn-tab-active' : 'btn-tab'}>✏️ Editar/Cargar</button>
+                            <button onClick={() => setAdminTab('edit')} className={adminTab === 'edit' ? 'btn-tab-active' : 'btn-tab'}>✏️ Edit</button>
+                            {/* BOTÓN NUEVO: USUARIOS */}
+                            <button onClick={() => setAdminTab('users')} className={adminTab === 'users' ? 'btn-tab-active' : 'btn-tab'}>👥 Users</button>
                         </div>
                         {adminTab === 'dashboard' && <AdminDashboard onUpdate={fetchPartidos} />}
                         {adminTab === 'create' && <MatchCreator onMatchCreated={fetchPartidos} />}
                         {adminTab === 'edit' && <MatchResultEditor />}
+                        {adminTab === 'users' && <UsersManagement />}
                     </div>
                 )}
+
                 {appView === 'ranking' && <Ranking />}
                 {appView === 'chat' && <div className="chat-full-page"><ChatGlobal username={username} fullPage={true} messages={chatMessages} setMessages={setChatMessages} /></div>}
 
-                {/* --- VISTA: FIXTURE (SOLO PARTIDOS POR JUGAR) --- */}
+                {/* --- FIXTURE --- */}
                 {appView === 'matches' && (
                     <>
                         <h1 style={{textAlign: 'center', marginBottom: '15px'}}>🏆 Fixture</h1>
@@ -214,7 +220,7 @@ function App() {
                     </>
                 )}
 
-                {/* --- VISTA: RESULTADOS (AGRUPADOS POR FECHA) --- */}
+                {/* --- RESULTADOS --- */}
                 {appView === 'results' && (
                     <>
                         <h1 style={{textAlign: 'center', marginBottom: '15px'}}>📊 Resultados</h1>
@@ -222,7 +228,6 @@ function App() {
                             const terminados = partidos.filter(p => p.status === 'FT');
                             if (terminados.length === 0) return <div style={{textAlign:'center', marginTop:'50px'}}><p style={{fontSize:'3rem'}}>⚽💤</p><p>Aún no hay resultados.</p></div>;
                             
-                            // Agrupar por fecha igual que el fixture
                             const resultadosPorFecha = terminados.reduce((acc, p) => {
                                 const f = p.round || 'Varios';
                                 if (!acc[f]) acc[f] = [];
