@@ -63,7 +63,7 @@ function TutorialOverlay({ username }) {
                     <>
                         <div className="tutorial-icon">🏆</div>
                         <h3>Tabla de Posiciones</h3>
-                        <p>Compite contra los demás usuarios.</p>
+                        <p>Compite contra los demás.</p>
                         <ul style={{textAlign: 'left', margin: '0 auto', maxWidth: '300px', marginBottom: '20px'}}>
                             <li><b>1 Punto:</b> Si aciertas el resultado exacto, te llevas 1 punto.</li>
                             <li><b>2 Punto:</b> Revisa la tabla para poder ver tus puntos y el de los demas</li>

@@ -7,7 +7,7 @@ import NavBar from './components/NavBar';
 import MatchCreator from './components/MatchCreator'; 
 import MatchResultEditor from './components/MatchResultEditor';
 import AdminDashboard from './components/AdminDashboard'; 
-import UsersManagement from './components/UsersManagement'; // 👈 Se queda aquí
+import UsersManagement from './components/UsersManagement'; 
 import ChatGlobal from './components/ChatGlobal';
 import Ranking from './components/Ranking';
 import { API_URL } from './config'; 
@@ -15,31 +15,35 @@ import TutorialOverlay from './components/TutorialOverlay';
 import './App.css';
 
 function App() {
+    // ESTADOS
     const [usuario, setUsuario] = useState(null); 
     const [partidos, setPartidos] = useState([]); 
     const [loading, setLoading] = useState(true);
     const [currentView, setCurrentView] = useState('login'); 
     const [appView, setAppView] = useState('matches'); 
     const [showWelcome, setShowWelcome] = useState(false); 
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
     
-    // 🟢 Agregamos 'users' a las pestañas del admin
-    const [adminTab, setAdminTab] = useState('dashboard'); 
+    // 🌑 MODO OSCURO FORZADO (Ya no leemos localStorage ni permitimos cambiar)
+    const [theme] = useState('dark'); 
 
+    const [adminTab, setAdminTab] = useState('dashboard');
     const [chatMessages, setChatMessages] = useState([]);
+
+    // ESTADOS DE LÓGICA
     const [misPronosticosTemp, setMisPronosticosTemp] = useState({});
-    const [fechaAbierta, setFechaAbierta] = useState(null); // Iniciamos en NULL
+    const [fechaAbierta, setFechaAbierta] = useState(null);
     const [guardando, setGuardando] = useState(false);
     
     const initializedRef = useRef(false);
     const username = localStorage.getItem('username') || (usuario ? usuario.username : "Anónimo");
 
+    // Efecto para aplicar el tema al HTML
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
+        // Opcional: Si quieres guardar la preferencia por si activas el modo claro en el futuro
+        localStorage.setItem('theme', theme); 
     }, [theme]);
 
-    const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
     const userRole = usuario ? usuario.role : null;
     const isAdmin = userRole === 'Owner' || userRole === 'Dev';
 
@@ -49,7 +53,7 @@ function App() {
         setUsuario(null);
         setCurrentView('login'); 
         setPartidos([]); 
-        initializedRef.current = false;
+        initializedRef.current = false; 
     }, []);
 
     const fetchPartidos = useCallback(async () => {
@@ -90,9 +94,6 @@ function App() {
             setMisPronosticosTemp(buffer);
         }
     }, [partidos]);
-
-    // ❌ AQUÍ BORRÉ EL EFECTO QUE ABRÍA LA FECHA AUTOMÁTICAMENTE ❌
-    // Ahora fechaAbierta se mantiene en null hasta que tú hagas clic.
 
     const partidosActivos = partidos.filter(p => p.status !== 'FT');
     
@@ -148,18 +149,18 @@ function App() {
         <div className="app-container">
             {showWelcome && <div className="welcome-overlay"><h1 className="welcome-text">⚽ Hola, {usuario.username}</h1></div>}
             
-            <NavBar userRole={userRole || 'Guest'} onLogout={handleLogout} onNavClick={handleNavClick} theme={theme} toggleTheme={toggleTheme} currentView={appView} />
+            {/* 👇 NavBar limpio: ya no pasamos theme ni toggleTheme */}
+            <NavBar userRole={userRole || 'Guest'} onLogout={handleLogout} onNavClick={handleNavClick} currentView={appView} />
             
             <div className="main-content-wrapper">
                 
-                {/* 🟢 ADMIN DASHBOARD CON PESTAÑA DE USUARIOS AÑADIDA */}
+                {appView === 'manage-users' && isAdmin && <UsersManagement />}
                 {appView === 'admin-dashboard' && isAdmin && (
                     <div style={{width: '100%', maxWidth: '800px', margin: '0 auto'}}>
                         <div style={{display: 'flex', justifyContent: 'center', gap: '5px', marginBottom: '20px', flexWrap: 'wrap'}}>
                             <button onClick={() => setAdminTab('dashboard')} className={adminTab === 'dashboard' ? 'btn-tab-active' : 'btn-tab'}>📊 Dash</button>
                             <button onClick={() => setAdminTab('create')} className={adminTab === 'create' ? 'btn-tab-active' : 'btn-tab'}>➕ Crear</button>
                             <button onClick={() => setAdminTab('edit')} className={adminTab === 'edit' ? 'btn-tab-active' : 'btn-tab'}>✏️ Edit</button>
-                            {/* BOTÓN NUEVO: USUARIOS */}
                             <button onClick={() => setAdminTab('users')} className={adminTab === 'users' ? 'btn-tab-active' : 'btn-tab'}>👥 Users</button>
                         </div>
                         {adminTab === 'dashboard' && <AdminDashboard onUpdate={fetchPartidos} />}
