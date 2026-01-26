@@ -157,16 +157,58 @@ function App() {
                 {appView === 'manage-users' && isAdmin && <UsersManagement />}
                 {appView === 'admin-dashboard' && isAdmin && (
                     <div style={{width: '100%', maxWidth: '800px', margin: '0 auto'}}>
-                        <div style={{display: 'flex', justifyContent: 'center', gap: '5px', marginBottom: '20px', flexWrap: 'wrap'}}>
-                            <button onClick={() => setAdminTab('dashboard')} className={adminTab === 'dashboard' ? 'btn-tab-active' : 'btn-tab'}>📊 Dash</button>
-                            <button onClick={() => setAdminTab('create')} className={adminTab === 'create' ? 'btn-tab-active' : 'btn-tab'}>➕ Crear</button>
-                            <button onClick={() => setAdminTab('edit')} className={adminTab === 'edit' ? 'btn-tab-active' : 'btn-tab'}>✏️ Edit</button>
-                            <button onClick={() => setAdminTab('users')} className={adminTab === 'users' ? 'btn-tab-active' : 'btn-tab'}>👥 Users</button>
+                        
+                        {/* Cabecera Unificada */}
+                        <div className="admin-header">
+                            <h2>🛠️ Administración</h2>
                         </div>
-                        {adminTab === 'dashboard' && <AdminDashboard onUpdate={fetchPartidos} />}
-                        {adminTab === 'create' && <MatchCreator onMatchCreated={fetchPartidos} />}
-                        {adminTab === 'edit' && <MatchResultEditor />}
-                        {adminTab === 'users' && <UsersManagement />}
+
+                        {/* Menú de Funciones (Grilla) */}
+                        <div className="admin-nav-grid">
+                            <button 
+                                onClick={() => setAdminTab('dashboard')} 
+                                className={`admin-nav-card ${adminTab === 'dashboard' ? 'active' : ''}`}
+                                data-tab="dashboard"
+                            >
+                                <span className="icon">📊</span>
+                                <span>General</span>
+                            </button>
+
+                            <button 
+                                onClick={() => setAdminTab('create')} 
+                                className={`admin-nav-card ${adminTab === 'create' ? 'active' : ''}`}
+                                data-tab="create"
+                            >
+                                <span className="icon">➕</span>
+                                <span>Crear</span>
+                            </button>
+
+                            <button 
+                                onClick={() => setAdminTab('edit')} 
+                                className={`admin-nav-card ${adminTab === 'edit' ? 'active' : ''}`}
+                                data-tab="edit"
+                            >
+                                <span className="icon">✏️</span>
+                                <span>Editar</span>
+                            </button>
+
+                            <button 
+                                onClick={() => setAdminTab('users')} 
+                                className={`admin-nav-card ${adminTab === 'users' ? 'active' : ''}`}
+                                data-tab="users"
+                            >
+                                <span className="icon">👥</span>
+                                <span>Usuarios</span>
+                            </button>
+                        </div>
+
+                        {/* CONTENIDO DINÁMICO */}
+                        <div className="admin-content-area">
+                            {adminTab === 'dashboard' && <AdminDashboard onUpdate={fetchPartidos} />}
+                            {adminTab === 'create' && <MatchCreator onMatchCreated={fetchPartidos} />}
+                            {adminTab === 'edit' && <MatchResultEditor />}
+                            {adminTab === 'users' && <UsersManagement />}
+                        </div>
                     </div>
                 )}
 

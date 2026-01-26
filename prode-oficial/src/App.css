@@ -300,3 +300,93 @@
 [data-theme='light'] .admin-table td {
     color: #333 !important;
 }
+
+/* --- ESTILOS DEL PANEL ADMIN (App.css) --- */
+
+.admin-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-top: 10px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 15px;
+}
+
+.admin-header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Contenedor de la grilla de botones */
+.admin-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 columnas en escritorio */
+  gap: 10px;
+  margin-bottom: 25px;
+  background-color: #1f1f1f;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #333;
+}
+
+/* Botones individuales (Tarjetas) */
+.admin-nav-card {
+  background-color: transparent;
+  border: none;
+  color: #888;
+  padding: 10px 5px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.admin-nav-card .icon {
+  font-size: 1.5rem;
+  margin-bottom: 2px;
+}
+
+/* Estado Hover */
+.admin-nav-card:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #bbb;
+}
+
+/* Estado Activo (Seleccionado) */
+.admin-nav-card.active {
+  background-color: #2196F3; /* Azul brillante */
+  color: white;
+  box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Colores específicos para activo si quieres diferenciarlos */
+.admin-nav-card.active[data-tab="dashboard"] { background-color: #4caf50; }
+.admin-nav-card.active[data-tab="create"] { background-color: #2196f3; }
+.admin-nav-card.active[data-tab="edit"] { background-color: #ff9800; }
+.admin-nav-card.active[data-tab="users"] { background-color: #9c27b0; }
+
+/* Ajuste para móviles: 2 columnas */
+@media (max-width: 600px) {
+  .admin-nav-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2x2 en celular */
+    gap: 8px;
+  }
+  
+  .admin-nav-card {
+    padding: 15px 10px; /* Más grande para el dedo */
+    background-color: #2a2a2a; /* Fondo más visible en móvil */
+  }
+  
+  .admin-nav-card.active {
+    background-color: #2196F3 !important; /* Unificar color en móvil para limpieza */
+  }
+}
