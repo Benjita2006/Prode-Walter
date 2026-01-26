@@ -12,6 +12,7 @@ import ChatGlobal from './components/ChatGlobal';
 import Ranking from './components/Ranking';
 import { API_URL } from './config'; 
 import TutorialOverlay from './components/TutorialOverlay';
+import { FaCalendarDay, FaChevronDown } from 'react-icons/fa';
 import './App.css';
 
 function App() {
@@ -216,29 +217,33 @@ function App() {
                 {appView === 'chat' && <div className="chat-full-page"><ChatGlobal username={username} fullPage={true} messages={chatMessages} setMessages={setChatMessages} /></div>}
 
                 {/* --- FIXTURE --- */}
+                {/* --- VISTA: FIXTURE (SOLO PARTIDOS POR JUGAR) --- */}
                 {appView === 'matches' && (
                     <>
-                        <h1 style={{textAlign: 'center', marginBottom: '15px'}}>🏆 Fixture</h1>
-                        {Object.keys(partidosPorFechaFixture).length === 0 ? <p style={{textAlign:'center'}}>No hay partidos pendientes.</p> : (
+                        <h1 style={{textAlign: 'center', marginBottom: '20px', textTransform:'uppercase', letterSpacing:'2px'}}>🏆 Fixture</h1>
+                        
+                        {Object.keys(partidosPorFechaFixture).length === 0 ? (
+                            <p style={{textAlign:'center', color:'#888', marginTop:'40px'}}>No hay partidos pendientes.</p> 
+                        ) : (
                             <div className="fechas-container" style={{paddingBottom: '100px', width: '100%'}}>
                                 {Object.keys(partidosPorFechaFixture).map((nombreFecha) => (
-                                    <div key={nombreFecha} style={{marginBottom: '0'}}>
+                                    <div key={nombreFecha} className="fecha-group-container">
+                                        
+                                        {/* 1. BOTÓN ENCABEZADO MEJORADO */}
                                         <button 
                                             onClick={() => setFechaAbierta(fechaAbierta === nombreFecha ? null : nombreFecha)}
-                                            style={{
-                                                width: '100%', padding: '20px', backgroundColor: fechaAbierta === nombreFecha ? '#1f1f1f' : '#2c2c2c',
-                                                border: 'none', borderBottom: '1px solid #444', color: 'white', borderRadius: '0',
-                                                fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', 
-                                                justifyContent: 'space-between', alignItems: 'center', textTransform: 'uppercase'
-                                            }}
+                                            className={`date-header-btn ${fechaAbierta === nombreFecha ? 'open' : ''}`}
                                         >
-                                            <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                                                <span style={{color: '#4caf50'}}>📅</span><span>{nombreFecha}</span>
+                                            <div className="date-label-container">
+                                                <FaCalendarDay className="date-icon" />
+                                                <span>{nombreFecha}</span>
                                             </div>
-                                            <span style={{color: '#888', fontSize: '1rem'}}>{fechaAbierta === nombreFecha ? '▲' : '▼'}</span>
+                                            <FaChevronDown className="arrow-icon" />
                                         </button>
+
+                                        {/* 2. CONTENIDO DESPLEGABLE */}
                                         {fechaAbierta === nombreFecha && (
-                                            <div style={{backgroundColor: '#181818', padding: '15px 10px', borderBottom: '2px solid #4caf50'}}>
+                                            <div className="date-content-area">
                                                 <div className="matches-grid-container" style={{padding: '0', gap: '15px'}}>
                                                     {partidosPorFechaFixture[nombreFecha].map(p => (
                                                         <MatchCard 
@@ -249,8 +254,13 @@ function App() {
                                                         />
                                                     ))}
                                                 </div>
-                                                <div style={{marginTop: '25px', padding: '0 10px'}}>
-                                                    <button onClick={() => guardarFecha(nombreFecha)} disabled={guardando} className="btn-save-fixture" style={{width:'100%', padding:'15px', background:'#2196F3', border:'none', color:'white', fontWeight:'bold', cursor:'pointer'}}>
+                                                
+                                                <div style={{marginTop: '25px', padding: '0 5px'}}>
+                                                    <button 
+                                                        onClick={() => guardarFecha(nombreFecha)} 
+                                                        disabled={guardando} 
+                                                        className="btn-save-fixture"
+                                                    >
                                                         {guardando ? 'Guardando...' : `GUARDAR PRONÓSTICOS`}
                                                     </button>
                                                 </div>

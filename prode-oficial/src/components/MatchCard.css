@@ -202,3 +202,124 @@
     50% { opacity: 0.5; }
     100% { opacity: 1; }
 }
+
+.fecha-group-container {
+    margin-bottom: 20px;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+}
+
+/* Botón Encabezado */
+.date-header-btn {
+    width: 100%;
+    padding: 18px 25px;
+    background: linear-gradient(145deg, #2a2a2a, #202020);
+    border: 1px solid #333;
+    border-radius: 12px; /* Bordes redondos cuando está cerrado */
+    color: #eee;
+    font-family: inherit;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efecto Hover */
+.date-header-btn:hover {
+    background: linear-gradient(145deg, #333, #252525);
+    border-color: #555;
+    transform: translateY(-2px);
+}
+
+/* Estado ABIERTO */
+.date-header-btn.open {
+    background: #222;
+    border-bottom: 1px solid #4caf50; /* Línea verde divisoria */
+    border-bottom-left-radius: 0; /* Quitamos curvas de abajo para unir */
+    border-bottom-right-radius: 0;
+    margin-bottom: 0;
+    color: #4caf50; /* Texto verde al abrir */
+}
+
+/* Icono y Texto Izquierda */
+.date-label-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.date-icon {
+    font-size: 1.3rem;
+    color: #666;
+    transition: color 0.3s;
+}
+
+.date-header-btn.open .date-icon {
+    color: #4caf50;
+    filter: drop-shadow(0 0 8px rgba(76, 175, 80, 0.4));
+}
+
+/* Flecha Derecha Animada */
+.arrow-icon {
+    font-size: 1rem;
+    color: #666;
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Rebote suave */
+}
+
+.date-header-btn.open .arrow-icon {
+    transform: rotate(180deg);
+    color: #4caf50;
+}
+
+/* Contenedor del Contenido (Partidos) */
+.date-content-area {
+    background-color: #181818;
+    border: 1px solid #333;
+    border-top: none; /* Sin borde arriba para unir con el botón */
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    padding: 20px 15px;
+    /* Animación de apertura */
+    animation: expandIn 0.3s ease-out forwards;
+    transform-origin: top;
+}
+
+@keyframes expandIn {
+    from { opacity: 0; transform: scaleY(0.95); }
+    to { opacity: 1; transform: scaleY(1); }
+}
+
+/* Botón Guardar dentro del acordeón */
+.btn-save-fixture {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(90deg, #2196F3, #1976D2);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 800;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(33, 150, 243, 0.4);
+    transition: all 0.2s;
+}
+
+.btn-save-fixture:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(33, 150, 243, 0.6);
+}
+
+.btn-save-fixture:disabled {
+    background: #444;
+    color: #888;
+    cursor: not-allowed;
+    box-shadow: none;
+}
