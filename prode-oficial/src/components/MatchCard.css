@@ -1,165 +1,152 @@
 /* src/components/MatchCard.css */
 
 .match-card {
-    background-color: var(--card-bg);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow);
-    border-radius: 12px;
-    padding: 15px; /* Padding reducido para móviles */
+    background: linear-gradient(145deg, #1e1e1e, #252525);
+    border-radius: 16px;
+    padding: 15px;
     margin-bottom: 15px;
-    transition: transform 0.2s, background-color 0.3s;
-    width: 100%;
-    /* Quitamos height fijo para que se adapte al contenido */
-    display: flex;
-    flex-direction: column;
+    border: 1px solid #333;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* HEADER (Fecha y Estado) */
-.card-header {
+/* Efecto hover suave */
+.match-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    border-color: #4caf50;
+}
+
+/* Barra lateral de estado (verde si activo, gris si cerrado) */
+.match-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: #4caf50; /* Por defecto activo */
+}
+
+.match-card.bloqueado::before {
+    background-color: #666;
+}
+
+/* Cabecera: Fecha y Estado */
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #888;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Contenedor de equipos */
+.teams-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 8px;
-}
-
-/* CUERPO (Equipos y Botones) */
-.card-body {
-    display: flex;
-    align-items: center; /* Alinea verticalmente al centro */
-    justify-content: space-between; /* Distribuye espacio */
-    gap: 5px; /* Espacio mínimo entre columnas */
     margin-bottom: 15px;
 }
 
-/* COLUMNA DE EQUIPO (Izquierda y Derecha) */
-.team-col {
-    flex: 1; /* Ocupan el mismo ancho */
+.team {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 35%;
     text-align: center;
-    /* Límite de ancho para que no empujen al centro */
-    max-width: 35%; 
 }
 
-/* --- SOLUCIÓN AL ESCUDO GIGANTE --- */
 .team-logo {
-    width: 45px;  /* Tamaño fijo seguro */
-    height: 45px; /* Tamaño fijo seguro */
-    object-fit: contain; /* Evita que se deforme */
-    margin-bottom: 5px;
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 
 .team-name {
-    font-size: 0.85rem; /* Texto un poco más chico en móvil */
-    font-weight: 600;
-    line-height: 1.2;
-    color: var(--text-primary);
-    word-wrap: break-word; /* Si el nombre es largo, baja de línea */
-}
-
-/* COLUMNA CENTRAL (Empate) */
-.draw-col {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 20%; /* Ancho fijo para el centro */
-}
-
-/* BOTONES DE SELECCIÓN */
-.team-selectable {
-    cursor: pointer;
-    padding: 8px 4px; /* Menos padding lateral */
-    border-radius: 8px;
-    border: 2px solid transparent;
-    transition: all 0.2s;
-    width: 100%; /* Que ocupe su columna */
-}
-
-.team-selectable:hover {
-    background-color: var(--input-bg);
-}
-
-.btn-draw {
-    background-color: var(--input-bg);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-    padding: 8px 5px;
-    font-size: 0.75rem; /* Letra más chica para que quepa "EMPATE" */
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    width: 100%;
-}
-
-/* ESTADOS ACTIVOS (Ganador/Empate) */
-.selected-win {
-    background-color: rgba(0, 200, 83, 0.15);
-    border-color: var(--accent-color);
-}
-
-.selected-draw {
-    background-color: rgba(251, 192, 45, 0.2);
-    color: #fbc02d;
-    border-color: #fbc02d;
-}
-
-/* BOTÓN GUARDAR (Footer) */
-.btn-save {
-    width: 100%;
-    padding: 10px;
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
     font-size: 0.9rem;
-    cursor: pointer;
-    margin-top: auto; /* Empuja al fondo */
-}
-.btn-save:disabled {
-    background-color: var(--border-color);
-    color: var(--text-secondary);
+    font-weight: 700;
+    color: #eee;
+    line-height: 1.2;
 }
 
-/* CHECK VERDE */
-.check-mark {
-    font-size: 0.75rem;
-    color: var(--accent-color);
-    font-weight: bold;
-    margin-top: 2px;
+/* VS o Marcador Central */
+.match-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 30%;
 }
 
-/* ESTILO DEL MARCADOR CENTRAL */
-.score-display {
+.vs-badge {
+    background-color: #333;
+    color: #aaa;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    background-color: #222; /* Fondo oscuro para el resultado */
-    padding: 5px 15px;
-    border-radius: 8px;
-    border: 1px solid #444;
+    font-size: 0.8rem;
+    font-weight: bold;
 }
 
-.score-number {
-    font-size: 1.8rem; /* Números grandes */
+.score-display {
+    font-size: 1.8rem;
     font-weight: 800;
     color: #fff;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
 }
 
-.score-divider {
-    font-size: 1.2rem;
+/* Botones de Pronóstico */
+.prediction-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    background-color: #121212;
+    padding: 5px;
+    border-radius: 12px;
+}
+
+.btn-predict {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #333;
     color: #888;
-    margin-top: -2px;
+    padding: 10px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+    font-size: 0.9rem;
 }
 
-/* Ajuste para que los nombres ganadores resalten más */
-.team-name {
-    transition: color 0.3s;
+/* Colores de selección */
+.btn-predict:hover:not(:disabled) {
+    background-color: #222;
+    color: white;
+}
+
+.btn-predict.selected {
+    color: white;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.btn-predict.home.selected { background-color: #4caf50; } /* Verde Local */
+.btn-predict.draw.selected { background-color: #ff9800; } /* Naranja Empate */
+.btn-predict.away.selected { background-color: #2196f3; } /* Azul Visitante */
+
+.btn-predict:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
