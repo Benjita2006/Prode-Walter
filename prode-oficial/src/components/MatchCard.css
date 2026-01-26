@@ -1,152 +1,204 @@
 /* src/components/MatchCard.css */
 
 .match-card {
-    background: linear-gradient(145deg, #1e1e1e, #252525);
+    background: linear-gradient(145deg, #232323, #1a1a1a); /* Gradiente sutil */
     border-radius: 16px;
-    padding: 15px;
-    margin-bottom: 15px;
+    padding: 0; /* Quitamos padding general para manejarlo por secciones */
+    margin-bottom: 20px;
     border: 1px solid #333;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Sombra flotante */
     position: relative;
     overflow: hidden;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Efecto hover suave */
+/* Efecto al pasar el mouse */
 .match-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
-    border-color: #4caf50;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.6);
+    border-color: #444;
 }
 
-/* Barra lateral de estado (verde si activo, gris si cerrado) */
+/* --- BARRA DE ESTADO LATERAL --- */
 .match-card::before {
     content: '';
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
-    width: 4px;
-    background-color: #4caf50; /* Por defecto activo */
+    width: 6px;
+    background: linear-gradient(to bottom, #4caf50, #2e7d32); /* Verde activo */
+    z-index: 2;
 }
 
+/* Estado Bloqueado/Terminado */
 .match-card.bloqueado::before {
-    background-color: #666;
+    background: linear-gradient(to bottom, #666, #444); /* Gris inactivo */
 }
 
-/* Cabecera: Fecha y Estado */
+/* --- CABECERA (Fecha y Estado) --- */
 .match-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    color: #888;
-    margin-bottom: 12px;
-    border-bottom: 1px solid #333;
-    padding-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* Contenedor de equipos */
-.teams-container {
+    background-color: rgba(255, 255, 255, 0.03);
+    padding: 10px 15px 10px 20px; /* Un poco más de padding a la izquierda por la barra */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    border-bottom: 1px solid #333;
 }
 
-.team {
+.match-date {
+    font-size: 0.75rem;
+    color: #aaa;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.match-status-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background-color: #333;
+    color: #fff;
+    font-weight: bold;
+}
+
+.match-status-badge.live { background-color: #e53935; animation: pulse 2s infinite; }
+.match-status-badge.ft { background-color: #1976d2; }
+
+/* --- ZONA CENTRAL (Equipos) --- */
+.match-content {
+    padding: 20px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+/* Equipos */
+.team-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 35%;
     text-align: center;
+    z-index: 1;
 }
 
 .team-logo {
-    width: 50px;
-    height: 50px;
+    width: 60px; /* Logos más grandes */
+    height: 60px;
     object-fit: contain;
-    margin-bottom: 8px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    margin-bottom: 10px;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); /* Sombra al logo */
+    transition: transform 0.2s;
+}
+
+.match-card:hover .team-logo {
+    transform: scale(1.1); /* Efecto zoom al pasar mouse */
 }
 
 .team-name {
     font-size: 0.9rem;
     font-weight: 700;
     color: #eee;
-    line-height: 1.2;
+    line-height: 1.1;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 }
 
-/* VS o Marcador Central */
-.match-center {
+/* Centro (VS o Resultado) */
+.match-vs {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 30%;
+    width: 20%;
 }
 
-.vs-badge {
-    background-color: #333;
-    color: #aaa;
+.vs-circle {
+    background-color: #2a2a2a;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
-    width: 30px;
-    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.8rem;
-    font-weight: bold;
+    font-weight: 900;
+    color: #666;
+    border: 1px solid #444;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
 }
 
-.score-display {
-    font-size: 1.8rem;
+.real-score {
+    font-size: 2rem;
     font-weight: 800;
     color: #fff;
-    text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    letter-spacing: 2px;
 }
 
-/* Botones de Pronóstico */
-.prediction-actions {
+/* --- FOOTER (Inputs de Pronóstico) --- */
+.prediction-footer {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 15px;
     display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    background-color: #121212;
-    padding: 5px;
-    border-radius: 12px;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    border-top: 1px solid #2a2a2a;
 }
 
-.btn-predict {
+.prediction-label {
+    font-size: 0.8rem;
+    color: #888;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+/* Botones de Selección (Radio buttons disfrazados) */
+.prediction-options {
+    display: flex;
+    background-color: #111;
+    border-radius: 8px;
+    padding: 4px;
+    border: 1px solid #333;
+    width: 100%;
+    max-width: 300px;
+}
+
+.predict-btn {
     flex: 1;
     background: transparent;
-    border: 1px solid #333;
-    color: #888;
-    padding: 10px 0;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.2s;
-    font-size: 0.9rem;
-}
-
-/* Colores de selección */
-.btn-predict:hover:not(:disabled) {
-    background-color: #222;
-    color: white;
-}
-
-.btn-predict.selected {
-    color: white;
     border: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    color: #777;
+    padding: 8px 0;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
 }
 
-.btn-predict.home.selected { background-color: #4caf50; } /* Verde Local */
-.btn-predict.draw.selected { background-color: #ff9800; } /* Naranja Empate */
-.btn-predict.away.selected { background-color: #2196f3; } /* Azul Visitante */
+.predict-btn:hover:not(:disabled) {
+    color: white;
+    background-color: rgba(255,255,255,0.1);
+}
 
-.btn-predict:disabled {
-    opacity: 0.5;
+/* Estados de Selección Activa */
+.predict-btn.selected-home { background-color: #4caf50; color: white; box-shadow: 0 2px 10px rgba(76, 175, 80, 0.4); }
+.predict-btn.selected-draw { background-color: #ff9800; color: white; box-shadow: 0 2px 10px rgba(255, 152, 0, 0.4); }
+.predict-btn.selected-away { background-color: #2196f3; color: white; box-shadow: 0 2px 10px rgba(33, 150, 243, 0.4); }
+
+.predict-btn:disabled {
     cursor: not-allowed;
+    opacity: 0.6;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
 }
