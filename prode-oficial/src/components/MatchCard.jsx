@@ -10,11 +10,10 @@ function MatchCard({
     bloqueado, 
     seleccionActual, 
     onSeleccionChange,
-    golesA, golesB, // Para cuando hay resultado real
+    golesA, golesB, 
     esAdmin, onEditClick
 }) {
 
-    // Formato de fecha bonito (Ej: "Lun 26 - 17:00")
     const fechaFormateada = new Date(fecha).toLocaleDateString('es-AR', {
         weekday: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
@@ -25,38 +24,51 @@ function MatchCard({
         }
     };
 
+    // --- LÓGICA DE GANADOR ---
+    const isFinished = status === 'FT' && golesA !== null && golesB !== null;
+    const isHomeWinner = isFinished && golesA > golesB;
+    const isAwayWinner = isFinished && golesB > golesA;
+    // 🗑️ Eliminamos 'isDraw' porque no lo estamos usando visualmente
+
     return (
         <div className={`match-card ${bloqueado ? 'bloqueado' : ''}`}>
             
-            {/* 1. CABECERA: Fecha y Estado */}
             <div className="match-header">
                 <span className="match-date">{fechaFormateada} HS</span>
                 <span className={`match-status-badge ${status.toLowerCase()}`}>
                     {status === 'NS' ? 'POR JUGAR' : status === 'FT' ? 'FINAL' : status}
                 </span>
-                
-                {/* Botón Admin Flotante (Si aplica) */}
                 {esAdmin && (
                     <button onClick={(e) => { e.stopPropagation(); onEditClick(matchId); }} 
-                        style={{background:'none', border:'none', cursor:'pointer', fontSize:'1.2rem'}}>
-                        ✏️
-                    </button>
+                        style={{background:'none', border:'none', cursor:'pointer', fontSize:'1.2rem'}}>✏️</button>
                 )}
             </div>
 
-            {/* 2. CONTENIDO PRINCIPAL: Equipos y VS */}
             <div className="match-content">
                 {/* LOCAL */}
                 <div className="team-container">
                     <img src={logoA} alt={equipoA} className="team-logo" />
-                    <span className="team-name">{equipoA}</span>
+                    {/* Aplicamos clase winner si ganó el local */}
+                    <span className={`team-name ${isHomeWinner ? 'winner' : isFinished ? 'loser' : ''}`}>
+                        {equipoA}
+                    </span>
                 </div>
 
                 {/* CENTRO: VS o RESULTADO */}
                 <div className="match-vs">
-                    {status === 'FT' && golesA !== null ? (
+                    {isFinished ? (
                         <div className="real-score">
-                            {golesA} - {golesB}
+                            {/* Número Local (Verde si ganó) */}
+                            <span className={`score-number ${isHomeWinner ? 'winner' : ''}`}>
+                                {golesA}
+                            </span>
+                            
+                            <span className="score-divider">-</span>
+                            
+                            {/* Número Visita (Verde si ganó) */}
+                            <span className={`score-number ${isAwayWinner ? 'winner' : ''}`}>
+                                {golesB}
+                            </span>
                         </div>
                     ) : (
                         <div className="vs-circle">VS</div>
@@ -66,11 +78,13 @@ function MatchCard({
                 {/* VISITANTE */}
                 <div className="team-container">
                     <img src={logoB} alt={equipoB} className="team-logo" />
-                    <span className="team-name">{equipoB}</span>
+                    {/* Aplicamos clase winner si ganó la visita */}
+                    <span className={`team-name ${isAwayWinner ? 'winner' : isFinished ? 'loser' : ''}`}>
+                        {equipoB}
+                    </span>
                 </div>
             </div>
 
-            {/* 3. FOOTER: BOTONES DE PRONÓSTICO */}
             <div className="prediction-footer">
                 {bloqueado ? (
                     <div style={{width:'100%', textAlign:'center'}}>

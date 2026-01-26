@@ -1,12 +1,13 @@
 /* src/components/MatchCard.css */
 
+/* --- CONTENEDOR PRINCIPAL (Tarjeta) --- */
 .match-card {
-    background: linear-gradient(145deg, #232323, #1a1a1a); /* Gradiente sutil */
+    background: linear-gradient(145deg, #232323, #1a1a1a);
     border-radius: 16px;
-    padding: 0; /* Quitamos padding general para manejarlo por secciones */
+    padding: 0;
     margin-bottom: 20px;
     border: 1px solid #333;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Sombra flotante */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     position: relative;
     overflow: hidden;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -14,14 +15,13 @@
     flex-direction: column;
 }
 
-/* Efecto al pasar el mouse */
 .match-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 12px 25px rgba(0, 0, 0, 0.6);
     border-color: #444;
 }
 
-/* --- BARRA DE ESTADO LATERAL --- */
+/* Barra lateral de estado */
 .match-card::before {
     content: '';
     position: absolute;
@@ -29,19 +29,18 @@
     top: 0;
     bottom: 0;
     width: 6px;
-    background: linear-gradient(to bottom, #4caf50, #2e7d32); /* Verde activo */
+    background: linear-gradient(to bottom, #4caf50, #2e7d32);
     z-index: 2;
 }
 
-/* Estado Bloqueado/Terminado */
 .match-card.bloqueado::before {
-    background: linear-gradient(to bottom, #666, #444); /* Gris inactivo */
+    background: linear-gradient(to bottom, #666, #444);
 }
 
 /* --- CABECERA (Fecha y Estado) --- */
 .match-header {
     background-color: rgba(255, 255, 255, 0.03);
-    padding: 10px 15px 10px 20px; /* Un poco más de padding a la izquierda por la barra */
+    padding: 10px 15px 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -68,53 +67,62 @@
 .match-status-badge.live { background-color: #e53935; animation: pulse 2s infinite; }
 .match-status-badge.ft { background-color: #1976d2; }
 
-/* --- ZONA CENTRAL (Equipos) --- */
+/* --- ZONA CENTRAL (Equipos y Resultado) --- */
 .match-content {
-    padding: 20px 15px;
+    padding: 20px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
 }
 
-/* Equipos */
+/* COLUMNA EQUIPOS (Izquierda y Derecha) */
 .team-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 35%;
+    width: 32%; /* Reducido para dar espacio al centro */
     text-align: center;
     z-index: 1;
 }
 
 .team-logo {
-    width: 60px; /* Logos más grandes */
-    height: 60px;
+    width: 55px;
+    height: 55px;
     object-fit: contain;
     margin-bottom: 10px;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); /* Sombra al logo */
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
     transition: transform 0.2s;
 }
 
-.match-card:hover .team-logo {
-    transform: scale(1.1); /* Efecto zoom al pasar mouse */
-}
+.match-card:hover .team-logo { transform: scale(1.1); }
 
 .team-name {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 700;
     color: #eee;
     line-height: 1.1;
     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 }
 
-/* Centro (VS o Resultado) */
+/* 👇 CLASES QUE FALTABAN PARA EL GANADOR (VERDE) 👇 */
+.team-name.winner {
+    color: #4caf50;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+}
+
+.team-name.loser {
+    color: #888;
+    opacity: 0.6;
+}
+
+/* COLUMNA CENTRAL (VS o Resultado) */
 .match-vs {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 20%;
+    width: 36%; /* Aumentado para que los números quepan horizontalmente */
 }
 
 .vs-circle {
@@ -132,33 +140,46 @@
     box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
 }
 
+/* 👇 ARREGLO DE NÚMEROS APILADOS 👇 */
 .real-score {
-    font-size: 2rem;
+    display: flex; /* Esto pone los números uno al lado del otro */
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Espacio entre los números */
+    font-size: 1.8rem;
     font-weight: 800;
     color: #fff;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-    letter-spacing: 2px;
+    white-space: nowrap; /* Evita que salten de línea */
 }
 
-/* --- FOOTER (Inputs de Pronóstico) --- */
+.score-number {
+    min-width: 25px;
+    text-align: center;
+}
+
+/* Destacar número ganador */
+.score-number.winner {
+    color: #4caf50;
+    text-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+    font-size: 2rem;
+}
+
+.score-divider {
+    color: #555;
+    font-size: 1.2rem;
+    margin-top: 4px;
+}
+
+/* --- FOOTER (Botones de Pronóstico) --- */
 .prediction-footer {
     background-color: rgba(0, 0, 0, 0.3);
     padding: 15px;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 15px;
     border-top: 1px solid #2a2a2a;
 }
 
-.prediction-label {
-    font-size: 0.8rem;
-    color: #888;
-    text-transform: uppercase;
-    font-weight: bold;
-}
-
-/* Botones de Selección (Radio buttons disfrazados) */
 .prediction-options {
     display: flex;
     background-color: #111;
@@ -187,7 +208,7 @@
     background-color: rgba(255,255,255,0.1);
 }
 
-/* Estados de Selección Activa */
+/* Colores de selección */
 .predict-btn.selected-home { background-color: #4caf50; color: white; box-shadow: 0 2px 10px rgba(76, 175, 80, 0.4); }
 .predict-btn.selected-draw { background-color: #ff9800; color: white; box-shadow: 0 2px 10px rgba(255, 152, 0, 0.4); }
 .predict-btn.selected-away { background-color: #2196f3; color: white; box-shadow: 0 2px 10px rgba(33, 150, 243, 0.4); }
@@ -203,18 +224,18 @@
     100% { opacity: 1; }
 }
 
+/* --- ESTILOS DEL ACORDEÓN (No borrarlos) --- */
 .fecha-group-container {
     margin-bottom: 20px;
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
 }
 
-/* Botón Encabezado */
 .date-header-btn {
     width: 100%;
     padding: 18px 25px;
     background: linear-gradient(145deg, #2a2a2a, #202020);
     border: 1px solid #333;
-    border-radius: 12px; /* Bordes redondos cuando está cerrado */
+    border-radius: 12px;
     color: #eee;
     font-family: inherit;
     font-size: 1.1rem;
@@ -230,24 +251,21 @@
     overflow: hidden;
 }
 
-/* Efecto Hover */
 .date-header-btn:hover {
     background: linear-gradient(145deg, #333, #252525);
     border-color: #555;
     transform: translateY(-2px);
 }
 
-/* Estado ABIERTO */
 .date-header-btn.open {
     background: #222;
-    border-bottom: 1px solid #4caf50; /* Línea verde divisoria */
-    border-bottom-left-radius: 0; /* Quitamos curvas de abajo para unir */
+    border-bottom: 1px solid #4caf50;
+    border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     margin-bottom: 0;
-    color: #4caf50; /* Texto verde al abrir */
+    color: #4caf50;
 }
 
-/* Icono y Texto Izquierda */
 .date-label-container {
     display: flex;
     align-items: center;
@@ -265,11 +283,10 @@
     filter: drop-shadow(0 0 8px rgba(76, 175, 80, 0.4));
 }
 
-/* Flecha Derecha Animada */
 .arrow-icon {
     font-size: 1rem;
     color: #666;
-    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Rebote suave */
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
 .date-header-btn.open .arrow-icon {
@@ -277,15 +294,13 @@
     color: #4caf50;
 }
 
-/* Contenedor del Contenido (Partidos) */
 .date-content-area {
     background-color: #181818;
     border: 1px solid #333;
-    border-top: none; /* Sin borde arriba para unir con el botón */
+    border-top: none;
     border-bottom-left-radius: 12px;
     border-bottom-right-radius: 12px;
     padding: 20px 15px;
-    /* Animación de apertura */
     animation: expandIn 0.3s ease-out forwards;
     transform-origin: top;
 }
@@ -295,7 +310,6 @@
     to { opacity: 1; transform: scaleY(1); }
 }
 
-/* Botón Guardar dentro del acordeón */
 .btn-save-fixture {
     width: 100%;
     padding: 15px;
