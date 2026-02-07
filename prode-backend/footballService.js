@@ -227,14 +227,17 @@ async function submitBulkPredictions(userId, ticketId, predictionsArray) {
             );
 
             if (existing.length > 0) {
+                // Si ya existe, actualizamos
                 await conn.execute(
                     'UPDATE predictions SET prediction_result = ? WHERE id = ?',
                     [result, existing[0].id]
                 );
             } else {
+                // 👇 AQUÍ ESTÁ EL CAMBIO IMPORTANTE 👇
+                // Agregamos 'user_id' a la lista de columnas y al array de valores
                 await conn.execute(
-                    'INSERT INTO predictions (ticket_id, match_id, prediction_result) VALUES (?, ?, ?)',
-                    [ticketId, matchId, result]
+                    'INSERT INTO predictions (ticket_id, user_id, match_id, prediction_result) VALUES (?, ?, ?, ?)',
+                    [ticketId, userId, matchId, result]
                 );
             }
         }
