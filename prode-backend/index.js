@@ -86,6 +86,9 @@ app.post('/api/predictions/submit', authenticateToken, async (req, res) => {
 
 app.post('/api/predictions/submit-bulk', authenticateToken, async (req, res) => {
     const { predictions, ticketId } = req.body; 
+    if (!ticketId || !predictions) {
+        return res.status(400).json({ message: "Faltan datos (ticketId o predictions)" });
+    }
     const result = await submitBulkPredictions(req.user.id, ticketId, predictions);
     
     res.status(result.success ? 201 : 500).json(result);
