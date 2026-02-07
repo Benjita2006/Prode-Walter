@@ -183,7 +183,8 @@ app.get('/api/partidos', authenticateToken, async (req, res) => {
 });
 
 app.get('/api/ranking', authenticateToken, async (req, res) => {
-    const result = await obtenerRanking();
+    const { round } = req.query; // Leemos el parámetro (ej: "Fecha 4")
+    const result = await obtenerRanking(round);
     res.json(result.success ? result.ranking : []);
 });
 

@@ -140,28 +140,45 @@ async function obtenerTodosLosPronosticos() {
 }
 
 // --- 5. RANKING: Calcular puntos en tiempo real 🏆 ---
-async function obtenerRanking() {
+// --- 5. RANKING: Calcular puntos (General o por Fecha) 🏆 ---
+async function obtenerRanking(round) {
     try {
-        const sql = `
-            SELECT 
-                u.username,
-                COALESCE(SUM(
-                    CASE 
-                        WHEN m.status != 'FT' THEN 0
-                        WHEN m.home_score > m.away_score AND p.prediction_result = 'HOME' THEN 1
-                        WHEN m.away_score > m.home_score AND p.prediction_result = 'AWAY' THEN 1
-                        WHEN m.home_score = m.away_score AND p.prediction_result = 'DRAW' THEN 1
-                        ELSE 0
-                    END
-                ), 0) as points
-            FROM users u
-            LEFT JOIN predictions p ON u.id = p.user_id
-            LEFT JOIN matches m ON p.match_id = m.id
-            GROUP BY u.id, u.username
-            ORDER BY points DESC, u.username ASC
-        `;
+        let sql;
+        const params = [];
 
-        const [rows] = await db.execute(sql);
+        if (round && round !== 'General') {
+            // --- RANKING POR FECHA (Muestra el rendimiento de cada Boleta en esa fecha) ---
+            // Sumamos los puntos de las predicciones que pertenecen a tickets de esa fecha
+            sql = `
+                SELECT 
+                    u.username,
+                    t.ticket_name, -- Mostramos el nombre de la boleta
+                    COALESCE(SUM(p.points), 0) as points
+                FROM users u
+                JOIN tickets t ON u.id = t.user_id
+                LEFT JOIN predictions p ON t.id = p.ticket_id
+                WHERE t.round_name = ?
+                GROUP BY t.id, u.username, t.ticket_name
+                ORDER BY points DESC, u.username ASC
+            `;
+            params.push(round);
+        } else {
+            // --- RANKING GENERAL (Acumulado de todo el torneo) ---
+            // Sumamos todos los puntos de todas las boletas del usuario
+            sql = `
+                SELECT 
+                    u.username,
+                    'Acumulado' as ticket_name,
+                    COALESCE(SUM(p.points), 0) as points
+                FROM users u
+                LEFT JOIN tickets t ON u.id = t.user_id
+                LEFT JOIN predictions p ON t.id = p.ticket_id
+                GROUP BY u.id, u.username
+                ORDER BY points DESC, u.username ASC
+            `;
+        }
+
+        const [rows] = await db.execute(sql, params);
         return { success: true, ranking: rows };
 
     } catch (error) {
