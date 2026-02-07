@@ -196,6 +196,22 @@ async function crearNuevoTicket(userId, roundName, ticketName) {
     }
 }
 
+// --- NUEVA FUNCIÓN: Obtener Pronósticos de un Ticket ---
+async function obtenerPronosticosPorTicket(ticketId) {
+    try {
+        // Seleccionamos match_id y el resultado (renombrado como 'prediction' para que el frontend lo entienda)
+        const [rows] = await db.execute(
+            'SELECT match_id, prediction_result as prediction FROM predictions WHERE ticket_id = ?',
+            [ticketId]
+        );
+        return rows;
+    } catch (error) {
+        console.error("Error obteniendo pronósticos del ticket:", error);
+        return [];
+    }
+}
+
+
 // --- ACTUALIZACIÓN: Guardado Masivo con Bloqueo de Horario ---
 async function submitBulkPredictions(userId, ticketId, predictionsArray) {
     if (!ticketId || !predictionsArray || predictionsArray.length === 0) {

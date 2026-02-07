@@ -20,7 +20,8 @@ const {
     obtenerRanking,
     updateMatch,
     crearNuevoTicket, 
-    obtenerTicketsUsuario 
+    obtenerTicketsUsuario,
+    obtenerPronosticosPorTicket 
 } = require('./footballService');
 
 const PORT = process.env.PORT || 3000;
@@ -53,6 +54,18 @@ io.on('connection', (socket) => {
 app.post('/api/auth/login', async (req, res) => {
     const result = await loginUser(req.body.email, req.body.password); 
     res.status(result.success ? 200 : 401).json(result);
+});
+
+// OBTENER PRONÓSTICOS DE UNA BOLETA ESPECÍFICA
+app.get('/api/predictions/my-predictions', authenticateToken, async (req, res) => {
+    const { ticketId } = req.query;
+
+    if (!ticketId) {
+        return res.status(400).json({ message: "Falta el parámetro ticketId" });
+    }
+
+    const pronosticos = await obtenerPronosticosPorTicket(ticketId);
+    res.json(pronosticos);
 });
 
 app.post('/api/auth/register', async (req, res) => {
