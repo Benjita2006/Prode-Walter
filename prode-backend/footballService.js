@@ -320,5 +320,7 @@ module.exports = {
     obtenerTodosLosPronosticos, 
     obtenerRanking,
     submitBulkPredictions,
-    updateMatch // 👈 AHORA SÍ FUNCIONARÁ PORQUE LA FUNCIÓN updateMatch ESTÁ DEFINIDA ARRIBA
+    updateMatch,
+    obtenerTicketsUsuario, 
+    crearNuevoTicket    
 };
