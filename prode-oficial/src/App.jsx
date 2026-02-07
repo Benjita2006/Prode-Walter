@@ -350,15 +350,33 @@ useEffect(() => {
 {fechaAbierta === nombreFecha && (
     <div className="date-content-area">
         
-        {/* --- SELECTOR DE BOLETAS --- */}
-        <div className="ticket-selector-container">
-            <p className="ticket-label">MIS BOLETAS PARA ESTA FECHA:</p>
-            
-            <div className="ticket-tabs-wrapper">
-                {cargandoTickets ? (
-                    <span className="loading-text">Cargando boletas...</span>
-                ) : (
-                    <>
+        {/* CASO 1: NO HAY BOLETAS (Usuario nuevo en esta fecha) */}
+        {tickets.length === 0 && !cargandoTickets ? (
+            <div style={{textAlign: 'center', padding: '40px 20px'}}>
+                <p style={{color: '#aaa', marginBottom: '20px'}}>Aún no has participado en esta fecha.</p>
+                <button 
+                    onClick={() => crearNuevaBoleta(nombreFecha)}
+                    style={{
+                        padding: '15px 30px',
+                        fontSize: '1.2rem',
+                        fontWeight: 'bold',
+                        backgroundColor: '#4caf50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50px',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(76, 175, 80, 0.4)'
+                    }}
+                >
+                    🚀 JUGAR AHORA
+                </button>
+            </div>
+        ) : (
+            /* CASO 2: YA TIENE BOLETAS (Mostramos selector y partidos) */
+            <>
+                {/* SELECTOR DE BOLETAS EXISTENTES */}
+                <div className="ticket-selector-container">
+                    <div className="ticket-tabs-wrapper">
                         {tickets.map(t => (
                             <button
                                 key={t.id}
@@ -369,45 +387,53 @@ useEffect(() => {
                             </button>
                         ))}
                         
+                        {/* Botón "+" discreto al final de la lista */}
                         <button 
-                        className="btn-ticket-add"
-                        onClick={() => crearNuevaBoleta(nombreFecha)} // 👈 Ahora usa la función real
+                            className="btn-ticket-add"
+                            onClick={() => crearNuevaBoleta(nombreFecha)}
+                            title="Crear otra boleta"
                         >
-                        + Nueva Boleta
+                            +
                         </button>
-                    </>
-                )}
-            </div>
-        </div>
+                    </div>
+                </div>
 
-        {/* --- GRILLA DE PARTIDOS --- */}
-        <div className="matches-grid-container">
-            {partidosPorFechaFixture[nombreFecha].map(p => (
-                <MatchCard 
-                    key={p.id} 
-                    matchId={p.id} 
-                    equipoA={p.local} 
-                    logoA={p.logoLocal}
-                    equipoB={p.visitante} 
-                    logoB={p.logoVisitante} 
-                    fecha={p.fecha} 
-                    status={p.status}
-                    bloqueado={(p.status !== 'NS' && p.status !== 'PST') || !ticketActivo}
-                    seleccionActual={misPronosticosTemp[p.id]} 
-                    onSeleccionChange={handleSeleccionChange}
-                />
-            ))}
-        </div>
-        
-        <div className="save-container">
-            <button 
-                onClick={() => guardarFecha(nombreFecha)} 
-                disabled={guardando || !ticketActivo} 
-                className="btn-save-fixture"
-            >
-                {guardando ? 'Guardando...' : ticketActivo ? `GUARDAR EN ${ticketActivo.ticket_name}` : 'SELECCIONA UNA BOLETA'}
-            </button>
-        </div>
+                {/* GRILLA DE PARTIDOS */}
+                <div className="matches-grid-container">
+                    {partidosPorFechaFixture[nombreFecha].map(p => (
+                        <MatchCard 
+                            key={p.id} 
+                            matchId={p.id} 
+                            equipoA={p.local} 
+                            logoA={p.logoLocal}
+                            equipoB={p.visitante} 
+                            logoB={p.logoVisitante} 
+                            fecha={p.fecha} 
+                            status={p.status}
+                            bloqueado={(p.status !== 'NS' && p.status !== 'PST') || !ticketActivo}
+                            seleccionActual={misPronosticosTemp[p.id]} 
+                            onSeleccionChange={handleSeleccionChange}
+                        />
+                    ))}
+                </div>
+                
+                {/* BOTÓN GUARDAR */}
+                <div className="save-container">
+                    <button 
+                        onClick={() => guardarFecha(nombreFecha)} 
+                        disabled={guardando || !ticketActivo} 
+                        className="btn-save-fixture"
+                    >
+                        {guardando ? 'Guardando...' : `GUARDAR PRONÓSTICO`}
+                    </button>
+                    
+                    {/* Mensaje sutil debajo */}
+                    <p style={{textAlign:'center', marginTop:'15px', fontSize:'0.8rem', color:'#666'}}>
+                        ¿Quieres probar otro resultado? <span onClick={() => crearNuevaBoleta(nombreFecha)} style={{color:'#4caf50', cursor:'pointer', textDecoration:'underline'}}>Crear nueva boleta</span>
+                    </p>
+                </div>
+            </>
+        )}
     </div>
 )}
                                         </div>
