@@ -18,7 +18,9 @@ const {
     submitBulkPredictions,
     obtenerTodosLosPronosticos, 
     obtenerRanking,
-    updateMatch 
+    updateMatch,
+    crearNuevoTicket, 
+    obtenerTicketsUsuario 
 } = require('./footballService');
 
 const PORT = process.env.PORT || 3000;
@@ -111,6 +113,40 @@ app.delete('/api/admin/matches', authenticateToken, async (req, res) => {
         res.json({ success: true, message: 'Base de datos limpiada.' });
     } catch (error) {
         res.status(500).json({ message: 'Error al borrar.' });
+    }
+});
+
+app.get('/api/tickets', authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+    const { round } = req.query; // Ej: "Fecha 4"
+
+    if (!round) return res.status(400).json({ message: "Falta el parámetro round" });
+
+    const tickets = await obtenerTicketsUsuario(userId, round);
+    res.json(tickets);
+});
+// CREAR UNA NUEVA BOLETA
+app.post('/api/tickets', authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+    const { ticketName, round } = req.body;
+
+    if (!ticketName || !round) {
+        return res.status(400).json({ message: "Faltan datos (nombre o fecha)" });
+    }
+
+    const resultado = await crearNuevoTicket(userId, round, ticketName);
+
+    if (resultado.success) {
+        // Devolvemos el objeto completo de la boleta recién creada
+        res.json({ 
+            id: resultado.id, 
+            user_id: userId, 
+            ticket_name: ticketName, 
+            round_name: round,
+            points: 0 
+        });
+    } else {
+        res.status(500).json({ message: "Error al crear la boleta" });
     }
 });
 
