@@ -3,13 +3,12 @@ import React, { useState } from 'react';
 import './TutorialOverlay.css';
 
 function TutorialOverlay({ username }) {
-    // Clave única por usuario para el localStorage
-    const storageKey = `tutorial_visto_${username}`;
+    // Clave única actualizada para forzar que los usuarios viejos vean el nuevo tutorial
+    const storageKey = `tutorial_v2_visto_${username}`; 
 
-    // Inicialización Perezosa: Comprobamos si ESTE usuario ya lo vio
     const [show, setShow] = useState(() => {
         const visto = localStorage.getItem(storageKey);
-        return !visto; // Si no existe la marca, devolvemos true (mostrar)
+        return !visto; 
     });
 
     const [step, setStep] = useState(1);
@@ -19,7 +18,6 @@ function TutorialOverlay({ username }) {
     };
 
     const handleFinish = () => {
-        // Marcamos que ESTE usuario ya lo vio
         localStorage.setItem(storageKey, 'true');
         setShow(false);
     };
@@ -30,8 +28,41 @@ function TutorialOverlay({ username }) {
         <div className="tutorial-overlay">
             <div className="tutorial-card">
                 
-                {/* PASO 1: CÓMO VOTAR */}
+                {/* PASO 1: BOLETAS (NUEVO) */}
                 {step === 1 && (
+                    <>
+                        <div className="tutorial-icon">🎟️</div>
+                        <h3>¡Nuevas Boletas!</h3>
+                        <p>Ahora puedes crear múltiples pronósticos para una misma fecha.</p>
+                        <p>Usa el botón <b>"+ Nueva Boleta"</b> para probar distintas estrategias (una arriesgada, una segura, etc.).</p>
+                        <button className="btn-tutorial" onClick={handleNext}>Siguiente ➡</button>
+                    </>
+                )}
+
+                {/* PASO 2: PAGOS (NUEVO) */}
+                {step === 2 && (
+                    <>
+                        <div className="tutorial-icon">🔒</div>
+                        <h3>Verificación de Pago</h3>
+                        <p>Podrás jugar y armar tus boletas libremente, pero...</p>
+                        <p className="warning-text">El botón "GUARDAR" solo funcionará una vez que hayamos confirmado tu pago.</p>
+                        <button className="btn-tutorial" onClick={handleNext}>Siguiente ➡</button>
+                    </>
+                )}
+
+                {/* PASO 3: RANKING POR FECHAS */}
+                {step === 3 && (
+                    <>
+                        <div className="tutorial-icon">🏆</div>
+                        <h3>Ranking Mejorado</h3>
+                        <p>Ahora puedes filtrar la tabla de posiciones por fechas específicas.</p>
+                        <p>¡Descubre quién fue el mejor de la Fecha 4 o quién lidera la tabla General!</p>
+                        <button className="btn-tutorial" onClick={handleNext}>Siguiente ➡</button>
+                    </>
+                )}
+
+                {/* PASO 4: CÓMO JUGAR (CLÁSICO) */}
+                {step === 4 && (
                     <>
                         <div className="tutorial-icon">👆</div>
                         <h3>¿Cómo Jugar?</h3>
@@ -45,53 +76,15 @@ function TutorialOverlay({ username }) {
                     </>
                 )}
 
-                {/* PASO 2: CONFIRMAR (CRÍTICO) */}
-                {step === 2 && (
-                    <>
-                        <div className="tutorial-icon">💾</div>
-                        <h3>¡No te olvides!</h3>
-                        <p>Tu selección <b>NO se guarda sola</b>.</p>
-                        <p>Debes presionar el botón azul para confirmar:</p>
-                        <div className="fake-confirm-btn">Confirmar Pronóstico</div>
-                        <p className="warning-text">Si no confirmas, no sumas puntos.</p>
-                        <button className="btn-tutorial" onClick={handleNext}>Siguiente ➡</button>
-                    </>
-                )}
-
-                {/* PASO 3: RANKING Y PUNTOS */}
-                {step === 3 && (
-                    <>
-                        <div className="tutorial-icon">🏆</div>
-                        <h3>Tabla de Posiciones</h3>
-                        <p>Compite contra los demás.</p>
-                        <ul style={{textAlign: 'left', margin: '0 auto', maxWidth: '300px', marginBottom: '20px'}}>
-                            <li><b>1 Punto:</b> Si aciertas el resultado exacto, te llevas 1 punto.</li>
-                            <li><b>2 Punto:</b> Revisa la tabla para poder ver tus puntos y el de los demas</li>
-                        </ul>
-                        <button className="btn-tutorial" onClick={handleNext}>Siguiente ➡</button>
-                    </>
-                )}
-
-                {/* PASO 4: CHAT GLOBAL */}
-                {step === 4 && (
-                    <>
-                        <div className="tutorial-icon">💬</div>
-                        <h3>Chat Global</h3>
-                        <p>En la pestaña <b>Chat</b> puedes hablar con todos los demás participantes en tiempo real.</p>
-                        <p>¡Úsalo para festejar goles o debatir jugadas!</p>
-                        <button className="btn-tutorial" onClick={handleNext}>Siguiente ➡</button>
-                    </>
-                )}
-
                 {/* PASO 5: FINALIZAR */}
                 {step === 5 && (
                     <>
                         <div className="tutorial-icon">😎</div>
                         <h3>¡Todo listo!</h3>
-                        <p>Ya sabes cómo funciona. ¡Mucha suerte, <b>{username}</b>!</p>
+                        <p>Ya conoces las novedades. ¡Mucha suerte con tus pronósticos, <b>{username}</b>!</p>
                         
                         <button className="btn-tutorial-finish" onClick={handleFinish}>
-                            Entendido (No volver a mostrar)
+                            ¡A Jugar!
                         </button>
                     </>
                 )}

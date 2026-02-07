@@ -1,4 +1,4 @@
-// src/components/UsersManagement.jsx (VERSIÓN FINAL FUNCIONAL)
+// src/components/UsersManagement.jsx
 import React, { useState, useEffect } from 'react';
 import './MatchCreator.css'; 
 import { API_URL } from '../config';
@@ -12,9 +12,10 @@ function UsersManagement() {
     const fetchUsers = async () => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`${API_URL}/api/admin/users`, {
+            const res = await fetch(`${API_URL}/api/admin/users`, { // Asegúrate de que esta ruta devuelva el campo is_paid
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            
             if (res.status === 403) throw new Error('No tienes permisos (Owner/Dev).');
             if (!res.ok) throw new Error('Error al cargar usuarios.');
 
@@ -46,13 +47,36 @@ function UsersManagement() {
 
             if (res.ok) {
                 alert('¡Rol actualizado!');
-                fetchUsers(); // Recargar la lista para ver el cambio
+                fetchUsers(); 
             } else {
                 alert('Error al cambiar el rol');
             }
         } catch (error) {
             console.error(error);
             alert('Error de conexión');
+        }
+    };
+
+    // FUNCIÓN PARA CAMBIAR ESTADO DE PAGO (NUEVO)
+    const togglePayment = async (userId) => {
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`${API_URL}/api/admin/users/${userId}/payment`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                // Actualización optimista: cambiamos el estado localmente sin recargar todo
+                setUsuarios(usuarios.map(u => 
+                    u.id === userId ? { ...u, is_paid: !u.is_paid } : u
+                ));
+            } else {
+                alert('Error al actualizar el pago.');
+            }
+        } catch (error) { 
+            console.error(error);
+            alert('Error de conexión.');
         }
     };
 
@@ -64,7 +88,7 @@ function UsersManagement() {
     
     return (
         <div className="match-creator-container">
-            <h2>👥 Gestión de Usuarios</h2>
+            <h2>👥 Gestión de Usuarios y Pagos</h2>
             <input 
                 type="text" 
                 placeholder="🔍 Buscar usuario..." 
@@ -84,6 +108,7 @@ function UsersManagement() {
                             <th>Usuario</th>
                             <th>Email</th>
                             <th>Rol</th>
+                            <th>Pago</th> {/* Columna Nueva */}
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -100,6 +125,26 @@ function UsersManagement() {
                                     }}>
                                         {user.role}
                                     </span>
+                                </td>
+                                {/* COLUMNA DE PAGO */}
+                                <td>
+                                    <button 
+                                        onClick={() => togglePayment(user.id)}
+                                        style={{
+                                            padding: '6px 12px',
+                                            cursor: 'pointer',
+                                            backgroundColor: user.is_paid ? '#2e7d32' : '#c62828', // Verde oscuro / Rojo oscuro
+                                            color: 'white',
+                                            border: '1px solid #555',
+                                            borderRadius: '20px',
+                                            fontWeight: 'bold',
+                                            fontSize: '0.8rem',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        title={user.is_paid ? "Click para revocar pago" : "Click para confirmar pago"}
+                                    >
+                                        {user.is_paid ? '✅ PAGADO' : '❌ PENDIENTE'}
+                                    </button>
                                 </td>
                                 <td>
                                     <select 

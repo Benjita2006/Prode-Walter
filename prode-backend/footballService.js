@@ -346,6 +346,31 @@ async function updateMatch(matchId, home_score, away_score, status, match_date) 
     }
 }
 
+
+// --- GESTIÓN DE PAGOS ---
+async function toggleUserPayment(userId) {
+    try {
+        // 1. Buscamos estado actual
+        const [rows] = await db.execute('SELECT is_paid FROM users WHERE id = ?', [userId]);
+        if (rows.length === 0) return { success: false, message: 'Usuario no encontrado' };
+
+        const nuevoEstado = !rows[0].is_paid; // Invertimos el valor
+
+        // 2. Actualizamos
+        await db.execute('UPDATE users SET is_paid = ? WHERE id = ?', [nuevoEstado, userId]);
+        
+        return { success: true, newStatus: nuevoEstado };
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+}
+
+// Modificar verificación de usuario para incluir is_paid
+async function getUserStatus(userId) {
+    const [rows] = await db.execute('SELECT is_paid, role FROM users WHERE id = ?', [userId]);
+    return rows[0];
+}
+
 // ==========================================
 // EXPORTACIONES AL FINAL DEL ARCHIVO
 // ==========================================
@@ -359,5 +384,7 @@ module.exports = {
     updateMatch,
     obtenerTicketsUsuario, 
     crearNuevoTicket,
-    obtenerPronosticosPorTicket
+    obtenerPronosticosPorTicket,
+    toggleUserPayment,
+    getUserStatus
 };

@@ -85,12 +85,21 @@ app.post('/api/predictions/submit', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/predictions/submit-bulk', authenticateToken, async (req, res) => {
-    const { predictions, ticketId } = req.body; 
-    if (!ticketId || !predictions) {
-        return res.status(400).json({ message: "Faltan datos (ticketId o predictions)" });
+    const { predictions, ticketId } = req.body;
+
+    // 1. VERIFICACIÓN DE PAGO EN TIEMPO REAL
+    const userStatus = await getUserStatus(req.user.id);
+
+    // Si no es Admin y no pagó, bloqueamos
+    if (!userStatus.is_paid && userStatus.role !== 'Owner' && userStatus.role !== 'Dev') {
+        return res.status(403).json({ message: "⛔ Debes abonar la inscripción para guardar pronósticos." });
     }
+
+    if (!ticketId || !predictions) {
+        return res.status(400).json({ message: "Faltan datos" });
+    }
+
     const result = await submitBulkPredictions(req.user.id, ticketId, predictions);
-    
     res.status(result.success ? 201 : 500).json(result);
 });
 
@@ -180,6 +189,14 @@ app.get('/api/partidos', authenticateToken, async (req, res) => {
     if (!userId) return res.sendStatus(403);
     const partidos = await obtenerPartidos(userId); 
     res.json(partidos || []); 
+});
+
+// ADMIN: Habilitar/Deshabilitar Pago de Usuario
+app.put('/api/admin/users/:id/payment', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
+
+    const result = await toggleUserPayment(req.params.id);
+    res.status(result.success ? 200 : 500).json(result);
 });
 
 app.get('/api/ranking', authenticateToken, async (req, res) => {
