@@ -11,7 +11,7 @@ const authenticateToken = require('./authMiddleware');
 const db = require('./db'); 
 const { registerUser, loginUser, googleLogin } = require('./authController');
 
-// AQUÍ ESTABA EL ERROR: He limpiado y unificado todas las importaciones
+// 👇 IMPORTACIONES CORRECTAS Y LIMPIAS
 const { 
     obtenerPartidos, 
     crearPartidos, 
@@ -24,10 +24,10 @@ const {
     obtenerTicketsUsuario,
     obtenerPronosticosPorTicket,
     getAllUsers,           
-    toggleRoundPayment,
+    getUserTicketsAdmin,    // NUEVO
+    toggleTicketPayment,    // NUEVO
     checkPaymentStatus,
-    verificarPagoUsuarioFecha,
-    toggleUserPayment // Faltaba importar esta función
+    toggleUserPayment
 } = require('./footballService');
 
 const PORT = process.env.PORT || 3000;
@@ -62,18 +62,6 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(result.success ? 200 : 401).json(result);
 });
 
-// OBTENER PRONÓSTICOS DE UNA BOLETA ESPECÍFICA
-app.get('/api/predictions/my-predictions', authenticateToken, async (req, res) => {
-    const { ticketId } = req.query;
-
-    if (!ticketId) {
-        return res.status(400).json({ message: "Falta el parámetro ticketId" });
-    }
-
-    const pronosticos = await obtenerPronosticosPorTicket(ticketId);
-    res.json(pronosticos);
-});
-
 app.post('/api/auth/register', async (req, res) => {
     const result = await registerUser(req.body.username, req.body.email, req.body.password); 
     res.status(result.success ? 201 : 400).json(result);
@@ -84,7 +72,15 @@ app.post('/api/auth/google', async (req, res) => {
     res.status(result.success ? 200 : 400).json(result);
 });
 
-// --- PRONÓSTICOS ---
+// --- PRONÓSTICOS Y BOLETAS ---
+
+app.get('/api/predictions/my-predictions', authenticateToken, async (req, res) => {
+    const { ticketId } = req.query;
+    if (!ticketId) return res.status(400).json({ message: "Falta el parámetro ticketId" });
+    const pronosticos = await obtenerPronosticosPorTicket(ticketId);
+    res.json(pronosticos);
+});
+
 app.post('/api/predictions/submit', authenticateToken, async (req, res) => {
     const result = await submitPrediction(req.user.id, req.body.matchId, req.body.result);
     res.status(result.success ? 201 : 400).json(result);
@@ -92,87 +88,36 @@ app.post('/api/predictions/submit', authenticateToken, async (req, res) => {
 
 app.post('/api/predictions/submit-bulk', authenticateToken, async (req, res) => {
     const { predictions, ticketId } = req.body;
-
     if (!ticketId) return res.status(400).json({ message: "Falta ticketId" });
 
-    // --- BLOQUEO DE SEGURIDAD ---
-    // Si NO es Admin, verificamos si pagó ESA fecha específica
+    // VERIFICACIÓN DE PAGO (POR BOLETA)
     if (req.user.role !== 'Owner' && req.user.role !== 'Dev') {
         const estaPagado = await checkPaymentStatus(ticketId);
-        
         if (!estaPagado) {
-            // AQUÍ CORTAMOS EL PROCESO
             return res.status(403).json({ 
-                message: "⛔ PAGO REQUERIDO: No se registró el pago para esta fecha." 
+                message: "⛔ PAGO REQUERIDO: Esta boleta no está habilitada por el administrador." 
             });
         }
     }
-    // ----------------------------
 
     const result = await submitBulkPredictions(req.user.id, ticketId, predictions);
     res.status(result.success ? 201 : 500).json(result);
 });
 
-// --- ADMIN (GESTIÓN MANUAL) ---
-app.post('/api/admin/matches/bulk-create', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
-    const result = await crearPartidos(req.body.matches); 
-    res.status(result.success ? 201 : 500).json(result);
-});
-
-// RUTA PARA EDITAR RESULTADOS
-app.put('/api/admin/matches/:id', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
-    
-    // Validamos que llegue el ID
-    if (!req.params.id) return res.status(400).json({message: "Falta ID de partido"});
-
-    const result = await updateMatch(
-        req.params.id, 
-        req.body.home_score, 
-        req.body.away_score, 
-        req.body.status, 
-        req.body.match_date
-    );
-
-    res.status(result.success ? 200 : 500).json(result);
-});
-
-app.delete('/api/admin/matches', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
-    try {
-        const conn = await db.getConnection();
-        await conn.execute('DELETE FROM predictions');
-        await conn.execute('DELETE FROM matches');
-        await conn.execute('ALTER TABLE predictions AUTO_INCREMENT = 1');
-        await conn.execute('ALTER TABLE matches AUTO_INCREMENT = 1');
-        conn.release();
-        res.json({ success: true, message: 'Base de datos limpiada.' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error al borrar.' });
-    }
-});
-
 app.get('/api/tickets', authenticateToken, async (req, res) => {
     const userId = req.user.id;
-    const { round } = req.query; // Ej: "Fecha 4"
-
+    const { round } = req.query; 
     if (!round) return res.status(400).json({ message: "Falta el parámetro round" });
-
     const tickets = await obtenerTicketsUsuario(userId, round);
     res.json(tickets);
 });
-// CREAR UNA NUEVA BOLETA
+
 app.post('/api/tickets', authenticateToken, async (req, res) => {
     const userId = req.user.id;
     const { ticketName, round } = req.body;
-
-    if (!ticketName || !round) {
-        return res.status(400).json({ message: "Faltan datos (nombre o fecha)" });
-    }
+    if (!ticketName || !round) return res.status(400).json({ message: "Faltan datos" });
 
     const resultado = await crearNuevoTicket(userId, round, ticketName);
-
     if (resultado.success) {
         res.json({ 
             id: resultado.id, 
@@ -186,7 +131,38 @@ app.post('/api/tickets', authenticateToken, async (req, res) => {
     }
 });
 
-// --- DATOS GENERALES ---
+// --- ADMIN ---
+
+app.post('/api/admin/matches/bulk-create', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
+    const result = await crearPartidos(req.body.matches); 
+    res.status(result.success ? 201 : 500).json(result);
+});
+
+app.put('/api/admin/matches/:id', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
+    if (!req.params.id) return res.status(400).json({message: "Falta ID"});
+    const result = await updateMatch(req.params.id, req.body.home_score, req.body.away_score, req.body.status, req.body.match_date);
+    res.status(result.success ? 200 : 500).json(result);
+});
+
+app.delete('/api/admin/matches', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
+    try {
+        const conn = await db.getConnection();
+        await conn.execute('DELETE FROM predictions');
+        await conn.execute('DELETE FROM matches');
+        await conn.execute('DELETE FROM tickets'); 
+        await conn.execute('ALTER TABLE predictions AUTO_INCREMENT = 1');
+        await conn.execute('ALTER TABLE matches AUTO_INCREMENT = 1');
+        await conn.execute('ALTER TABLE tickets AUTO_INCREMENT = 1');
+        conn.release();
+        res.json({ success: true, message: 'Base de datos limpiada.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al borrar.' });
+    }
+});
+
 app.get('/api/admin/predictions', authenticateToken, async (req, res) => {
     if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
     const predictions = await obtenerTodosLosPronosticos();
@@ -194,21 +170,33 @@ app.get('/api/admin/predictions', authenticateToken, async (req, res) => {
 });
 
 app.get('/api/admin/users', authenticateToken, async (req, res) => {
-    // Verificamos permisos de admin
-    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') {
-        return res.sendStatus(403);
-    }
-
+    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
     const users = await getAllUsers();
     res.json(users);
 });
 
-app.post('/api/admin/users/payment', authenticateToken, async (req, res) => {
+app.put('/api/admin/users/:id/payment', authenticateToken, async (req, res) => {
     if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
-    const { userId, roundName } = req.body;
-    const result = await toggleRoundPayment(userId, roundName);
+    const result = await toggleUserPayment(req.params.id);
+    res.status(result.success ? 200 : 500).json(result);
+});
+
+// NUEVO: Obtener tickets de un usuario
+app.get('/api/admin/users/:userId/tickets', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
+    const tickets = await getUserTicketsAdmin(req.params.userId);
+    res.json(tickets);
+});
+
+// NUEVO: Toggle pago de ticket
+app.post('/api/admin/tickets/payment', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
+    const { ticketId } = req.body;
+    const result = await toggleTicketPayment(ticketId);
     res.json(result);
 });
+
+// --- DATOS PÚBLICOS ---
 
 app.get('/api/partidos', authenticateToken, async (req, res) => {
     const userId = req.user ? req.user.id : null; 
@@ -217,26 +205,15 @@ app.get('/api/partidos', authenticateToken, async (req, res) => {
     res.json(partidos || []); 
 });
 
-// ADMIN: Habilitar/Deshabilitar Pago de Usuario
-
+// ACTUALIZADO: Verifica pago por ticketId
 app.get('/api/payments/status', authenticateToken, async (req, res) => {
-    const { round } = req.query; // Ej: ?round=Fecha 4
-    const userId = req.user.id;
-
-    // Si es Owner/Dev, siempre es TRUE
+    const { ticketId } = req.query; 
     if (req.user.role === 'Owner' || req.user.role === 'Dev') {
         return res.json({ isPaid: true, isVip: true });
     }
-
-    const pagado = await verificarPagoUsuarioFecha(userId, round);
+    if (!ticketId) return res.json({ isPaid: false }); 
+    const pagado = await checkPaymentStatus(ticketId);
     res.json({ isPaid: pagado, isVip: false });
-});
-
-app.put('/api/admin/users/:id/payment', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
-
-    const result = await toggleUserPayment(req.params.id);
-    res.status(result.success ? 200 : 500).json(result);
 });
 
 app.get('/api/ranking', authenticateToken, async (req, res) => {

@@ -1,3 +1,4 @@
+// prode-backend/footballService.js
 const db = require('./db');
 
 // --- 1. LECTURA DE PARTIDOS (Para el Usuario) ---
@@ -75,44 +76,7 @@ async function crearPartidos(matches) {
 
 // --- 3. ESCRITURA: Enviar Pronóstico (Usuario) ---
 async function submitPrediction(userId, matchId, result) { 
-    if (!userId || !matchId || !result) {
-        return { success: false, message: 'Faltan datos.' };
-    }
-
-    try {
-        const [match] = await db.execute('SELECT match_date FROM matches WHERE id = ?', [matchId]);
-        if (match.length > 0) {
-            const now = new Date();
-            const matchDate = new Date(match[0].match_date);
-            if (now >= matchDate) {
-                return { success: false, message: 'El partido ya comenzó.' };
-            }
-        }
-
-        const [existing] = await db.execute(
-            'SELECT id FROM predictions WHERE user_id = ? AND match_id = ?',
-            [userId, matchId]
-        );
-
-        if (existing.length > 0) {
-            await db.execute(
-                'UPDATE predictions SET prediction_result = ? WHERE id = ?',
-                [result, existing[0].id]
-            );
-            return { success: true, message: 'Pronóstico actualizado.' };
-        }
-
-        const [resultDb] = await db.execute(
-            'INSERT INTO predictions (user_id, match_id, prediction_result) VALUES (?, ?, ?)',
-            [userId, matchId, result]
-        );
-
-        return { success: true, message: 'Pronóstico guardado.', id: resultDb.insertId };
-
-    } catch (error) {
-        console.error("❌ ERROR guardando pronóstico:", error);
-        return { success: false, message: 'Error interno.' };
-    }
+    return { success: false, message: 'Usar submitBulkPredictions' };
 }
 
 // --- 4. LECTURA: Todos los Pronósticos (Admin Dashboard) ---
@@ -139,7 +103,6 @@ async function obtenerTodosLosPronosticos() {
     }
 }
 
-// --- 5. RANKING: Calcular puntos en tiempo real 🏆 ---
 // --- 5. RANKING: Calcular puntos (General o por Fecha) 🏆 ---
 async function obtenerRanking(round) {
     try {
@@ -147,12 +110,11 @@ async function obtenerRanking(round) {
         const params = [];
 
         if (round && round !== 'General') {
-            // --- RANKING POR FECHA (Muestra el rendimiento de cada Boleta en esa fecha) ---
-            // Sumamos los puntos de las predicciones que pertenecen a tickets de esa fecha
+            // RANKING POR FECHA (Boletas)
             sql = `
                 SELECT 
                     u.username,
-                    t.ticket_name, -- Mostramos el nombre de la boleta
+                    t.ticket_name, 
                     COALESCE(SUM(p.points), 0) as points
                 FROM users u
                 JOIN tickets t ON u.id = t.user_id
@@ -163,8 +125,7 @@ async function obtenerRanking(round) {
             `;
             params.push(round);
         } else {
-            // --- RANKING GENERAL (Acumulado de todo el torneo) ---
-            // Sumamos todos los puntos de todas las boletas del usuario
+            // RANKING GENERAL (Suma total)
             sql = `
                 SELECT 
                     u.username,
@@ -187,7 +148,8 @@ async function obtenerRanking(round) {
     }
 }
 
-// --- NUEVA FUNCIÓN: Obtener o Crear Boletas ---
+// --- GESTIÓN DE TICKETS (USUARIO) ---
+
 async function obtenerTicketsUsuario(userId, roundName) {
     try {
         const [rows] = await db.execute(
@@ -203,8 +165,9 @@ async function obtenerTicketsUsuario(userId, roundName) {
 
 async function crearNuevoTicket(userId, roundName, ticketName) {
     try {
+        // Por defecto nace impago (is_paid = 0)
         const [res] = await db.execute(
-            'INSERT INTO tickets (user_id, round_name, ticket_name) VALUES (?, ?, ?)',
+            'INSERT INTO tickets (user_id, round_name, ticket_name, is_paid) VALUES (?, ?, ?, 0)',
             [userId, roundName, ticketName]
         );
         return { success: true, id: res.insertId };
@@ -213,10 +176,8 @@ async function crearNuevoTicket(userId, roundName, ticketName) {
     }
 }
 
-// --- NUEVA FUNCIÓN: Obtener Pronósticos de un Ticket ---
 async function obtenerPronosticosPorTicket(ticketId) {
     try {
-        // Seleccionamos match_id y el resultado (renombrado como 'prediction' para que el frontend lo entienda)
         const [rows] = await db.execute(
             'SELECT match_id, prediction_result as prediction FROM predictions WHERE ticket_id = ?',
             [ticketId]
@@ -228,8 +189,7 @@ async function obtenerPronosticosPorTicket(ticketId) {
     }
 }
 
-
-// --- ACTUALIZACIÓN: Guardado Masivo con Bloqueo de Horario ---
+// --- ACTUALIZACIÓN: Guardado Masivo ---
 async function submitBulkPredictions(userId, ticketId, predictionsArray) {
     if (!ticketId || !predictionsArray || predictionsArray.length === 0) {
         return { success: false, message: 'Datos incompletos.' };
@@ -243,31 +203,27 @@ async function submitBulkPredictions(userId, ticketId, predictionsArray) {
         for (const pred of predictionsArray) {
             const { matchId, result } = pred;
 
-            // 🛡️ BLOQUEO DE SEGURIDAD: Consultar hora del partido
+            // Bloqueo de horario
             const [mRows] = await conn.execute('SELECT match_date FROM matches WHERE id = ?', [matchId]);
             if (mRows.length > 0) {
                 const matchDate = new Date(mRows[0].match_date);
                 if (now >= matchDate) {
-                    console.log(`🚫 Intento de hack: Partido ${matchId} ya empezó.`);
-                    continue; // Saltamos este partido, no se guarda
+                    continue; 
                 }
             }
 
-            // Guardar o Actualizar vinculado al ticketId
+            // Upsert
             const [existing] = await conn.execute(
                 'SELECT id FROM predictions WHERE ticket_id = ? AND match_id = ?',
                 [ticketId, matchId]
             );
 
             if (existing.length > 0) {
-                // Si ya existe, actualizamos
                 await conn.execute(
                     'UPDATE predictions SET prediction_result = ? WHERE id = ?',
                     [result, existing[0].id]
                 );
             } else {
-                // 👇 AQUÍ ESTÁ EL CAMBIO IMPORTANTE 👇
-                // Agregamos 'user_id' a la lista de columnas y al array de valores
                 await conn.execute(
                     'INSERT INTO predictions (ticket_id, user_id, match_id, prediction_result) VALUES (?, ?, ?, ?)',
                     [ticketId, userId, matchId, result]
@@ -284,36 +240,27 @@ async function submitBulkPredictions(userId, ticketId, predictionsArray) {
     }
 }
 
-// --- 7. EDICIÓN: Actualizar Partido y Recalcular Puntos (Admin) ---
-// 👇 ESTA ES LA FUNCIÓN QUE TE FALTABA O ESTABA MAL UBICADA
+// --- EDICIÓN Y RECALCULO ---
 async function updateMatch(matchId, home_score, away_score, status, match_date) {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
-        // 1. Sanitizar Goles
-        const hScore = (home_score === '' || home_score === null || home_score === undefined) ? null : parseInt(home_score);
-        const aScore = (away_score === '' || away_score === null || away_score === undefined) ? null : parseInt(away_score);
-
-        // 2. 🛠️ CORRECCIÓN DE FECHA: Convertir ISO (T/Z) a MySQL (Espacio)
+        const hScore = (home_score === '' || home_score === null) ? null : parseInt(home_score);
+        const aScore = (away_score === '' || away_score === null) ? null : parseInt(away_score);
+        
         let fechaSQL = match_date;
         if (match_date) {
-            // Si viene con formato javascript completo, lo limpiamos
             fechaSQL = new Date(match_date).toISOString().slice(0, 19).replace('T', ' ');
         }
 
-        // 3. Actualizar la tabla matches
         await conn.execute(
-            `UPDATE matches 
-             SET home_score = ?, away_score = ?, status = ?, match_date = ? 
-             WHERE id = ?`,
+            `UPDATE matches SET home_score = ?, away_score = ?, status = ?, match_date = ? WHERE id = ?`,
             [hScore, aScore, status, fechaSQL, matchId]
         );
 
-        // 4. RECALCULAR PUNTOS (Solo si el partido se marca como 'FT')
         if (status === 'FT') {
-            console.log(`🔄 Recalculando puntos para el partido ID: ${matchId}...`);
-            
+            // Recalcular puntos individuales
             const sqlRecalculate = `
                 UPDATE predictions p
                 JOIN matches m ON p.match_id = m.id
@@ -329,8 +276,21 @@ async function updateMatch(matchId, home_score, away_score, status, match_date) 
                 WHERE p.match_id = ?
             `;
             await conn.execute(sqlRecalculate, [matchId]);
+
+            // ACTUALIZAR PUNTOS TOTALES DEL TICKET
+            const sqlUpdateTickets = `
+               UPDATE tickets t
+               JOIN predictions p ON p.ticket_id = t.id
+               SET t.points = (
+                   SELECT COALESCE(SUM(sub_p.points), 0)
+                   FROM predictions sub_p
+                   WHERE sub_p.ticket_id = t.id
+               )
+               WHERE p.match_id = ?
+            `;
+             await conn.execute(sqlUpdateTickets, [matchId]);
+
         } else {
-            // Si deja de ser FT, quitamos los puntos
             await conn.execute('UPDATE predictions SET points = 0 WHERE match_id = ?', [matchId]);
         }
 
@@ -346,101 +306,55 @@ async function updateMatch(matchId, home_score, away_score, status, match_date) 
     }
 }
 
-
-// --- GESTIÓN DE PAGOS ---
-async function toggleUserPayment(userId) {
-    try {
-        // 1. Buscamos estado actual
-        const [rows] = await db.execute('SELECT is_paid FROM users WHERE id = ?', [userId]);
-        if (rows.length === 0) return { success: false, message: 'Usuario no encontrado' };
-
-        const nuevoEstado = !rows[0].is_paid; // Invertimos el valor
-
-        // 2. Actualizamos
-        await db.execute('UPDATE users SET is_paid = ? WHERE id = ?', [nuevoEstado, userId]);
-        
-        return { success: true, newStatus: nuevoEstado };
-    } catch (error) {
-        return { success: false, message: error.message };
-    }
-}
-
-// Modificar verificación de usuario para incluir is_paid
-async function getUserStatus(userId) {
-    const [rows] = await db.execute('SELECT is_paid, role FROM users WHERE id = ?', [userId]);
-    return rows[0];
-}
-
-
-// 1. Obtener pagos de un usuario (para el admin y validaciones)
-async function getUserPayments(userId) {
-    const [rows] = await db.execute('SELECT round_name FROM payments WHERE user_id = ?', [userId]);
-    return rows.map(r => r.round_name);
-}
-// 2. Alternar pago de una fecha específica
-async function toggleRoundPayment(userId, roundName) {
-    try {
-        const [existing] = await db.execute(
-            'SELECT id FROM payments WHERE user_id = ? AND round_name = ?', 
-            [userId, roundName]
-        );
-
-        if (existing.length > 0) {
-            await db.execute('DELETE FROM payments WHERE id = ?', [existing[0].id]);
-            return { success: true, status: 'PENDING' };
-        } else {
-            await db.execute('INSERT INTO payments (user_id, round_name) VALUES (?, ?)', [userId, roundName]);
-            return { success: true, status: 'PAID' };
-        }
-    } catch (error) {
-        return { success: false, message: error.message };
-    }
-}
-
-// 3. Verificar si puede guardar (Validación de seguridad)
-async function checkPaymentStatus(ticketId) {
-    // 1. Averiguamos de qué fecha es el ticket y de qué usuario
-    const [ticket] = await db.execute('SELECT user_id, round_name FROM tickets WHERE id = ?', [ticketId]);
-    
-    if (ticket.length === 0) return false; // Ticket no existe
-
-    const { user_id, round_name } = ticket[0];
-
-    // 2. Buscamos si hay un pago registrado para ESE usuario y ESA fecha
-    const [payment] = await db.execute(
-        'SELECT id FROM payments WHERE user_id = ? AND round_name = ?', 
-        [user_id, round_name]
-    );
-
-    return payment.length > 0; // True si pagó, False si no
-}
-// --- ADMIN: Obtener todos los usuarios para gestión ---
+// --- ADMIN: OBTENER USUARIOS ---
 async function getAllUsers() {
     try {
         const [users] = await db.execute('SELECT id, username, email, role FROM users ORDER BY id DESC');
-        
-        // Adjuntamos los pagos a cada usuario
-        for (let user of users) {
-            const pagos = await getUserPayments(user.id);
-            user.paid_rounds = pagos; // Array tipo ['Fecha 4', 'Fecha 5']
-        }
         return users;
     } catch (error) {
         return [];
     }
 }
 
-async function verificarPagoUsuarioFecha(userId, roundName) {
-    const [rows] = await db.execute(
-        'SELECT id FROM payments WHERE user_id = ? AND round_name = ?',
-        [userId, roundName]
-    );
-    return rows.length > 0;
+// --- GESTIÓN DE PAGOS ---
+async function toggleUserPayment(userId) {
+    try {
+        const [rows] = await db.execute('SELECT is_paid FROM users WHERE id = ?', [userId]);
+        if (rows.length === 0) return { success: false, message: 'Usuario no encontrado' };
+        const nuevoEstado = !rows[0].is_paid;
+        await db.execute('UPDATE users SET is_paid = ? WHERE id = ?', [nuevoEstado, userId]);
+        return { success: true, newStatus: nuevoEstado };
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
 }
 
-// ==========================================
-// EXPORTACIONES AL FINAL DEL ARCHIVO
-// ==========================================
+// --- NUEVO: GESTIÓN DE TICKETS PARA ADMIN ---
+
+// 1. Obtener todas las boletas de un usuario
+async function getUserTicketsAdmin(userId) {
+    const [rows] = await db.execute(
+        'SELECT id, ticket_name, round_name, points, is_paid FROM tickets WHERE user_id = ? ORDER BY round_name DESC, id ASC', 
+        [userId]
+    );
+    return rows;
+}
+
+// 2. Alternar pago de un TICKET específico
+async function toggleTicketPayment(ticketId) {
+    await db.execute('UPDATE tickets SET is_paid = NOT is_paid WHERE id = ?', [ticketId]);
+    const [rows] = await db.execute('SELECT is_paid FROM tickets WHERE id = ?', [ticketId]);
+    return { success: true, is_paid: rows[0].is_paid };
+}
+
+// 3. Verificar si puede guardar (Ahora mira el ticket)
+async function checkPaymentStatus(ticketId) {
+    const [rows] = await db.execute('SELECT is_paid FROM tickets WHERE id = ?', [ticketId]);
+    if (rows.length === 0) return false; 
+    return rows[0].is_paid === 1; 
+}
+
+// EXPORTS
 module.exports = { 
     obtenerPartidos, 
     crearPartidos, 
@@ -452,10 +366,9 @@ module.exports = {
     obtenerTicketsUsuario, 
     crearNuevoTicket,
     obtenerPronosticosPorTicket,
-    toggleUserPayment,
-    getUserStatus,
     getAllUsers,
-    toggleRoundPayment,
-    checkPaymentStatus,
-    verificarPagoUsuarioFecha
+    getUserTicketsAdmin,      // NUEVO
+    toggleTicketPayment,      // NUEVO
+    checkPaymentStatus,       // ACTUALIZADO
+    toggleUserPayment,
 };

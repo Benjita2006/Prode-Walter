@@ -18,10 +18,9 @@ import './App.css';
 
 function App() {
     // --- ESTADOS ---
-    
     const [tickets, setTickets] = useState([]); 
     const [ticketActivo, setTicketActivo] = useState(null); 
-    const [estadoPago, setEstadoPago] = useState(null); // Ahora sí se usa
+    const [estadoPago, setEstadoPago] = useState(null); 
     const [cargandoTickets, setCargandoTickets] = useState(false);
     const [usuario, setUsuario] = useState(null); 
     const [partidos, setPartidos] = useState([]); 
@@ -79,6 +78,33 @@ function App() {
         cargarPronosticosDeBoleta();
     }, [ticketActivo, fechaAbierta]);
 
+    // 3. EFECTO CRÍTICO: Verificar estado de pago cuando cambia la boleta
+    useEffect(() => {
+        const verificarPagoTicket = async () => {
+            // Si no hay boleta seleccionada, limpiamos el estado
+            if (!ticketActivo) {
+                setEstadoPago(null);
+                return;
+            }
+            
+            const token = localStorage.getItem('token');
+            try {
+                // AHORA SÍ: Consultamos por ticketId, que es como lo espera el backend nuevo
+                const res = await fetch(`${API_URL}/api/payments/status?ticketId=${ticketActivo.id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setEstadoPago(data.isPaid); // True o False
+                }
+            } catch (error) {
+                console.error("Error verificando pago:", error);
+            }
+        };
+
+        verificarPagoTicket();
+    }, [ticketActivo]); // Se ejecuta cada vez que cambias de boleta
+
     const userRole = usuario ? usuario.role : null;
     const isAdmin = userRole === 'Owner' || userRole === 'Dev';
 
@@ -120,7 +146,7 @@ function App() {
             setTickets(data);
             
             if (data.length > 0) {
-                setTicketActivo(data[0]);
+                setTicketActivo(data[0]); // Esto disparará el useEffect de verificación de pago
             } else {
                 setTicketActivo(null);
             }
@@ -131,7 +157,7 @@ function App() {
         }
     }, []);
 
-    // 3. Verificar Token al inicio
+    // 4. Verificar Token al inicio
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -149,7 +175,7 @@ function App() {
         setLoading(false);
     }, [handleLogout, fetchPartidos]);
 
-    // 4. Buffer de pronósticos
+    // 5. Buffer de pronósticos
     useEffect(() => {
         if (partidos.length > 0) {
             const buffer = {};
@@ -254,29 +280,22 @@ function App() {
     };
     
     // --- FUNCIÓN TOGGLE FECHA CORREGIDA ---
-    const toggleFecha = async (nombreFecha) => {
+    const toggleFecha = (nombreFecha) => {
         if (fechaAbierta === nombreFecha) {
+            // Si cerramos, limpiamos todo
             setFechaAbierta(null);
             setTicketActivo(null);
-            setEstadoPago(null); // Resetear estado al cerrar
+            setEstadoPago(null); 
         } else {
+            // Si abrimos, cargamos boletas
             setFechaAbierta(nombreFecha);
             fetchTickets(nombreFecha);
             
-            // Lógica para verificar pago
+            // ⚠️ IMPORTANTE: Aquí NO verificamos el pago.
+            // ¿Por qué? Porque aún no sabemos cuál será el "ticketActivo".
+            // Esperamos a que 'fetchTickets' termine, establezca 'ticketActivo',
+            // y eso disparará el useEffect de la línea 80 que verificará el pago correctamente.
             setEstadoPago(null); 
-            const token = localStorage.getItem('token');
-            try {
-                const res = await fetch(`${API_URL}/api/payments/status?round=${nombreFecha}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    setEstadoPago(data.isPaid); // Asignamos el valor
-                }
-            } catch (error) {
-                console.error("Error verificando pago:", error);
-            }
         }
     };
 
@@ -386,7 +405,7 @@ function App() {
                                                         </div>
                                                         
                                                         <div className="save-container">
-                                                            {/* --- AQUI SE USA ESTADOPAGO VISUALMENTE --- */}
+                                                            {/* --- INDICADOR VISUAL DE PAGO (SOLO APARECE SI HAY BOLETA) --- */}
                                                             <div style={{
                                                                 marginBottom: '15px', 
                                                                 padding: '10px', 
@@ -397,7 +416,7 @@ function App() {
                                                             }}>
                                                                 {estadoPago ? (
                                                                     <span style={{color: '#4caf50', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
-                                                                        ✅ FECHA HABILITADA
+                                                                        ✅ BOLETA HABILITADA
                                                                     </span>
                                                                 ) : (
                                                                     <span style={{color: '#f44336', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
@@ -406,7 +425,7 @@ function App() {
                                                                 )}
                                                                 {!estadoPago && (
                                                                     <p style={{fontSize: '0.8rem', color: '#aaa', marginTop: '5px', margin: 0}}>
-                                                                        Podrás guardar tus pronósticos una vez que el admin confirme tu pago.
+                                                                        Podrás guardar tus pronósticos una vez que el admin habilite esta boleta.
                                                                     </p>
                                                                 )}
                                                             </div>

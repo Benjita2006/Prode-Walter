@@ -6,13 +6,14 @@ import './UsersManagement.css';
 function UsersManagement() {
     const [usuarios, setUsuarios] = useState([]);
     const [filtro, setFiltro] = useState('');
-    const [selectedUser, setSelectedUser] = useState(null); // Usuario seleccionado para el modal
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [userTickets, setUserTickets] = useState([]); 
+    const [loadingTickets, setLoadingTickets] = useState(false);
+    
+    // Aquí está el estado que daba error
     const [error, setError] = useState(null);
 
-    // Lista de fechas disponibles (Idealmente vendría del backend)
-    const rondasDisponibles = ['Fecha 1', 'Fecha 2', 'Fecha 3', 'Fecha 4', 'Fecha 5', 'Fecha 6'];
-
-    // Cargar usuarios (envuelto en useCallback para evitar warnings)
+    // Cargar usuarios
     const fetchUsers = useCallback(async () => {
         const token = localStorage.getItem('token');
         try {
@@ -25,15 +26,13 @@ function UsersManagement() {
 
             const data = await res.json();
             setUsuarios(data);
+            setError(null); // Limpiamos error si sale bien
         } catch (err) {
             setError(err.message);
         }
     }, []);
 
-    // Ejecutar carga inicial
-    useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+    useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
     // CAMBIAR ROL
     const handleChangeRole = async (userId, newRole) => {
@@ -62,62 +61,58 @@ function UsersManagement() {
         }
     };
 
-    // TOGGLE PAGO POR FECHA (Llama a la nueva ruta)
-    const handleToggleRound = async (userId, roundName) => {
+    // ABRIR MODAL Y CARGAR TICKETS
+    const openManageModal = async (user) => {
+        setSelectedUser(user);
+        setLoadingTickets(true);
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`${API_URL}/api/admin/users/payment`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ userId, roundName })
+            const res = await fetch(`${API_URL}/api/admin/users/${user.id}/tickets`, {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-
             if (res.ok) {
-                const data = await res.json(); // { success: true, status: 'PAID' o 'PENDING' }
-                
-                // Actualizar interfaz visualmente sin recargar todo
-                setUsuarios(prev => prev.map(u => {
-                    if (u.id !== userId) return u;
-                    
-                    const currentRounds = u.paid_rounds || [];
-                    let newRounds;
-
-                    if (data.status === 'PAID') {
-                        newRounds = [...currentRounds, roundName];
-                    } else {
-                        newRounds = currentRounds.filter(r => r !== roundName);
-                    }
-
-                    // Actualizamos también el usuario seleccionado para que el modal reaccione en vivo
-                    if (selectedUser && selectedUser.id === userId) {
-                        setSelectedUser(prevSel => ({ ...prevSel, paid_rounds: newRounds }));
-                    }
-
-                    return { ...u, paid_rounds: newRounds };
-                }));
+                const data = await res.json();
+                setUserTickets(data);
             }
         } catch (error) {
             console.error(error);
-            alert("Error al actualizar pago");
+            alert("Error cargando boletas");
+        } finally {
+            setLoadingTickets(false);
         }
     };
 
-    // Filtrado
-    const filteredUsers = usuarios.filter(user => 
-        user.username.toLowerCase().includes(filtro.toLowerCase()) ||
-        user.email.toLowerCase().includes(filtro.toLowerCase())
-    );
-    
-    // Helper para estilo de Rol
-    const getRoleStyle = (role) => {
-        if (role === 'Owner') return { backgroundColor: 'rgba(255, 204, 0, 0.2)', color: '#ffcc00' };
-        if (role === 'Admin') return { backgroundColor: 'rgba(0, 212, 255, 0.2)', color: '#00d4ff' };
-        return { backgroundColor: 'rgba(76, 175, 80, 0.1)', color: '#4caf50' };
+    // TOGGLE PAGO DE BOLETA
+    const handleToggleTicket = async (ticketId) => {
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`${API_URL}/api/admin/tickets/payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ ticketId })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setUserTickets(prev => prev.map(t => 
+                    t.id === ticketId ? { ...t, is_paid: data.is_paid } : t
+                ));
+            }
+        } catch (error) { console.error(error); }
     };
+
+    // Agrupar tickets por fecha
+    const ticketsPorFecha = userTickets.reduce((acc, t) => {
+        if (!acc[t.round_name]) acc[t.round_name] = [];
+        acc[t.round_name].push(t);
+        return acc;
+    }, {});
+
+    const filteredUsers = usuarios.filter(u => u.username.toLowerCase().includes(filtro.toLowerCase()));
 
     return (
         <div className="users-management-container">
-            <h2 className="users-management-header">👥 Gestión de Usuarios y Pagos</h2>
+            <h2 className="users-management-header">👥 Gestión de Boletas</h2>
             
             <input 
                 type="text" 
@@ -127,7 +122,8 @@ function UsersManagement() {
                 onChange={(e) => setFiltro(e.target.value)}
             />
             
-            {error && <p className="error-message">{error}</p>}
+            {/* 👇 ESTO ES LO QUE FALTABA: MOSTRAR EL ERROR */}
+            {error && <p className="error-message" style={{color: '#ff5252', textAlign: 'center'}}>{error}</p>}
             
             <div className="table-responsive">
                 <table className="users-table">
@@ -136,39 +132,32 @@ function UsersManagement() {
                             <th>Usuario</th>
                             <th>Email</th>
                             <th>Rol</th>
-                            <th>Pagos Activos</th>
                             <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredUsers.map((user) => {
-                            const roleStyle = getRoleStyle(user.role);
+                            // Definimos colores de rol aquí mismo para simplificar
+                            const roleColor = user.role === 'Owner' ? '#ffcc00' : user.role === 'Admin' ? '#00d4ff' : '#4caf50';
+                            
                             return (
                                 <tr key={user.id}>
                                     <td className="col-username">{user.username}</td>
                                     <td className="col-email">{user.email}</td>
                                     <td>
-                                        <span className="role-badge" style={roleStyle}>
+                                        <span className="role-badge" style={{color: roleColor, border: `1px solid ${roleColor}`, padding: '4px 8px', borderRadius: '4px'}}>
                                             {user.role}
                                         </span>
                                     </td>
                                     <td>
-                                        {/* Badge que muestra cuántas fechas pagó */}
-                                        <span className="payment-count-badge">
-                                            {user.paid_rounds ? user.paid_rounds.length : 0} Fechas
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div className="actions-container">
-                                            {/* Botón para abrir el Modal */}
+                                        <div style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
                                             <button 
-                                                onClick={() => setSelectedUser(user)}
+                                                onClick={() => openManageModal(user)}
                                                 className="btn-action btn-manage"
                                             >
-                                                💰 Gestionar
+                                                💰 Ver Boletas
                                             </button>
 
-                                            {/* Select Rol */}
                                             <select 
                                                 value="" 
                                                 onChange={(e) => handleChangeRole(user.id, e.target.value)}
@@ -194,26 +183,38 @@ function UsersManagement() {
             {/* --- MODAL FLOTANTE --- */}
             {selectedUser && (
                 <div className="modal-overlay" onClick={() => setSelectedUser(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3 className="modal-title">Pagos de {selectedUser.username}</h3>
-                        <p className="modal-subtitle">Toca una fecha para activar/desactivar:</p>
+                    <div className="modal-content wide-modal" onClick={e => e.stopPropagation()}>
+                        <h3 className="modal-title">Boletas de {selectedUser.username}</h3>
                         
-                        <div className="rounds-grid">
-                            {rondasDisponibles.map(ronda => {
-                                const isPaid = selectedUser.paid_rounds?.includes(ronda);
-                                return (
-                                    <button 
-                                        key={ronda} 
-                                        onClick={() => handleToggleRound(selectedUser.id, ronda)}
-                                        className={`btn-round ${isPaid ? 'paid' : 'pending'}`}
-                                    >
-                                        <span className="round-name">{ronda}</span>
-                                        <span className="round-icon">{isPaid ? '✅' : '❌'}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        <button className="btn-close-modal" onClick={() => setSelectedUser(null)}>Cerrar</button>
+                        {loadingTickets ? (
+                            <p>Cargando...</p>
+                        ) : (
+                            <div className="tickets-scroll-area">
+                                {Object.keys(ticketsPorFecha).length === 0 ? (
+                                    <p style={{color: '#aaa'}}>Sin boletas creadas.</p>
+                                ) : (
+                                    Object.keys(ticketsPorFecha).map(fecha => (
+                                        <div key={fecha} className="round-group">
+                                            <h4 className="round-header" style={{color: '#4caf50', borderBottom: '1px solid #333', paddingBottom: '5px', marginTop:'15px'}}>{fecha}</h4>
+                                            <div className="tickets-grid" style={{display: 'grid', gap: '10px', marginTop: '10px'}}>
+                                                {ticketsPorFecha[fecha].map(ticket => (
+                                                    <button 
+                                                        key={ticket.id}
+                                                        onClick={() => handleToggleTicket(ticket.id)}
+                                                        className={`btn-round ${ticket.is_paid ? 'paid' : 'pending'}`}
+                                                        style={{display: 'flex', justifyContent: 'space-between', alignItems:'center', width: '100%', padding:'12px'}}
+                                                    >
+                                                        <span style={{fontWeight:'bold'}}>{ticket.ticket_name} <small>({ticket.points} pts)</small></span>
+                                                        <span style={{fontSize:'0.9rem'}}>{ticket.is_paid ? '✅ HABILITADA' : '🔒 PENDIENTE'}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
+                        <button className="btn-close-modal" onClick={() => setSelectedUser(null)} style={{marginTop:'20px'}}>Cerrar</button>
                     </div>
                 </div>
             )}
