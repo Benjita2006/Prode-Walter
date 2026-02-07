@@ -371,6 +371,20 @@ async function getUserStatus(userId) {
     return rows[0];
 }
 
+// --- ADMIN: Obtener todos los usuarios para gestión ---
+async function getAllUsers() {
+    try {
+        // Seleccionamos datos clave + is_paid
+        const [rows] = await db.execute(
+            'SELECT id, username, email, role, is_paid FROM users ORDER BY id DESC'
+        );
+        return rows;
+    } catch (error) {
+        console.error("Error obteniendo usuarios:", error);
+        return [];
+    }
+}
+
 // ==========================================
 // EXPORTACIONES AL FINAL DEL ARCHIVO
 // ==========================================
@@ -386,5 +400,6 @@ module.exports = {
     crearNuevoTicket,
     obtenerPronosticosPorTicket,
     toggleUserPayment,
-    getUserStatus
+    getUserStatus,
+    getAllUsers
 };

@@ -21,7 +21,10 @@ const {
     updateMatch,
     crearNuevoTicket, 
     obtenerTicketsUsuario,
-    obtenerPronosticosPorTicket 
+    obtenerPronosticosPorTicket,
+    toggleUserPayment,
+    getUserStatus,
+    getAllUsers
 } = require('./footballService');
 
 const PORT = process.env.PORT || 3000;
@@ -182,6 +185,16 @@ app.get('/api/admin/predictions', authenticateToken, async (req, res) => {
     if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
     const predictions = await obtenerTodosLosPronosticos();
     res.json(predictions);
+});
+
+app.get('/api/admin/users', authenticateToken, async (req, res) => {
+    // Verificamos permisos de admin
+    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') {
+        return res.sendStatus(403);
+    }
+
+    const users = await getAllUsers();
+    res.json(users);
 });
 
 app.get('/api/partidos', authenticateToken, async (req, res) => {
