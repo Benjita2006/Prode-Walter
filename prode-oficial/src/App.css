@@ -390,3 +390,64 @@
     background-color: #2196F3 !important; /* Unificar color en móvil para limpieza */
   }
 }
+.ticket-selector-container {
+    margin-bottom: 20px;
+    padding: 0 5px;
+}
+
+.ticket-label {
+    font-size: 0.75rem;
+    color: #888;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+/* Contenedor con scroll horizontal para móviles */
+.ticket-tabs-wrapper {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+/* Estilo de cada boleta */
+.btn-ticket-tab {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #444;
+    background: #222;
+    color: white;
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: bold;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.btn-ticket-tab:hover {
+    border-color: #666;
+}
+
+/* Boleta activa */
+.btn-ticket-tab.active {
+    background-color: #4caf50;
+    border-color: #4caf50;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+}
+
+/* Botón de nueva boleta */
+.btn-ticket-add {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px dashed #4caf50;
+    background: transparent;
+    color: #4caf50;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+.btn-ticket-add:hover {
+    background: rgba(76, 175, 80, 0.1);
+}

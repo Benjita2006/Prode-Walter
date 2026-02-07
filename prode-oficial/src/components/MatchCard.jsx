@@ -1,126 +1,94 @@
-// src/components/MatchCard.jsx
 import React from 'react';
 import './MatchCard.css';
 
 function MatchCard({ 
-    matchId, 
-    equipoA, logoA, 
-    equipoB, logoB, 
-    fecha, status, 
-    bloqueado, 
-    seleccionActual, 
-    onSeleccionChange,
-    golesA, golesB, 
-    esAdmin, onEditClick
+    matchId, equipoA, logoA, equipoB, logoB, 
+    fecha, status, bloqueado, seleccionActual, 
+    onSeleccionChange, golesA, golesB 
 }) {
 
-    const fechaFormateada = new Date(fecha).toLocaleDateString('es-AR', {
+    const ahora = new Date();
+    const horaPartido = new Date(fecha);
+    
+   
+    const estaCerrado = ahora >= horaPartido || status === 'FT' || bloqueado;
+
+    const fechaFormateada = horaPartido.toLocaleDateString('es-AR', {
         weekday: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
 
     const handleSelect = (valor) => {
-        if (!bloqueado) {
+        // Solo permitimos el cambio si NO está cerrado
+        if (!estaCerrado) {
             onSeleccionChange(matchId, valor);
         }
     };
 
-    // --- LÓGICA DE GANADOR ---
-    const isFinished = status === 'FT' && golesA !== null && golesB !== null;
-    const isHomeWinner = isFinished && golesA > golesB;
-    const isAwayWinner = isFinished && golesB > golesA;
-    // 🗑️ Eliminamos 'isDraw' porque no lo estamos usando visualmente
-
     return (
-        <div className={`match-card ${bloqueado ? 'bloqueado' : ''}`}>
+        <div className={`match-card ${estaCerrado ? 'bloqueado' : ''}`}>
             
             <div className="match-header">
                 <span className="match-date">{fechaFormateada} HS</span>
-                <span className={`match-status-badge ${status.toLowerCase()}`}>
-                    {status === 'NS' ? 'POR JUGAR' : status === 'FT' ? 'FINAL' : status}
+                
+                {/* 2. Actualizamos el Badge para mostrar "CERRADO" si ya empezó */}
+                <span className={`match-status-badge ${estaCerrado && status === 'NS' ? 'closed' : status.toLowerCase()}`}>
+                    {status === 'FT' ? 'FINAL' : (ahora >= horaPartido ? 'CERRADO' : 'POR JUGAR')}
                 </span>
-                {esAdmin && (
-                    <button onClick={(e) => { e.stopPropagation(); onEditClick(matchId); }} 
-                        style={{background:'none', border:'none', cursor:'pointer', fontSize:'1.2rem'}}>✏️</button>
-                )}
             </div>
 
             <div className="match-content">
-                {/* LOCAL */}
                 <div className="team-container">
                     <img src={logoA} alt={equipoA} className="team-logo" />
-                    {/* Aplicamos clase winner si ganó el local */}
-                    <span className={`team-name ${isHomeWinner ? 'winner' : isFinished ? 'loser' : ''}`}>
+                    <span className={`team-name ${(status === 'FT' && golesA > golesB) ? 'winner' : ''}`}>
                         {equipoA}
                     </span>
                 </div>
 
-                {/* CENTRO: VS o RESULTADO */}
                 <div className="match-vs">
-                    {isFinished ? (
+                    {status === 'FT' ? (
                         <div className="real-score">
-                            {/* Número Local (Verde si ganó) */}
-                            <span className={`score-number ${isHomeWinner ? 'winner' : ''}`}>
-                                {golesA}
-                            </span>
-                            
+                            <span className={golesA > golesB ? 'winner' : ''}>{golesA}</span>
                             <span className="score-divider">-</span>
-                            
-                            {/* Número Visita (Verde si ganó) */}
-                            <span className={`score-number ${isAwayWinner ? 'winner' : ''}`}>
-                                {golesB}
-                            </span>
+                            <span className={golesB > golesA ? 'winner' : ''}>{golesB}</span>
                         </div>
                     ) : (
                         <div className="vs-circle">VS</div>
                     )}
                 </div>
 
-                {/* VISITANTE */}
                 <div className="team-container">
                     <img src={logoB} alt={equipoB} className="team-logo" />
-                    {/* Aplicamos clase winner si ganó la visita */}
-                    <span className={`team-name ${isAwayWinner ? 'winner' : isFinished ? 'loser' : ''}`}>
+                    <span className={`team-name ${(status === 'FT' && golesB > golesA) ? 'winner' : ''}`}>
                         {equipoB}
                     </span>
                 </div>
             </div>
 
             <div className="prediction-footer">
-                {bloqueado ? (
-                    <div style={{width:'100%', textAlign:'center'}}>
-                        {seleccionActual ? (
-                            <span style={{color: '#aaa', fontWeight:'bold', fontSize:'0.9rem'}}>
-                                TU PRONÓSTICO: <span style={{color:'white'}}>{
-                                    seleccionActual === 'HOME' ? equipoA : 
-                                    seleccionActual === 'AWAY' ? equipoB : 'EMPATE'
-                                }</span>
-                            </span>
-                        ) : (
-                            <span style={{color:'#666', fontSize:'0.8rem'}}>NO PRONOSTICADO</span>
-                        )}
-                    </div>
-                ) : (
-                    <div className="prediction-options">
-                        <button 
-                            className={`predict-btn ${seleccionActual === 'HOME' ? 'selected-home' : ''}`}
-                            onClick={() => handleSelect('HOME')}
-                        >
-                            LOCAL
-                        </button>
-                        <button 
-                            className={`predict-btn ${seleccionActual === 'DRAW' ? 'selected-draw' : ''}`}
-                            onClick={() => handleSelect('DRAW')}
-                        >
-                            EMPATE
-                        </button>
-                        <button 
-                            className={`predict-btn ${seleccionActual === 'AWAY' ? 'selected-away' : ''}`}
-                            onClick={() => handleSelect('AWAY')}
-                        >
-                            VISITA
-                        </button>
-                    </div>
-                )}
+                {/* 3. Si está cerrado, mostramos el pronóstico pero deshabilitamos clics */}
+                <div className="prediction-options">
+                    <button 
+                        className={`predict-btn ${seleccionActual === 'HOME' ? 'selected-home' : ''}`}
+                        onClick={() => handleSelect('HOME')}
+                        disabled={estaCerrado} // 👈 Importante
+                    >
+                        LOCAL
+                    </button>
+                    <button 
+                        className={`predict-btn ${seleccionActual === 'DRAW' ? 'selected-draw' : ''}`}
+                        onClick={() => handleSelect('DRAW')}
+                        disabled={estaCerrado} // 👈 Importante
+                    >
+                        EMPATE
+                    </button>
+                    <button 
+                        className={`predict-btn ${seleccionActual === 'AWAY' ? 'selected-away' : ''}`}
+                        onClick={() => handleSelect('AWAY')}
+                        disabled={estaCerrado} // 👈 Importante
+                    >
+                        VISITA
+                    </button>
+                </div>
             </div>
         </div>
     );

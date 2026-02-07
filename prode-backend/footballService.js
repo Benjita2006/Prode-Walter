@@ -170,21 +170,62 @@ async function obtenerRanking() {
     }
 }
 
-// --- 6. ESCRITURA: Guardado Masivo (BULK SUBMIT) ---
-async function submitBulkPredictions(userId, predictionsArray) {
-    if (!userId || !predictionsArray || predictionsArray.length === 0) {
-        return { success: false, message: 'No hay pronósticos para guardar.' };
+// --- NUEVA FUNCIÓN: Obtener o Crear Boletas ---
+async function obtenerTicketsUsuario(userId, roundName) {
+    try {
+        const [rows] = await db.execute(
+            'SELECT * FROM tickets WHERE user_id = ? AND round_name = ?',
+            [userId, roundName]
+        );
+        return rows;
+    } catch (error) {
+        console.error("Error tickets:", error);
+        return [];
+    }
+}
+
+async function crearNuevoTicket(userId, roundName, ticketName) {
+    try {
+        const [res] = await db.execute(
+            'INSERT INTO tickets (user_id, round_name, ticket_name) VALUES (?, ?, ?)',
+            [userId, roundName, ticketName]
+        );
+        return { success: true, id: res.insertId };
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+}
+
+// --- ACTUALIZACIÓN: Guardado Masivo con Bloqueo de Horario ---
+async function submitBulkPredictions(userId, ticketId, predictionsArray) {
+    if (!ticketId || !predictionsArray || predictionsArray.length === 0) {
+        return { success: false, message: 'Datos incompletos.' };
     }
 
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
+        const now = new Date();
+
         for (const pred of predictionsArray) {
             const { matchId, result } = pred;
+
+            // 🛡️ BLOQUEO DE SEGURIDAD: Consultar hora del partido
+            const [mRows] = await conn.execute('SELECT match_date FROM matches WHERE id = ?', [matchId]);
+            if (mRows.length > 0) {
+                const matchDate = new Date(mRows[0].match_date);
+                if (now >= matchDate) {
+                    console.log(`🚫 Intento de hack: Partido ${matchId} ya empezó.`);
+                    continue; // Saltamos este partido, no se guarda
+                }
+            }
+
+            // Guardar o Actualizar vinculado al ticketId
             const [existing] = await conn.execute(
-                'SELECT id FROM predictions WHERE user_id = ? AND match_id = ?',
-                [userId, matchId]
+                'SELECT id FROM predictions WHERE ticket_id = ? AND match_id = ?',
+                [ticketId, matchId]
             );
+
             if (existing.length > 0) {
                 await conn.execute(
                     'UPDATE predictions SET prediction_result = ? WHERE id = ?',
@@ -192,17 +233,16 @@ async function submitBulkPredictions(userId, predictionsArray) {
                 );
             } else {
                 await conn.execute(
-                    'INSERT INTO predictions (user_id, match_id, prediction_result) VALUES (?, ?, ?)',
-                    [userId, matchId, result]
+                    'INSERT INTO predictions (ticket_id, match_id, prediction_result) VALUES (?, ?, ?)',
+                    [ticketId, matchId, result]
                 );
             }
         }
         await conn.commit();
-        return { success: true, message: '¡Pronósticos guardados correctamente!' };
+        return { success: true };
     } catch (error) {
         await conn.rollback();
-        console.error("Error bulk save:", error);
-        return { success: false, message: 'Error al guardar pronósticos.' };
+        return { success: false, message: error.message };
     } finally {
         conn.release();
     }

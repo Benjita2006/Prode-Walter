@@ -337,3 +337,24 @@
     cursor: not-allowed;
     box-shadow: none;
 }
+
+/* Estado cerrado (cuando llegó la hora pero no es FT) */
+.match-status-badge.closed {
+    background-color: #616161;
+    color: #e0e0e0;
+    border: 1px solid #757575;
+}
+
+/* Opacidad para botones deshabilitados */
+.predict-btn:disabled {
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+    opacity: 0.6;
+}
+
+/* Evitar hover en tarjetas bloqueadas */
+.match-card.bloqueado:hover {
+    transform: none;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    border-color: #333;
+}
