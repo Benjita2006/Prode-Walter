@@ -7,11 +7,11 @@ const path = require('path');
 require('dotenv').config(); 
 
 // --- IMPORTACIONES LOCALES ---
-const { checkPaymentStatus, toggleRoundPayment } = require('./footballService');
 const authenticateToken = require('./authMiddleware'); 
 const db = require('./db'); 
 const { registerUser, loginUser, googleLogin } = require('./authController');
 
+// AQUÍ ESTABA EL ERROR: He limpiado y unificado todas las importaciones
 const { 
     obtenerPartidos, 
     crearPartidos, 
@@ -23,9 +23,11 @@ const {
     crearNuevoTicket, 
     obtenerTicketsUsuario,
     obtenerPronosticosPorTicket,
-    toggleUserPayment,
-    getUserStatus,
-    getAllUsers
+    getAllUsers,           
+    toggleRoundPayment,
+    checkPaymentStatus,
+    verificarPagoUsuarioFecha,
+    toggleUserPayment // Faltaba importar esta función
 } = require('./footballService');
 
 const PORT = process.env.PORT || 3000;
@@ -118,7 +120,7 @@ app.post('/api/admin/matches/bulk-create', authenticateToken, async (req, res) =
     res.status(result.success ? 201 : 500).json(result);
 });
 
-// RUTA PARA EDITAR RESULTADOS (Soluciona el error de guardar)
+// RUTA PARA EDITAR RESULTADOS
 app.put('/api/admin/matches/:id', authenticateToken, async (req, res) => {
     if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
     
@@ -172,7 +174,6 @@ app.post('/api/tickets', authenticateToken, async (req, res) => {
     const resultado = await crearNuevoTicket(userId, round, ticketName);
 
     if (resultado.success) {
-        // Devolvemos el objeto completo de la boleta recién creada
         res.json({ 
             id: resultado.id, 
             user_id: userId, 
@@ -217,6 +218,20 @@ app.get('/api/partidos', authenticateToken, async (req, res) => {
 });
 
 // ADMIN: Habilitar/Deshabilitar Pago de Usuario
+
+app.get('/api/payments/status', authenticateToken, async (req, res) => {
+    const { round } = req.query; // Ej: ?round=Fecha 4
+    const userId = req.user.id;
+
+    // Si es Owner/Dev, siempre es TRUE
+    if (req.user.role === 'Owner' || req.user.role === 'Dev') {
+        return res.json({ isPaid: true, isVip: true });
+    }
+
+    const pagado = await verificarPagoUsuarioFecha(userId, round);
+    res.json({ isPaid: pagado, isVip: false });
+});
+
 app.put('/api/admin/users/:id/payment', authenticateToken, async (req, res) => {
     if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
 
@@ -225,7 +240,7 @@ app.put('/api/admin/users/:id/payment', authenticateToken, async (req, res) => {
 });
 
 app.get('/api/ranking', authenticateToken, async (req, res) => {
-    const { round } = req.query; // Leemos el parámetro (ej: "Fecha 4")
+    const { round } = req.query; 
     const result = await obtenerRanking(round);
     res.json(result.success ? result.ranking : []);
 });

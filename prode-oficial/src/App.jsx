@@ -1,4 +1,5 @@
 // src/App.jsx
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MatchCard from './components/MatchCard';
 import Login from './components/Login';
@@ -17,8 +18,10 @@ import './App.css';
 
 function App() {
     // --- ESTADOS ---
+    
     const [tickets, setTickets] = useState([]); 
     const [ticketActivo, setTicketActivo] = useState(null); 
+    const [estadoPago, setEstadoPago] = useState(null); // Ahora sí se usa
     const [cargandoTickets, setCargandoTickets] = useState(false);
     const [usuario, setUsuario] = useState(null); 
     const [partidos, setPartidos] = useState([]); 
@@ -63,7 +66,7 @@ function App() {
 
                 const mapaPronosticos = {};
                 data.forEach(p => {
-                    mapaPronosticos[p.match_id] = p.prediction; // 'prediction' viene de la query SQL corregida
+                    mapaPronosticos[p.match_id] = p.prediction; 
                 });
 
                 setMisPronosticosTemp(mapaPronosticos);
@@ -146,7 +149,7 @@ function App() {
         setLoading(false);
     }, [handleLogout, fetchPartidos]);
 
-    // 4. Buffer de pronósticos (para visualización inicial)
+    // 4. Buffer de pronósticos
     useEffect(() => {
         if (partidos.length > 0) {
             const buffer = {};
@@ -166,9 +169,7 @@ function App() {
 
     const handleSeleccionChange = (matchId, sel) => setMisPronosticosTemp(prev => ({ ...prev, [matchId]: sel }));
 
-    // --- AQUÍ ESTABA EL ERROR: AHORA LA FUNCIÓN ESTÁ BIEN DEFINIDA ---
     const guardarFecha = async (nombreFecha) => {
-        // 1. Validación de seguridad
         if (!ticketActivo) {
             alert("Primero selecciona o crea una boleta.");
             return;
@@ -177,10 +178,7 @@ function App() {
         setGuardando(true);
         const token = localStorage.getItem('token');
         
-        // 2. Preparamos los datos
         const partidosDeLaFecha = partidosPorFechaFixture[nombreFecha];
-        
-        // Filtramos solo los partidos que tienen pronóstico
         const payload = partidosDeLaFecha
             .filter(p => misPronosticosTemp[p.id])
             .map(p => ({ matchId: p.id, result: misPronosticosTemp[p.id] }));
@@ -192,7 +190,6 @@ function App() {
         }
 
         try {
-            // 3. Enviamos al servidor con ticketId
             const res = await fetch(`${API_URL}/api/predictions/submit-bulk`, {
                 method: 'POST',
                 headers: { 
@@ -222,7 +219,6 @@ function App() {
 
     const crearNuevaBoleta = async (nombreFecha) => {
         const nombre = prompt("Ingresá un nombre para tu nueva boleta:");
-        
         if (!nombre || nombre.trim() === "") return;
         if (nombre.length > 20) return alert("El nombre es muy largo (máx 20 caracteres)");
 
@@ -252,20 +248,35 @@ function App() {
         }
     };
 
-    // --- EVENTOS DE INTERFAZ ---
     const handleNavClick = (view) => {
         setAppView(view);
         if ((view === 'matches' || view === 'results') && partidos.length === 0) fetchPartidos();
     };
     
-    // Agregamos fetchTickets al abrir la fecha
-    const toggleFecha = (nombreFecha) => {
+    // --- FUNCIÓN TOGGLE FECHA CORREGIDA ---
+    const toggleFecha = async (nombreFecha) => {
         if (fechaAbierta === nombreFecha) {
             setFechaAbierta(null);
             setTicketActivo(null);
+            setEstadoPago(null); // Resetear estado al cerrar
         } else {
             setFechaAbierta(nombreFecha);
             fetchTickets(nombreFecha);
+            
+            // Lógica para verificar pago
+            setEstadoPago(null); 
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_URL}/api/payments/status?round=${nombreFecha}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setEstadoPago(data.isPaid); // Asignamos el valor
+                }
+            } catch (error) {
+                console.error("Error verificando pago:", error);
+            }
         }
     };
 
@@ -275,7 +286,6 @@ function App() {
         setTimeout(() => setShowWelcome(false), 2500);
     };
 
-    // --- RENDERIZADO ---
     if (loading && !usuario) return <div className="loading-screen">Cargando...</div>;
     if (!usuario) return currentView === 'register' 
         ? <Register onRegisterSuccess={() => setCurrentView('login')} onSwitchToLogin={() => setCurrentView('login')} />
@@ -325,7 +335,7 @@ function App() {
                                         
                                         {/* 1. BOTÓN ENCABEZADO */}
                                         <button 
-                                            onClick={() => toggleFecha(nombreFecha)} // Usamos la nueva función toggleFecha
+                                            onClick={() => toggleFecha(nombreFecha)}
                                             className={`date-header-btn ${fechaAbierta === nombreFecha ? 'open' : ''}`}
                                         >
                                             <div className="date-label-container">
@@ -376,6 +386,32 @@ function App() {
                                                         </div>
                                                         
                                                         <div className="save-container">
+                                                            {/* --- AQUI SE USA ESTADOPAGO VISUALMENTE --- */}
+                                                            <div style={{
+                                                                marginBottom: '15px', 
+                                                                padding: '10px', 
+                                                                borderRadius: '8px', 
+                                                                textAlign: 'center',
+                                                                backgroundColor: estadoPago ? 'rgba(76, 175, 80, 0.15)' : 'rgba(244, 67, 54, 0.15)',
+                                                                border: `1px solid ${estadoPago ? '#4caf50' : '#f44336'}`
+                                                            }}>
+                                                                {estadoPago ? (
+                                                                    <span style={{color: '#4caf50', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+                                                                        ✅ FECHA HABILITADA
+                                                                    </span>
+                                                                ) : (
+                                                                    <span style={{color: '#f44336', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+                                                                        🔒 PAGO PENDIENTE
+                                                                    </span>
+                                                                )}
+                                                                {!estadoPago && (
+                                                                    <p style={{fontSize: '0.8rem', color: '#aaa', marginTop: '5px', margin: 0}}>
+                                                                        Podrás guardar tus pronósticos una vez que el admin confirme tu pago.
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            {/* ------------------------------------------- */}
+
                                                             <button onClick={() => guardarFecha(nombreFecha)} disabled={guardando || !ticketActivo} className="btn-save-fixture">
                                                                 {guardando ? 'Guardando...' : `GUARDAR PRONÓSTICO`}
                                                             </button>

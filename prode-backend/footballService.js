@@ -430,6 +430,14 @@ async function getAllUsers() {
     }
 }
 
+async function verificarPagoUsuarioFecha(userId, roundName) {
+    const [rows] = await db.execute(
+        'SELECT id FROM payments WHERE user_id = ? AND round_name = ?',
+        [userId, roundName]
+    );
+    return rows.length > 0;
+}
+
 // ==========================================
 // EXPORTACIONES AL FINAL DEL ARCHIVO
 // ==========================================
@@ -448,5 +456,6 @@ module.exports = {
     getUserStatus,
     getAllUsers,
     toggleRoundPayment,
-    checkPaymentStatus
+    checkPaymentStatus,
+    verificarPagoUsuarioFecha
 };
