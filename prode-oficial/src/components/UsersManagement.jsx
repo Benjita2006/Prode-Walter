@@ -1,15 +1,19 @@
 // src/components/UsersManagement.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_URL } from '../config';
-import './UsersManagement.css'; // 👈 Importamos el CSS nuevo
+import './UsersManagement.css'; 
 
 function UsersManagement() {
     const [usuarios, setUsuarios] = useState([]);
     const [filtro, setFiltro] = useState('');
+    const [selectedUser, setSelectedUser] = useState(null); // Usuario seleccionado para el modal
     const [error, setError] = useState(null);
 
-    // Cargar usuarios
-    const fetchUsers = async () => {
+    // Lista de fechas disponibles (Idealmente vendría del backend)
+    const rondasDisponibles = ['Fecha 1', 'Fecha 2', 'Fecha 3', 'Fecha 4', 'Fecha 5', 'Fecha 6'];
+
+    // Cargar usuarios (envuelto en useCallback para evitar warnings)
+    const fetchUsers = useCallback(async () => {
         const token = localStorage.getItem('token');
         try {
             const res = await fetch(`${API_URL}/api/admin/users`, { 
@@ -24,16 +28,17 @@ function UsersManagement() {
         } catch (err) {
             setError(err.message);
         }
-    };
+    }, []);
 
+    // Ejecutar carga inicial
     useEffect(() => {
         fetchUsers();
-    }, []);
+    }, [fetchUsers]);
 
     // CAMBIAR ROL
     const handleChangeRole = async (userId, newRole) => {
-        const token = localStorage.getItem('token');
         if(!window.confirm(`¿Seguro que quieres cambiar este usuario a ${newRole}?`)) return;
+        const token = localStorage.getItem('token');
 
         try {
             const res = await fetch(`${API_URL}/api/admin/users/${userId}/role`, {
@@ -57,25 +62,43 @@ function UsersManagement() {
         }
     };
 
-    // CAMBIAR PAGO (Toggle simple para is_paid legacy, aunque idealmente usaremos el modal por fecha)
-    const togglePayment = async (userId) => {
+    // TOGGLE PAGO POR FECHA (Llama a la nueva ruta)
+    const handleToggleRound = async (userId, roundName) => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`${API_URL}/api/admin/users/${userId}/payment`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const res = await fetch(`${API_URL}/api/admin/users/payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ userId, roundName })
             });
 
             if (res.ok) {
-                setUsuarios(usuarios.map(u => 
-                    u.id === userId ? { ...u, is_paid: !u.is_paid } : u
-                ));
-            } else {
-                alert('Error al actualizar el pago.');
+                const data = await res.json(); // { success: true, status: 'PAID' o 'PENDING' }
+                
+                // Actualizar interfaz visualmente sin recargar todo
+                setUsuarios(prev => prev.map(u => {
+                    if (u.id !== userId) return u;
+                    
+                    const currentRounds = u.paid_rounds || [];
+                    let newRounds;
+
+                    if (data.status === 'PAID') {
+                        newRounds = [...currentRounds, roundName];
+                    } else {
+                        newRounds = currentRounds.filter(r => r !== roundName);
+                    }
+
+                    // Actualizamos también el usuario seleccionado para que el modal reaccione en vivo
+                    if (selectedUser && selectedUser.id === userId) {
+                        setSelectedUser(prevSel => ({ ...prevSel, paid_rounds: newRounds }));
+                    }
+
+                    return { ...u, paid_rounds: newRounds };
+                }));
             }
-        } catch (error) { 
+        } catch (error) {
             console.error(error);
-            alert('Error de conexión.');
+            alert("Error al actualizar pago");
         }
     };
 
@@ -110,11 +133,10 @@ function UsersManagement() {
                 <table className="users-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Usuario</th>
                             <th>Email</th>
                             <th>Rol</th>
-                            <th>Pago (Global)</th>
+                            <th>Pagos Activos</th>
                             <th>Acción</th>
                         </tr>
                     </thead>
@@ -123,7 +145,6 @@ function UsersManagement() {
                             const roleStyle = getRoleStyle(user.role);
                             return (
                                 <tr key={user.id}>
-                                    <td>#{user.id}</td>
                                     <td className="col-username">{user.username}</td>
                                     <td className="col-email">{user.email}</td>
                                     <td>
@@ -132,20 +153,19 @@ function UsersManagement() {
                                         </span>
                                     </td>
                                     <td>
-                                        {user.is_paid ? (
-                                            <span className="payment-status status-paid">✅ PAGADO</span>
-                                        ) : (
-                                            <span className="payment-status status-pending">❌ PENDIENTE</span>
-                                        )}
+                                        {/* Badge que muestra cuántas fechas pagó */}
+                                        <span className="payment-count-badge">
+                                            {user.paid_rounds ? user.paid_rounds.length : 0} Fechas
+                                        </span>
                                     </td>
                                     <td>
                                         <div className="actions-container">
-                                            {/* Botón Pago */}
+                                            {/* Botón para abrir el Modal */}
                                             <button 
-                                                onClick={() => togglePayment(user.id)}
-                                                className={`btn-action ${user.is_paid ? 'btn-revoke' : 'btn-confirm'}`}
+                                                onClick={() => setSelectedUser(user)}
+                                                className="btn-action btn-manage"
                                             >
-                                                {user.is_paid ? 'Revocar' : 'Confirmar'}
+                                                💰 Gestionar
                                             </button>
 
                                             {/* Select Rol */}
@@ -157,7 +177,6 @@ function UsersManagement() {
                                                 <option value="" disabled>Rol...</option>
                                                 <option value="User">User</option>
                                                 <option value="Admin">Admin</option>
-                                                <option value="Dev">Dev</option>
                                             </select>
                                         </div>
                                     </td>
@@ -170,6 +189,33 @@ function UsersManagement() {
             
             {filteredUsers.length === 0 && (
                 <p className="empty-message">No se encontraron usuarios.</p>
+            )}
+
+            {/* --- MODAL FLOTANTE --- */}
+            {selectedUser && (
+                <div className="modal-overlay" onClick={() => setSelectedUser(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3 className="modal-title">Pagos de {selectedUser.username}</h3>
+                        <p className="modal-subtitle">Toca una fecha para activar/desactivar:</p>
+                        
+                        <div className="rounds-grid">
+                            {rondasDisponibles.map(ronda => {
+                                const isPaid = selectedUser.paid_rounds?.includes(ronda);
+                                return (
+                                    <button 
+                                        key={ronda} 
+                                        onClick={() => handleToggleRound(selectedUser.id, ronda)}
+                                        className={`btn-round ${isPaid ? 'paid' : 'pending'}`}
+                                    >
+                                        <span className="round-name">{ronda}</span>
+                                        <span className="round-icon">{isPaid ? '✅' : '❌'}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <button className="btn-close-modal" onClick={() => setSelectedUser(null)}>Cerrar</button>
+                    </div>
+                </div>
             )}
         </div>
     );

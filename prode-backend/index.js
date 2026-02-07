@@ -7,6 +7,7 @@ const path = require('path');
 require('dotenv').config(); 
 
 // --- IMPORTACIONES LOCALES ---
+const { checkPaymentStatus, toggleRoundPayment } = require('./footballService');
 const authenticateToken = require('./authMiddleware'); 
 const db = require('./db'); 
 const { registerUser, loginUser, googleLogin } = require('./authController');
@@ -92,18 +93,20 @@ app.post('/api/predictions/submit-bulk', authenticateToken, async (req, res) => 
 
     if (!ticketId) return res.status(400).json({ message: "Falta ticketId" });
 
-    // --- VERIFICACIÓN DE PAGO ESTRICTA ---
-    // Si NO es Admin, verificamos pago
+    // --- BLOQUEO DE SEGURIDAD ---
+    // Si NO es Admin, verificamos si pagó ESA fecha específica
     if (req.user.role !== 'Owner' && req.user.role !== 'Dev') {
         const estaPagado = await checkPaymentStatus(ticketId);
-
+        
         if (!estaPagado) {
-            // Aquí cortamos la ejecución. El frontend recibirá error 403.
+            // AQUÍ CORTAMOS EL PROCESO
             return res.status(403).json({ 
-                message: "⛔ PAGO REQUERIDO: No has abonado esta fecha específica." 
+                message: "⛔ PAGO REQUERIDO: No se registró el pago para esta fecha." 
             });
         }
     }
+    // ----------------------------
+
     const result = await submitBulkPredictions(req.user.id, ticketId, predictions);
     res.status(result.success ? 201 : 500).json(result);
 });
@@ -201,7 +204,6 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
 
 app.post('/api/admin/users/payment', authenticateToken, async (req, res) => {
     if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
-
     const { userId, roundName } = req.body;
     const result = await toggleRoundPayment(userId, roundName);
     res.json(result);

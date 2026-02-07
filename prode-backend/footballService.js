@@ -374,54 +374,45 @@ async function getUserStatus(userId) {
 
 // 1. Obtener pagos de un usuario (para el admin y validaciones)
 async function getUserPayments(userId) {
-    try {
-        const [rows] = await db.execute('SELECT round_name FROM payments WHERE user_id = ?', [userId]);
-        // Devuelve un array simple: ['Fecha 4', 'Fecha 5']
-        return rows.map(r => r.round_name);
-    } catch (error) {
-        return [];
-    }
+    const [rows] = await db.execute('SELECT round_name FROM payments WHERE user_id = ?', [userId]);
+    return rows.map(r => r.round_name);
 }
-
 // 2. Alternar pago de una fecha específica
 async function toggleRoundPayment(userId, roundName) {
     try {
-        // Verificamos si ya pagó esa fecha
         const [existing] = await db.execute(
             'SELECT id FROM payments WHERE user_id = ? AND round_name = ?', 
             [userId, roundName]
         );
 
         if (existing.length > 0) {
-            // Si existe, lo borramos (Revocar pago)
             await db.execute('DELETE FROM payments WHERE id = ?', [existing[0].id]);
             return { success: true, status: 'PENDING' };
         } else {
-            // Si no existe, lo creamos (Confirmar pago)
             await db.execute('INSERT INTO payments (user_id, round_name) VALUES (?, ?)', [userId, roundName]);
             return { success: true, status: 'PAID' };
         }
     } catch (error) {
-        console.error(error);
         return { success: false, message: error.message };
     }
 }
 
 // 3. Verificar si puede guardar (Validación de seguridad)
 async function checkPaymentStatus(ticketId) {
-    // Primero averiguamos de qué fecha es el ticket
+    // 1. Averiguamos de qué fecha es el ticket y de qué usuario
     const [ticket] = await db.execute('SELECT user_id, round_name FROM tickets WHERE id = ?', [ticketId]);
-    if (ticket.length === 0) return false;
+    
+    if (ticket.length === 0) return false; // Ticket no existe
 
     const { user_id, round_name } = ticket[0];
 
-    // Verificamos si hay pago para esa fecha y ese usuario
+    // 2. Buscamos si hay un pago registrado para ESE usuario y ESA fecha
     const [payment] = await db.execute(
         'SELECT id FROM payments WHERE user_id = ? AND round_name = ?', 
         [user_id, round_name]
     );
 
-    return payment.length > 0;
+    return payment.length > 0; // True si pagó, False si no
 }
 // --- ADMIN: Obtener todos los usuarios para gestión ---
 async function getAllUsers() {
@@ -431,11 +422,10 @@ async function getAllUsers() {
         // Adjuntamos los pagos a cada usuario
         for (let user of users) {
             const pagos = await getUserPayments(user.id);
-            user.paid_rounds = pagos; // Agregamos array de fechas pagadas
+            user.paid_rounds = pagos; // Array tipo ['Fecha 4', 'Fecha 5']
         }
         return users;
     } catch (error) {
-        console.error("Error obteniendo usuarios:", error);
         return [];
     }
 }
@@ -458,4 +448,5 @@ module.exports = {
     getUserStatus,
     getAllUsers,
     toggleRoundPayment,
+    checkPaymentStatus
 };

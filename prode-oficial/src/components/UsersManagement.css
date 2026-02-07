@@ -1,17 +1,17 @@
 /* src/components/UsersManagement.css */
 
-/* Contenedor Principal */
+/* ... (Estilos base anteriores se mantienen, agrega estos nuevos) ... */
+
 .users-management-container {
     padding: 20px;
     color: #e0e0e0;
-    background-color: #121212; /* Fondo muy oscuro */
+    background-color: #121212;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     margin-top: 20px;
-    min-height: 80vh; /* Opcional: para que ocupe buen espacio vertical */
+    min-height: 80vh;
 }
 
-/* Encabezado */
 .users-management-header {
     text-align: center;
     margin-bottom: 20px;
@@ -20,10 +20,8 @@
     color: #ffffff;
     font-size: 1.5rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
-/* Input de Búsqueda */
 .users-search-input {
     width: 100%;
     padding: 12px;
@@ -33,73 +31,32 @@
     background-color: #1e1e1e;
     color: white;
     font-size: 1rem;
-    transition: border-color 0.3s ease;
 }
 
-.users-search-input:focus {
-    outline: none;
-    border-color: #4caf50;
-}
-
-/* Mensajes de Error */
-.error-message {
-    color: #ff5252;
-    text-align: center;
-    margin-bottom: 15px;
-    font-weight: bold;
-}
-
-/* Contenedor de la Tabla (para scroll horizontal en móviles) */
-.table-responsive {
-    overflow-x: auto;
-}
-
-/* Tabla */
 .users-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
 }
 
-/* Encabezados de Tabla */
 .users-table th {
     background-color: #333;
     color: #4caf50;
     padding: 12px;
     text-align: left;
     border-bottom: 2px solid #444;
-    white-space: nowrap;
 }
 
-/* Celdas de Tabla */
 .users-table td {
     padding: 12px;
     border-bottom: 1px solid #2a2a2a;
     color: #dddddd;
-    vertical-align: middle;
 }
 
-/* Filas */
 .users-table tr {
     background-color: #1a1a1a;
-    transition: background-color 0.2s;
 }
 
-.users-table tr:hover {
-    background-color: #252525;
-}
-
-/* Estilos específicos para columnas */
-.col-username {
-    font-weight: bold;
-    color: #fff !important;
-}
-
-.col-email {
-    color: #aaa !important;
-}
-
-/* Badges (Etiquetas de Rol y Pago) */
 .role-badge {
     padding: 4px 8px;
     border-radius: 4px;
@@ -108,56 +65,42 @@
     display: inline-block;
 }
 
-.payment-status {
+.payment-count-badge {
+    background-color: #333;
+    color: #4caf50;
+    padding: 4px 8px;
+    border-radius: 10px;
     font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    font-size: 0.85rem;
+    border: 1px solid #4caf50;
 }
 
-.status-paid {
-    color: #66bb6a;
-}
-
-.status-pending {
-    color: #ef5350;
-}
-
-/* Contenedor de Acciones (Botones) */
+/* BOTONES */
 .actions-container {
     display: flex;
     gap: 10px;
     align-items: center;
 }
 
-/* Botón de Acción (Confirmar/Revocar) */
 .btn-action {
     padding: 6px 12px;
     cursor: pointer;
     border: none;
     border-radius: 5px;
     font-size: 0.75rem;
-    white-space: nowrap;
     font-weight: bold;
-    transition: transform 0.1s, opacity 0.2s;
+    transition: transform 0.1s;
 }
 
-.btn-action:active {
-    transform: scale(0.95);
-}
-
-.btn-confirm {
-    background-color: #2e7d32;
+.btn-manage {
+    background-color: #2196f3; /* Azul */
     color: white;
 }
 
-.btn-revoke {
-    background-color: #424242;
-    color: white;
-    border: 1px solid #555;
+.btn-manage:hover {
+    background-color: #1976d2;
 }
 
-/* Selector de Rol */
 .role-select {
     background-color: #222;
     color: white;
@@ -167,15 +110,105 @@
     cursor: pointer;
 }
 
-.role-select:focus {
-    outline: none;
-    border-color: #4caf50;
+/* --- ESTILOS DEL MODAL --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85); /* Fondo oscuro semitransparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
 }
 
-/* Mensaje vacío */
-.empty-message {
+.modal-content {
+    background-color: #1e1e1e;
+    padding: 25px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 350px;
+    border: 1px solid #4caf50;
+    box-shadow: 0 0 25px rgba(76, 175, 80, 0.2);
     text-align: center;
-    padding: 20px;
-    color: #777;
-    font-style: italic;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-title {
+    margin-top: 0;
+    color: #4caf50;
+    font-size: 1.2rem;
+}
+
+.modal-subtitle {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-bottom: 20px;
+}
+
+.rounds-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 columnas */
+    gap: 10px;
+    margin-bottom: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.btn-round {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.btn-round:active {
+    transform: scale(0.95);
+}
+
+/* Estado Pagado */
+.btn-round.paid {
+    background-color: #2e7d32;
+    color: white;
+    border: 1px solid #4caf50;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* Estado Pendiente */
+.btn-round.pending {
+    background-color: #c62828;
+    color: white;
+    opacity: 0.6;
+    border: 1px solid #ef5350;
+}
+
+.btn-round.pending:hover {
+    opacity: 1;
+}
+
+.btn-close-modal {
+    width: 100%;
+    padding: 12px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background 0.2s;
+}
+
+.btn-close-modal:hover {
+    background-color: #444;
 }
