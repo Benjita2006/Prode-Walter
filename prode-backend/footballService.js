@@ -341,5 +341,6 @@ module.exports = {
     submitBulkPredictions,
     updateMatch,
     obtenerTicketsUsuario, 
-    crearNuevoTicket    
+    crearNuevoTicket,
+    obtenerPronosticosPorTicket
 };

@@ -85,7 +85,9 @@ app.post('/api/predictions/submit', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/predictions/submit-bulk', authenticateToken, async (req, res) => {
-    const result = await submitBulkPredictions(req.user.id, req.body.predictions);
+    const { predictions, ticketId } = req.body; 
+    const result = await submitBulkPredictions(req.user.id, ticketId, predictions);
+    
     res.status(result.success ? 201 : 500).json(result);
 });
 
