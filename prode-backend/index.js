@@ -90,18 +90,20 @@ app.post('/api/predictions/submit', authenticateToken, async (req, res) => {
 app.post('/api/predictions/submit-bulk', authenticateToken, async (req, res) => {
     const { predictions, ticketId } = req.body;
 
-    // 1. VERIFICACIÓN DE PAGO EN TIEMPO REAL
-    const userStatus = await getUserStatus(req.user.id);
+    if (!ticketId) return res.status(400).json({ message: "Falta ticketId" });
 
-    // Si no es Admin y no pagó, bloqueamos
-    if (!userStatus.is_paid && userStatus.role !== 'Owner' && userStatus.role !== 'Dev') {
-        return res.status(403).json({ message: "⛔ Debes abonar la inscripción para guardar pronósticos." });
+    // --- VERIFICACIÓN DE PAGO ESTRICTA ---
+    // Si NO es Admin, verificamos pago
+    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') {
+        const estaPagado = await checkPaymentStatus(ticketId);
+
+        if (!estaPagado) {
+            // Aquí cortamos la ejecución. El frontend recibirá error 403.
+            return res.status(403).json({ 
+                message: "⛔ PAGO REQUERIDO: No has abonado esta fecha específica." 
+            });
+        }
     }
-
-    if (!ticketId || !predictions) {
-        return res.status(400).json({ message: "Faltan datos" });
-    }
-
     const result = await submitBulkPredictions(req.user.id, ticketId, predictions);
     res.status(result.success ? 201 : 500).json(result);
 });
@@ -195,6 +197,14 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
 
     const users = await getAllUsers();
     res.json(users);
+});
+
+app.post('/api/admin/users/payment', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'Owner' && req.user.role !== 'Dev') return res.sendStatus(403);
+
+    const { userId, roundName } = req.body;
+    const result = await toggleRoundPayment(userId, roundName);
+    res.json(result);
 });
 
 app.get('/api/partidos', authenticateToken, async (req, res) => {

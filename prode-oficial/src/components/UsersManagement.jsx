@@ -1,7 +1,7 @@
 // src/components/UsersManagement.jsx
 import React, { useState, useEffect } from 'react';
-import './MatchCreator.css'; 
 import { API_URL } from '../config';
+import './UsersManagement.css'; // 👈 Importamos el CSS nuevo
 
 function UsersManagement() {
     const [usuarios, setUsuarios] = useState([]);
@@ -12,7 +12,7 @@ function UsersManagement() {
     const fetchUsers = async () => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`${API_URL}/api/admin/users`, { // Asegúrate de que esta ruta devuelva el campo is_paid
+            const res = await fetch(`${API_URL}/api/admin/users`, { 
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
@@ -30,7 +30,7 @@ function UsersManagement() {
         fetchUsers();
     }, []);
 
-    // FUNCIÓN PARA CAMBIAR ROL
+    // CAMBIAR ROL
     const handleChangeRole = async (userId, newRole) => {
         const token = localStorage.getItem('token');
         if(!window.confirm(`¿Seguro que quieres cambiar este usuario a ${newRole}?`)) return;
@@ -57,7 +57,7 @@ function UsersManagement() {
         }
     };
 
-    // FUNCIÓN PARA CAMBIAR ESTADO DE PAGO (NUEVO)
+    // CAMBIAR PAGO (Toggle simple para is_paid legacy, aunque idealmente usaremos el modal por fecha)
     const togglePayment = async (userId) => {
         const token = localStorage.getItem('token');
         try {
@@ -67,7 +67,6 @@ function UsersManagement() {
             });
 
             if (res.ok) {
-                // Actualización optimista: cambiamos el estado localmente sin recargar todo
                 setUsuarios(usuarios.map(u => 
                     u.id === userId ? { ...u, is_paid: !u.is_paid } : u
                 ));
@@ -86,83 +85,92 @@ function UsersManagement() {
         user.email.toLowerCase().includes(filtro.toLowerCase())
     );
     
+    // Helper para estilo de Rol
+    const getRoleStyle = (role) => {
+        if (role === 'Owner') return { backgroundColor: 'rgba(255, 204, 0, 0.2)', color: '#ffcc00' };
+        if (role === 'Admin') return { backgroundColor: 'rgba(0, 212, 255, 0.2)', color: '#00d4ff' };
+        return { backgroundColor: 'rgba(76, 175, 80, 0.1)', color: '#4caf50' };
+    };
+
     return (
-        <div className="match-creator-container">
-            <h2>👥 Gestión de Usuarios y Pagos</h2>
+        <div className="users-management-container">
+            <h2 className="users-management-header">👥 Gestión de Usuarios y Pagos</h2>
+            
             <input 
                 type="text" 
-                placeholder="🔍 Buscar usuario..." 
-                className="table-input"
-                style={{marginBottom: '20px', padding: '10px'}}
+                placeholder="🔍 Buscar usuario por nombre o email..." 
+                className="users-search-input"
                 value={filtro}
                 onChange={(e) => setFiltro(e.target.value)}
             />
             
-            {error && <p className="status-message error">{error}</p>}
+            {error && <p className="error-message">{error}</p>}
             
             <div className="table-responsive">
-                <table className="matches-table">
+                <table className="users-table">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Usuario</th>
                             <th>Email</th>
                             <th>Rol</th>
-                            <th>Pago</th> {/* Columna Nueva */}
-                            <th>Acciones</th>
+                            <th>Pago (Global)</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredUsers.map((user) => (
-                            <tr key={user.id}>
-                                <td>{user.id}</td>
-                                <td>{user.username}</td>
-                                <td>{user.email}</td>
-                                <td>
-                                    <span style={{
-                                        fontWeight: 'bold', 
-                                        color: user.role === 'Owner' ? '#ffcc00' : user.role === 'Admin' ? '#00d4ff' : '#4caf50'
-                                    }}>
-                                        {user.role}
-                                    </span>
-                                </td>
-                                {/* COLUMNA DE PAGO */}
-                                <td>
-                                    <button 
-                                        onClick={() => togglePayment(user.id)}
-                                        style={{
-                                            padding: '6px 12px',
-                                            cursor: 'pointer',
-                                            backgroundColor: user.is_paid ? '#2e7d32' : '#c62828', // Verde oscuro / Rojo oscuro
-                                            color: 'white',
-                                            border: '1px solid #555',
-                                            borderRadius: '20px',
-                                            fontWeight: 'bold',
-                                            fontSize: '0.8rem',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        title={user.is_paid ? "Click para revocar pago" : "Click para confirmar pago"}
-                                    >
-                                        {user.is_paid ? '✅ PAGADO' : '❌ PENDIENTE'}
-                                    </button>
-                                </td>
-                                <td>
-                                    <select 
-                                        defaultValue="" 
-                                        onChange={(e) => handleChangeRole(user.id, e.target.value)}
-                                        style={{padding: '5px', borderRadius: '5px'}}
-                                    >
-                                        <option value="" disabled>Cambiar Rol...</option>
-                                        <option value="User">User</option>
-                                        <option value="Admin">Admin</option>
-                                        <option value="Dev">Dev</option>
-                                    </select>
-                                </td>
-                            </tr>
-                        ))}
+                        {filteredUsers.map((user) => {
+                            const roleStyle = getRoleStyle(user.role);
+                            return (
+                                <tr key={user.id}>
+                                    <td>#{user.id}</td>
+                                    <td className="col-username">{user.username}</td>
+                                    <td className="col-email">{user.email}</td>
+                                    <td>
+                                        <span className="role-badge" style={roleStyle}>
+                                            {user.role}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {user.is_paid ? (
+                                            <span className="payment-status status-paid">✅ PAGADO</span>
+                                        ) : (
+                                            <span className="payment-status status-pending">❌ PENDIENTE</span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        <div className="actions-container">
+                                            {/* Botón Pago */}
+                                            <button 
+                                                onClick={() => togglePayment(user.id)}
+                                                className={`btn-action ${user.is_paid ? 'btn-revoke' : 'btn-confirm'}`}
+                                            >
+                                                {user.is_paid ? 'Revocar' : 'Confirmar'}
+                                            </button>
+
+                                            {/* Select Rol */}
+                                            <select 
+                                                value="" 
+                                                onChange={(e) => handleChangeRole(user.id, e.target.value)}
+                                                className="role-select"
+                                            >
+                                                <option value="" disabled>Rol...</option>
+                                                <option value="User">User</option>
+                                                <option value="Admin">Admin</option>
+                                                <option value="Dev">Dev</option>
+                                            </select>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
+            
+            {filteredUsers.length === 0 && (
+                <p className="empty-message">No se encontraron usuarios.</p>
+            )}
         </div>
     );
 }
