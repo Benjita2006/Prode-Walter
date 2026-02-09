@@ -55,8 +55,8 @@ function TutorialOverlay({ username }) {
                     <>
                         <div className="tutorial-icon">🔒</div>
                         <h3>Pago Requerido</h3>
-                        <p>Puedes jugar libremente, pero el botón <b>"GUARDAR"</b> estará bloqueado.</p>
-                        <p className="warning-text">Solo podrás guardar tus pronósticos cuando el Administrador confirme tu pago.</p>
+                        <p>Puedes jugar libremente, preciona el boton <b>"GUARDAR"</b> para guardar tu pronostico</p>
+                        <p className="warning-text">RECORDA GUARDAR SINO NO SE SUMARAN LOS PUNTOS QUE CONSIGAS</p>
                         <button className="btn-tutorial" onClick={handleNext}>Siguiente ➡</button>
                     </>
                 )}
