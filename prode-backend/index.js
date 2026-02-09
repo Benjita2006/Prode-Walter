@@ -11,7 +11,6 @@ const authenticateToken = require('./authMiddleware');
 const db = require('./db'); 
 const { registerUser, loginUser, googleLogin } = require('./authController');
 
-// 👇 IMPORTACIONES CORRECTAS Y LIMPIAS
 const { 
     obtenerPartidos, 
     crearPartidos, 
@@ -24,8 +23,8 @@ const {
     obtenerTicketsUsuario,
     obtenerPronosticosPorTicket,
     getAllUsers,           
-    getUserTicketsAdmin,    // NUEVO
-    toggleTicketPayment,    // NUEVO
+    getUserTicketsAdmin,    
+    toggleTicketPayment,    
     checkPaymentStatus,
     toggleUserPayment
 } = require('./footballService');
@@ -46,15 +45,54 @@ app.use(cors());
 app.use(express.json());
 
 // ======================================================
-// 2. SOCKET.IO (CHAT)
+// 2. SOCKET.IO (CHAT CON PERSISTENCIA)
 // ======================================================
 io.on('connection', (socket) => {
-    socket.on('chat_message', (data) => { io.emit('chat_message', data); });
+    // console.log('Usuario conectado al chat'); // Opcional
+
+    socket.on('chat_message', async (data) => {
+        // data trae: { user, text, userId, type }
+        
+        try {
+            // 1. Guardar en Base de Datos
+            const conn = await db.getConnection();
+            await conn.execute(
+                'INSERT INTO chat_messages (user_id, username, message, type) VALUES (?, ?, ?, ?)',
+                [data.userId, data.user, data.text, data.type || 'text']
+            );
+            conn.release();
+
+            // 2. Emitir a todos (agregamos timestamp del servidor)
+            io.emit('chat_message', { 
+                ...data, 
+                timestamp: new Date().toISOString() 
+            });
+
+        } catch (error) {
+            console.error("Error guardando mensaje de chat:", error);
+        }
+    });
 });
 
 // ======================================================
 // 3. RUTAS DE LA API
 // ======================================================
+
+// --- NUEVA RUTA: OBTENER HISTORIAL DE CHAT (48 HS) ---
+app.get('/api/chat/history', authenticateToken, async (req, res) => {
+    try {
+        const [rows] = await db.execute(`
+            SELECT user_id as userId, username as user, message as text, type, created_at as timestamp
+            FROM chat_messages
+            WHERE created_at >= NOW() - INTERVAL 48 HOUR
+            ORDER BY created_at ASC
+        `);
+        res.json(rows);
+    } catch (error) {
+        console.error("Error historial chat:", error);
+        res.status(500).json([]);
+    }
+});
 
 // --- AUTENTICACIÓN ---
 app.post('/api/auth/login', async (req, res) => {
