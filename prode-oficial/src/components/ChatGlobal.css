@@ -2,39 +2,43 @@
 .chat-container {
     display: flex;
     flex-direction: column;
-    /* CORRECCIÓN CLAVE: Restamos solo 60px (aprox la altura del menú de abajo) */
-    /* Usamos 100dvh para mejor compatibilidad con móviles */
-    height: calc(100vh - 65px); 
-    background-color: #0b141a; /* Fondo base oscuro */
-    position: relative;
-    border: none; /* Quitamos bordes para que parezca nativo */
+    background-color: #0b141a; /* Fondo oscuro WhatsApp */
+    height: 100%; 
+    border: none;
 }
 
-/* Si el contenedor padre agrega márgenes, esto fuerza a ocuparlo todo */
+/* MODIFICACIÓN NUCLEAR: Usar position fixed */
+/* Esto saca al chat del flujo normal y evita el padding-bottom de 80px del App.css */
 .full-page-chat {
+    position: fixed;     
+    top: 0;              
+    left: 0;
+    right: 0;
+    /* Ajustamos esto para que termine justo encima de tu menú de navegación */
+    /* Tu menú parece medir unos 60-70px. Probemos con 60px. */
+    bottom: 60px;        
     width: 100%;
+    height: auto;        
     margin: 0;
-    border-radius: 0;
+    z-index: 99;         /* Encima del contenido, debajo de modales */
 }
 
 /* --- CABECERA --- */
 .chat-header {
     padding: 10px 15px;
-    background-color: #008069; /* Verde WhatsApp más fiel */
-    border-bottom: 1px solid #005c4b;
+    background-color: #1f2c34; 
+    border-bottom: 1px solid #2a3942;
+    color: #00a884;
+    font-weight: bold;
     display: flex;
     align-items: center;
     gap: 10px;
-    color: white;
-    font-weight: bold;
-    font-size: 1.1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    z-index: 10;
+    height: 60px; /* Altura fija para estabilidad */
 }
 
 /* --- ÁREA DE MENSAJES --- */
 .chat-messages-area {
-    flex: 1; /* Ocupa todo el espacio disponible */
+    flex: 1;
     overflow-y: auto;
     padding: 15px;
     display: flex;
@@ -45,19 +49,18 @@
     background-image: linear-gradient(rgba(11, 20, 26, 0.9), rgba(11, 20, 26, 0.9)), url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
 }
 
-/* --- BURBUJAS DE MENSAJE --- */
+/* --- BURBUJAS --- */
 .message-bubble {
     max-width: 80%;
     padding: 6px 10px;
     border-radius: 8px;
     font-size: 0.95rem;
-    position: relative;
     line-height: 1.4;
+    position: relative;
     word-wrap: break-word;
     box-shadow: 0 1px 1px rgba(0,0,0,0.1);
 }
 
-/* Mis mensajes (Derecha - Verde Oscuro) */
 .my-message {
     align-self: flex-end;
     background-color: #005c4b;
@@ -65,7 +68,6 @@
     border-top-right-radius: 0;
 }
 
-/* Mensajes de otros (Izquierda - Gris Oscuro) */
 .other-message {
     align-self: flex-start;
     background-color: #202c33;
@@ -73,40 +75,27 @@
     border-top-left-radius: 0;
 }
 
-/* Cabecera del mensaje (Nombre y Hora) */
 .msg-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
     font-size: 0.75rem;
     margin-bottom: 2px;
-    gap: 8px;
+    gap: 10px;
+    opacity: 0.8;
 }
 
-.msg-user {
-    font-weight: bold;
-    color: #53bdeb; /* Azulito claro para nombres ajenos */
-    font-size: 0.8rem;
-}
+.msg-user { font-weight: bold; color: #53bdeb; }
+.my-message .msg-user { color: #aebac1; }
+.msg-time { font-size: 0.65rem; margin-top: 2px; }
 
-.my-message .msg-user {
-    display: none; /* Opcional: Ocultar mi propio nombre para ahorrar espacio */
-}
-
-.msg-time {
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.6);
-    margin-left: auto; /* Empuja la hora a la derecha */
-}
-
-/* --- ÁREA DE INPUT (Abajo) --- */
+/* --- INPUT AREA --- */
 .chat-input-area {
     display: flex;
     align-items: center;
     padding: 8px 10px;
-    background-color: #202c33; /* Gris barra inferior */
+    background-color: #202c33;
+    min-height: 60px;
     gap: 8px;
-    min-height: 60px; /* Asegura altura mínima para el dedo */
 }
 
 .chat-input {
@@ -114,22 +103,13 @@
     padding: 10px 15px;
     border-radius: 20px;
     border: none;
-    background-color: #2a3942; /* Gris input */
+    background-color: #2a3942;
     color: white;
     font-size: 1rem;
     outline: none;
 }
 
-.chat-input::placeholder {
-    color: #8696a0;
-}
-
 /* --- BOTONES --- */
-.action-buttons {
-    display: flex;
-    align-items: center;
-}
-
 .chat-send-btn {
     border: none;
     width: 45px;
@@ -141,16 +121,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.1s;
 }
 
-.chat-send-btn:active { transform: scale(0.9); }
-
-.chat-send-btn.send { background-color: #00a884; } /* Botón enviar verde */
-.chat-send-btn.mic { background-color: #00a884; }  /* Micro verde */
+.chat-send-btn.send { background-color: #00a884; }
+.chat-send-btn.mic { background-color: #00a884; }
 .chat-send-btn.stop { background-color: #ef5350; animation: pulse 1.5s infinite; }
 
-/* Controles de Audio */
+/* --- AUDIO CONTROLS --- */
 .audio-controls {
     flex: 1;
     display: flex;
@@ -158,37 +135,16 @@
     justify-content: center;
 }
 
-.recording-indicator {
-    color: #ef5350;
-    font-weight: bold;
-    animation: blink 1s infinite;
-}
+.recording-indicator { color: #ef5350; font-weight: bold; animation: blink 1s infinite; }
 
 .audio-preview {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #2a3942;
-    padding: 5px 15px;
-    border-radius: 20px;
-    color: #fff;
-    width: 100%;
-    justify-content: space-between;
+    display: flex; align-items: center; gap: 10px; width: 100%; justify-content: space-between;
+    background: #2a3942; padding: 5px 15px; border-radius: 20px; color: #fff;
 }
 
-.btn-cancel-audio {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2rem;
-    color: #8696a0;
-}
+.btn-cancel-audio { background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #8696a0; }
 
-/* Animaciones */
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(239, 83, 80, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(239, 83, 80, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(239, 83, 80, 0); }
-}
+.audio-player { height: 35px; max-width: 220px; border-radius: 5px; }
 
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 83, 80, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 83, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 83, 80, 0); } }
 @keyframes blink { 50% { opacity: 0.5; } }
