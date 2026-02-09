@@ -165,9 +165,9 @@ async function obtenerTicketsUsuario(userId, roundName) {
 
 async function crearNuevoTicket(userId, roundName, ticketName) {
     try {
-        // Por defecto nace impago (is_paid = 0)
+        // CAMBIO AQUÍ: is_paid pasa de 0 a 1 (Nace habilitada)
         const [res] = await db.execute(
-            'INSERT INTO tickets (user_id, round_name, ticket_name, is_paid) VALUES (?, ?, ?, 0)',
+            'INSERT INTO tickets (user_id, round_name, ticket_name, is_paid) VALUES (?, ?, ?, 1)',
             [userId, roundName, ticketName]
         );
         return { success: true, id: res.insertId };
