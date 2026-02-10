@@ -1,16 +1,12 @@
 import React from 'react';
 import './MatchCard.css';
+import { motion } from 'framer-motion'; // Ahora sí se usará abajo
 
-function MatchCard({ 
-    matchId, equipoA, logoA, equipoB, logoB, 
-    fecha, status, bloqueado, seleccionActual, 
-    onSeleccionChange, golesA, golesB 
-}) {
+const MatchCard = ({ matchId, equipoA, logoA, equipoB, logoB, fecha, status, bloqueado, seleccionActual, onSeleccionChange, golesA, golesB }) => {
 
     const ahora = new Date();
     const horaPartido = new Date(fecha);
     
-   
     const estaCerrado = ahora >= horaPartido || status === 'FT' || bloqueado;
 
     const fechaFormateada = horaPartido.toLocaleDateString('es-AR', {
@@ -18,19 +14,24 @@ function MatchCard({
     });
 
     const handleSelect = (valor) => {
-        // Solo permitimos el cambio si NO está cerrado
         if (!estaCerrado) {
             onSeleccionChange(matchId, valor);
         }
     };
 
     return (
-        <div className={`match-card ${estaCerrado ? 'bloqueado' : ''}`}>
+        // ✅ AQUÍ ESTÁ EL CAMBIO: Usamos <motion.div> en vez de <div>
+        <motion.div 
+            className={`match-card ${estaCerrado ? 'bloqueado' : ''}`}
+            // Estas propiedades usan la variable 'motion'
+            initial={{ opacity: 0, y: 30 }} 
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+        >
             
             <div className="match-header">
                 <span className="match-date">{fechaFormateada} HS</span>
-                
-                {/* 2. Actualizamos el Badge para mostrar "CERRADO" si ya empezó */}
                 <span className={`match-status-badge ${estaCerrado && status === 'NS' ? 'closed' : status.toLowerCase()}`}>
                     {status === 'FT' ? 'FINAL' : (ahora >= horaPartido ? 'CERRADO' : 'POR JUGAR')}
                 </span>
@@ -65,32 +66,31 @@ function MatchCard({
             </div>
 
             <div className="prediction-footer">
-                {/* 3. Si está cerrado, mostramos el pronóstico pero deshabilitamos clics */}
                 <div className="prediction-options">
                     <button 
                         className={`predict-btn ${seleccionActual === 'HOME' ? 'selected-home' : ''}`}
                         onClick={() => handleSelect('HOME')}
-                        disabled={estaCerrado} // 👈 Importante
+                        disabled={estaCerrado}
                     >
                         LOCAL
                     </button>
                     <button 
                         className={`predict-btn ${seleccionActual === 'DRAW' ? 'selected-draw' : ''}`}
                         onClick={() => handleSelect('DRAW')}
-                        disabled={estaCerrado} // 👈 Importante
+                        disabled={estaCerrado}
                     >
                         EMPATE
                     </button>
                     <button 
                         className={`predict-btn ${seleccionActual === 'AWAY' ? 'selected-away' : ''}`}
                         onClick={() => handleSelect('AWAY')}
-                        disabled={estaCerrado} // 👈 Importante
+                        disabled={estaCerrado}
                     >
                         VISITA
                     </button>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 }
 
