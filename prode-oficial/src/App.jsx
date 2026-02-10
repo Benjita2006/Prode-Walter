@@ -14,9 +14,7 @@ import Ranking from './components/Ranking';
 import { API_URL } from './config'; 
 import TutorialOverlay from './components/TutorialOverlay';
 import { FaCalendarDay, FaChevronDown } from 'react-icons/fa';
-import confetti from 'canvas-confetti';
-// Importamos y USAMOS motion y AnimatePresence
-import { AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti'; // Mantenemos el confetti
 import './App.css';
 
 function App() {
@@ -232,7 +230,7 @@ function App() {
             const data = await res.json();
 
             if (res.ok) {
-                // --- 🎉 EFECTO DE PAPELITOS (Celeste, Blanco y Verde) ---
+                // --- 🎉 FIESTA DE PAPELITOS ---
                 const duration = 3 * 1000;
                 const animationEnd = Date.now() + duration;
                 const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
@@ -248,7 +246,7 @@ function App() {
 
                     const particleCount = 50 * (timeLeft / duration);
 
-                    // Papelitos desde los costados
+                    // Papelitos celestes, blancos y verdes
                     confetti({
                         ...defaults, 
                         particleCount,
@@ -340,209 +338,169 @@ function App() {
             
             <NavBar userRole={userRole || 'Guest'} onLogout={handleLogout} onNavClick={handleNavClick} currentView={appView} />
             
-            {/* WRAPPER PRINCIPAL CON ANIMACIONES */}
             <div className="main-content-wrapper">
-                {/* AQUÍ ESTÁ EL CAMBIO: Usamos AnimatePresence para gestionar las transiciones */}
-                <AnimatePresence mode="wait">
-                    
-                    {/* PANEL DE ADMIN */}
-                    {isAdmin && (
-                        <>
-                            {appView === 'manage-users' && (
-                                <motion.div 
-                                    key="manage-users"
-                                    initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}
-                                >
-                                    <UsersManagement />
-                                </motion.div>
-                            )}
-                            {appView === 'admin-dashboard' && (
-                                <motion.div 
-                                    key="admin-dashboard"
-                                    initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}
-                                    style={{width: '100%', maxWidth: '800px', margin: '0 auto'}}
-                                >
-                                    <div className="admin-header"><h2>🛠️ Administración</h2></div>
-                                    <div className="admin-nav-grid">
-                                        <button onClick={() => setAdminTab('dashboard')} className={`admin-nav-card ${adminTab === 'dashboard' ? 'active' : ''}`}><span className="icon">📊</span><span>General</span></button>
-                                        <button onClick={() => setAdminTab('create')} className={`admin-nav-card ${adminTab === 'create' ? 'active' : ''}`}><span className="icon">➕</span><span>Crear</span></button>
-                                        <button onClick={() => setAdminTab('edit')} className={`admin-nav-card ${adminTab === 'edit' ? 'active' : ''}`}><span className="icon">✏️</span><span>Editar</span></button>
-                                        <button onClick={() => setAdminTab('users')} className={`admin-nav-card ${adminTab === 'users' ? 'active' : ''}`}><span className="icon">👥</span><span>Usuarios</span></button>
-                                    </div>
-                                    <div className="admin-content-area">
-                                        {adminTab === 'dashboard' && <AdminDashboard onUpdate={fetchPartidos} />}
-                                        {adminTab === 'create' && <MatchCreator onMatchCreated={fetchPartidos} />}
-                                        {adminTab === 'edit' && <MatchResultEditor />}
-                                        {adminTab === 'users' && <UsersManagement />}
-                                    </div>
-                                </motion.div>
-                            )}
-                        </>
-                    )}
+                
+                {/* PANEL DE ADMIN */}
+                {isAdmin && (
+                    <>
+                        {appView === 'manage-users' && <UsersManagement />}
+                        {appView === 'admin-dashboard' && (
+                            <div style={{width: '100%', maxWidth: '800px', margin: '0 auto'}}>
+                                <div className="admin-header"><h2>🛠️ Administración</h2></div>
+                                <div className="admin-nav-grid">
+                                    <button onClick={() => setAdminTab('dashboard')} className={`admin-nav-card ${adminTab === 'dashboard' ? 'active' : ''}`}><span className="icon">📊</span><span>General</span></button>
+                                    <button onClick={() => setAdminTab('create')} className={`admin-nav-card ${adminTab === 'create' ? 'active' : ''}`}><span className="icon">➕</span><span>Crear</span></button>
+                                    <button onClick={() => setAdminTab('edit')} className={`admin-nav-card ${adminTab === 'edit' ? 'active' : ''}`}><span className="icon">✏️</span><span>Editar</span></button>
+                                    <button onClick={() => setAdminTab('users')} className={`admin-nav-card ${adminTab === 'users' ? 'active' : ''}`}><span className="icon">👥</span><span>Usuarios</span></button>
+                                </div>
+                                <div className="admin-content-area">
+                                    {adminTab === 'dashboard' && <AdminDashboard onUpdate={fetchPartidos} />}
+                                    {adminTab === 'create' && <MatchCreator onMatchCreated={fetchPartidos} />}
+                                    {adminTab === 'edit' && <MatchResultEditor />}
+                                    {adminTab === 'users' && <UsersManagement />}
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
 
-                    {/* RANKING */}
-                    {appView === 'ranking' && (
-                        <motion.div 
-                            key="ranking"
-                            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}
-                            style={{width: '100%'}}
-                        >
-                            <Ranking />
-                        </motion.div>
-                    )}
+                {/* RANKING */}
+                {appView === 'ranking' && <Ranking />}
 
-                    {/* CHAT */}
-                    {appView === 'chat' && (
-                        <motion.div 
-                            key="chat"
-                            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }}
-                            className="chat-full-page"
-                        >
-                            <ChatGlobal username={username} fullPage={true} messages={chatMessages} setMessages={setChatMessages} />
-                        </motion.div>
-                    )}
+                {/* CHAT */}
+                {appView === 'chat' && <div className="chat-full-page"><ChatGlobal username={username} fullPage={true} messages={chatMessages} setMessages={setChatMessages} /></div>}
 
-                    {/* FIXTURE (MATCHES) */}
-                    {appView === 'matches' && (
-                        <motion.div 
-                            key="matches"
-                            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}
-                            style={{width: '100%'}}
-                        >
-                            <h1 style={{textAlign: 'center', marginBottom: '20px', textTransform:'uppercase', letterSpacing:'2px'}}>🏆 Fixture</h1>
-                            
-                            {Object.keys(partidosPorFechaFixture).length === 0 ? (
-                                <p style={{textAlign:'center', color:'#888', marginTop:'40px'}}>No hay partidos pendientes.</p> 
-                            ) : (
-                                <div className="fechas-container" style={{paddingBottom: '100px', width: '100%'}}>
-                                    {Object.keys(partidosPorFechaFixture).map((nombreFecha) => (
-                                        <div key={nombreFecha} className="fecha-group-container">
-                                            
-                                            {/* BOTÓN ENCABEZADO */}
-                                            <button 
-                                                onClick={() => toggleFecha(nombreFecha)}
-                                                className={`date-header-btn ${fechaAbierta === nombreFecha ? 'open' : ''}`}
-                                            >
-                                                <div className="date-label-container">
-                                                    <FaCalendarDay className="date-icon" />
-                                                    <span>{nombreFecha}</span>
-                                                </div>
-                                                <FaChevronDown className="arrow-icon" />
-                                            </button>
+                {/* FIXTURE (MATCHES) */}
+                {appView === 'matches' && (
+                    <>
+                        <h1 style={{textAlign: 'center', marginBottom: '20px', textTransform:'uppercase', letterSpacing:'2px'}}>🏆 Fixture</h1>
+                        
+                        {Object.keys(partidosPorFechaFixture).length === 0 ? (
+                            <p style={{textAlign:'center', color:'#888', marginTop:'40px'}}>No hay partidos pendientes.</p> 
+                        ) : (
+                            <div className="fechas-container" style={{paddingBottom: '100px', width: '100%'}}>
+                                {Object.keys(partidosPorFechaFixture).map((nombreFecha) => (
+                                    <div key={nombreFecha} className="fecha-group-container">
+                                        
+                                        {/* BOTÓN ENCABEZADO */}
+                                        <button 
+                                            onClick={() => toggleFecha(nombreFecha)}
+                                            className={`date-header-btn ${fechaAbierta === nombreFecha ? 'open' : ''}`}
+                                        >
+                                            <div className="date-label-container">
+                                                <FaCalendarDay className="date-icon" />
+                                                <span>{nombreFecha}</span>
+                                            </div>
+                                            <FaChevronDown className="arrow-icon" />
+                                        </button>
 
-                                            {/* CONTENIDO DESPLEGABLE */}
-                                            {fechaAbierta === nombreFecha && (
-                                                <div className="date-content-area">
-                                                    {tickets.length === 0 && !cargandoTickets ? (
-                                                        <div style={{textAlign: 'center', padding: '40px 20px'}}>
-                                                            <p style={{color: '#aaa', marginBottom: '20px'}}>Aún no has participado en esta fecha.</p>
-                                                            <button 
-                                                                onClick={() => crearNuevaBoleta(nombreFecha)}
-                                                                style={{padding: '15px 30px', fontSize: '1.2rem', fontWeight: 'bold', backgroundColor: '#4caf50', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(76, 175, 80, 0.4)'}}
-                                                            >
-                                                                🚀 JUGAR AHORA
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            <div className="ticket-selector-container">
-                                                                <div className="ticket-tabs-wrapper">
-                                                                    {tickets.map(t => (
-                                                                        <button key={t.id} onClick={() => setTicketActivo(t)} className={`btn-ticket-tab ${ticketActivo?.id === t.id ? 'active' : ''}`}>
-                                                                            {t.ticket_name}
-                                                                        </button>
-                                                                    ))}
-                                                                    <button className="btn-ticket-add" onClick={() => crearNuevaBoleta(nombreFecha)} title="Crear otra boleta">+</button>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="matches-grid-container">
-                                                                {partidosPorFechaFixture[nombreFecha].map(p => (
-                                                                    <MatchCard 
-                                                                        key={p.id} matchId={p.id} equipoA={p.local} logoA={p.logoLocal} equipoB={p.visitante} logoB={p.logoVisitante} fecha={p.fecha} status={p.status}
-                                                                        bloqueado={(p.status !== 'NS' && p.status !== 'PST') || !ticketActivo}
-                                                                        seleccionActual={misPronosticosTemp[p.id]} 
-                                                                        onSeleccionChange={handleSeleccionChange}
-                                                                    />
+                                        {/* CONTENIDO DESPLEGABLE */}
+                                        {fechaAbierta === nombreFecha && (
+                                            <div className="date-content-area">
+                                                {tickets.length === 0 && !cargandoTickets ? (
+                                                    <div style={{textAlign: 'center', padding: '40px 20px'}}>
+                                                        <p style={{color: '#aaa', marginBottom: '20px'}}>Aún no has participado en esta fecha.</p>
+                                                        <button 
+                                                            onClick={() => crearNuevaBoleta(nombreFecha)}
+                                                            style={{padding: '15px 30px', fontSize: '1.2rem', fontWeight: 'bold', backgroundColor: '#4caf50', color: 'white', border: 'none', borderRadius: '50px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(76, 175, 80, 0.4)'}}
+                                                        >
+                                                            🚀 JUGAR AHORA
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="ticket-selector-container">
+                                                            <div className="ticket-tabs-wrapper">
+                                                                {tickets.map(t => (
+                                                                    <button key={t.id} onClick={() => setTicketActivo(t)} className={`btn-ticket-tab ${ticketActivo?.id === t.id ? 'active' : ''}`}>
+                                                                        {t.ticket_name}
+                                                                    </button>
                                                                 ))}
+                                                                <button className="btn-ticket-add" onClick={() => crearNuevaBoleta(nombreFecha)} title="Crear otra boleta">+</button>
                                                             </div>
-                                                            
-                                                            <div className="save-container">
-                                                                <div style={{
-                                                                    marginBottom: '15px', padding: '10px', borderRadius: '8px', textAlign: 'center',
-                                                                    backgroundColor: estadoPago ? 'rgba(76, 175, 80, 0.15)' : 'rgba(244, 67, 54, 0.15)',
-                                                                    border: `1px solid ${estadoPago ? '#4caf50' : '#f44336'}`
-                                                                }}>
-                                                                    {estadoPago ? (
-                                                                        <span style={{color: '#4caf50', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>✅ BOLETA HABILITADA</span>
-                                                                    ) : (
-                                                                        <span style={{color: '#f44336', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>🔒 PAGO PENDIENTE</span>
-                                                                    )}
-                                                                    {!estadoPago && <p style={{fontSize: '0.8rem', color: '#aaa', marginTop: '5px', margin: 0}}>Podrás guardar tus pronósticos una vez que el admin habilite esta boleta.</p>}
-                                                                </div>
+                                                        </div>
 
-                                                                <button onClick={() => guardarFecha(nombreFecha)} disabled={guardando || !ticketActivo} className="btn-save-fixture">
-                                                                    {guardando ? 'Guardando...' : `GUARDAR PRONÓSTICO`}
-                                                                </button>
-                                                                <p style={{textAlign:'center', marginTop:'15px', fontSize:'0.8rem', color:'#666'}}>
-                                                                    ¿Quieres probar otro resultado? <span onClick={() => crearNuevaBoleta(nombreFecha)} style={{color:'#4caf50', cursor:'pointer', textDecoration:'underline'}}>Crear nueva boleta</span>
-                                                                </p>
+                                                        <div className="matches-grid-container">
+                                                            {partidosPorFechaFixture[nombreFecha].map(p => (
+                                                                <MatchCard 
+                                                                    key={p.id} matchId={p.id} equipoA={p.local} logoA={p.logoLocal} equipoB={p.visitante} logoB={p.logoVisitante} fecha={p.fecha} status={p.status}
+                                                                    bloqueado={(p.status !== 'NS' && p.status !== 'PST') || !ticketActivo}
+                                                                    seleccionActual={misPronosticosTemp[p.id]} 
+                                                                    onSeleccionChange={handleSeleccionChange}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                        
+                                                        <div className="save-container">
+                                                            <div style={{
+                                                                marginBottom: '15px', padding: '10px', borderRadius: '8px', textAlign: 'center',
+                                                                backgroundColor: estadoPago ? 'rgba(76, 175, 80, 0.15)' : 'rgba(244, 67, 54, 0.15)',
+                                                                border: `1px solid ${estadoPago ? '#4caf50' : '#f44336'}`
+                                                            }}>
+                                                                {estadoPago ? (
+                                                                    <span style={{color: '#4caf50', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>✅ BOLETA HABILITADA</span>
+                                                                ) : (
+                                                                    <span style={{color: '#f44336', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>🔒 PAGO PENDIENTE</span>
+                                                                )}
+                                                                {!estadoPago && <p style={{fontSize: '0.8rem', color: '#aaa', marginTop: '5px', margin: 0}}>Podrás guardar tus pronósticos una vez que el admin habilite esta boleta.</p>}
                                                             </div>
-                                                        </> 
-                                                    )}
+
+                                                            <button onClick={() => guardarFecha(nombreFecha)} disabled={guardando || !ticketActivo} className="btn-save-fixture">
+                                                                {guardando ? 'Guardando...' : `GUARDAR PRONÓSTICO`}
+                                                            </button>
+                                                            <p style={{textAlign:'center', marginTop:'15px', fontSize:'0.8rem', color:'#666'}}>
+                                                                ¿Quieres probar otro resultado? <span onClick={() => crearNuevaBoleta(nombreFecha)} style={{color:'#4caf50', cursor:'pointer', textDecoration:'underline'}}>Crear nueva boleta</span>
+                                                            </p>
+                                                        </div>
+                                                    </> 
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* RESULTADOS */}
+                {appView === 'results' && (
+                    <>
+                        <h1 style={{textAlign: 'center', marginBottom: '15px'}}>📊 Resultados</h1>
+                        {(() => {
+                            const terminados = partidos.filter(p => p.status === 'FT');
+                            if (terminados.length === 0) return <div style={{textAlign:'center', marginTop:'50px'}}><p style={{fontSize:'3rem'}}>⚽💤</p><p>Aún no hay resultados.</p></div>;
+                            
+                            const resultadosPorFecha = terminados.reduce((acc, p) => {
+                                const f = p.round || 'Varios';
+                                if (!acc[f]) acc[f] = [];
+                                acc[f].push(p);
+                                return acc;
+                            }, {});
+
+                            return (
+                                <div className="fechas-container" style={{paddingBottom: '100px', width: '100%'}}>
+                                    {Object.keys(resultadosPorFecha).map(nombreFecha => (
+                                        <div key={nombreFecha} style={{marginBottom: '15px', border:'1px solid #444', borderRadius:'8px', overflow:'hidden'}}>
+                                            <div style={{padding: '15px', background: '#333', color: '#4caf50', fontWeight: 'bold', borderBottom:'1px solid #555'}}>🏁 {nombreFecha}</div>
+                                            <div style={{padding: '10px', background: 'rgba(0,0,0,0.2)'}}>
+                                                <div className="matches-grid-container" style={{gap: '10px'}}>
+                                                    {resultadosPorFecha[nombreFecha].map(p => (
+                                                        <MatchCard 
+                                                            key={p.id} matchId={p.id} equipoA={p.local} logoA={p.logoLocal} equipoB={p.visitante} logoB={p.logoVisitante} fecha={p.fecha} status={p.status}
+                                                            bloqueado={true} seleccionActual={p.miPronostico} golesA={p.home_score} golesB={p.away_score}
+                                                            onSeleccionChange={() => {}} 
+                                                        />
+                                                    ))}
                                                 </div>
-                                            )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-                            )}
-                        </motion.div>
-                    )}
-
-                    {/* RESULTADOS */}
-                    {appView === 'results' && (
-                        <motion.div 
-                            key="results"
-                            initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}
-                            style={{width: '100%'}}
-                        >
-                            <h1 style={{textAlign: 'center', marginBottom: '15px'}}>📊 Resultados</h1>
-                            {(() => {
-                                const terminados = partidos.filter(p => p.status === 'FT');
-                                if (terminados.length === 0) return <div style={{textAlign:'center', marginTop:'50px'}}><p style={{fontSize:'3rem'}}>⚽💤</p><p>Aún no hay resultados.</p></div>;
-                                
-                                const resultadosPorFecha = terminados.reduce((acc, p) => {
-                                    const f = p.round || 'Varios';
-                                    if (!acc[f]) acc[f] = [];
-                                    acc[f].push(p);
-                                    return acc;
-                                }, {});
-
-                                return (
-                                    <div className="fechas-container" style={{paddingBottom: '100px', width: '100%'}}>
-                                        {Object.keys(resultadosPorFecha).map(nombreFecha => (
-                                            <div key={nombreFecha} style={{marginBottom: '15px', border:'1px solid #444', borderRadius:'8px', overflow:'hidden'}}>
-                                                <div style={{padding: '15px', background: '#333', color: '#4caf50', fontWeight: 'bold', borderBottom:'1px solid #555'}}>🏁 {nombreFecha}</div>
-                                                <div style={{padding: '10px', background: 'rgba(0,0,0,0.2)'}}>
-                                                    <div className="matches-grid-container" style={{gap: '10px'}}>
-                                                        {resultadosPorFecha[nombreFecha].map(p => (
-                                                            <MatchCard 
-                                                                key={p.id} matchId={p.id} equipoA={p.local} logoA={p.logoLocal} equipoB={p.visitante} logoB={p.logoVisitante} fecha={p.fecha} status={p.status}
-                                                                bloqueado={true} seleccionActual={p.miPronostico} golesA={p.home_score} golesB={p.away_score}
-                                                                onSeleccionChange={() => {}} 
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                );
-                            })()}
-                        </motion.div>
-                    )}
-
-                </AnimatePresence>
+                            );
+                        })()}
+                    </>
+                )}
             </div>
             
             {usuario && <TutorialOverlay username={usuario.username} />}

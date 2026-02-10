@@ -1,6 +1,6 @@
 import React from 'react';
 import './MatchCard.css';
-import { motion } from 'framer-motion'; // Ahora sí se usará abajo
+// Eliminada la referencia a framer-motion para evitar errores
 
 const MatchCard = ({ matchId, equipoA, logoA, equipoB, logoB, fecha, status, bloqueado, seleccionActual, onSeleccionChange, golesA, golesB }) => {
 
@@ -20,18 +20,11 @@ const MatchCard = ({ matchId, equipoA, logoA, equipoB, logoB, fecha, status, blo
     };
 
     return (
-        // ✅ AQUÍ ESTÁ EL CAMBIO: Usamos <motion.div> en vez de <div>
-        <motion.div 
-            className={`match-card ${estaCerrado ? 'bloqueado' : ''}`}
-            // Estas propiedades usan la variable 'motion'
-            initial={{ opacity: 0, y: 30 }} 
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-        >
+        <div className={`match-card ${estaCerrado ? 'bloqueado' : ''}`}>
             
             <div className="match-header">
                 <span className="match-date">{fechaFormateada} HS</span>
+                
                 <span className={`match-status-badge ${estaCerrado && status === 'NS' ? 'closed' : status.toLowerCase()}`}>
                     {status === 'FT' ? 'FINAL' : (ahora >= horaPartido ? 'CERRADO' : 'POR JUGAR')}
                 </span>
@@ -90,7 +83,7 @@ const MatchCard = ({ matchId, equipoA, logoA, equipoB, logoB, fecha, status, blo
                     </button>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 }
 
