@@ -9,8 +9,6 @@ function UsersManagement() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [userTickets, setUserTickets] = useState([]); 
     const [loadingTickets, setLoadingTickets] = useState(false);
-    
-    // Aquí está el estado que daba error
     const [error, setError] = useState(null);
 
     // Cargar usuarios
@@ -26,7 +24,7 @@ function UsersManagement() {
 
             const data = await res.json();
             setUsuarios(data);
-            setError(null); // Limpiamos error si sale bien
+            setError(null);
         } catch (err) {
             setError(err.message);
         }
@@ -122,7 +120,6 @@ function UsersManagement() {
                 onChange={(e) => setFiltro(e.target.value)}
             />
             
-            {/* 👇 ESTO ES LO QUE FALTABA: MOSTRAR EL ERROR */}
             {error && <p className="error-message" style={{color: '#ff5252', textAlign: 'center'}}>{error}</p>}
             
             <div className="table-responsive">
@@ -137,7 +134,6 @@ function UsersManagement() {
                     </thead>
                     <tbody>
                         {filteredUsers.map((user) => {
-                            // Definimos colores de rol aquí mismo para simplificar
                             const roleColor = user.role === 'Owner' ? '#ffcc00' : user.role === 'Admin' ? '#00d4ff' : '#4caf50';
                             
                             return (
@@ -145,7 +141,7 @@ function UsersManagement() {
                                     <td className="col-username">{user.username}</td>
                                     <td className="col-email">{user.email}</td>
                                     <td>
-                                        <span className="role-badge" style={{color: roleColor, border: `1px solid ${roleColor}`, padding: '4px 8px', borderRadius: '4px'}}>
+                                        <span className="role-badge" style={{color: roleColor, border: `1px solid ${roleColor}`}}>
                                             {user.role}
                                         </span>
                                     </td>
@@ -177,35 +173,41 @@ function UsersManagement() {
             </div>
             
             {filteredUsers.length === 0 && (
-                <p className="empty-message">No se encontraron usuarios.</p>
+                <p className="empty-message" style={{textAlign: 'center', marginTop: '20px', color: '#888'}}>
+                    No se encontraron usuarios.
+                </p>
             )}
 
-            {/* --- MODAL FLOTANTE --- */}
+            {/* --- MODAL FLOTANTE (ESTRUCTURA CORREGIDA) --- */}
             {selectedUser && (
                 <div className="modal-overlay" onClick={() => setSelectedUser(null)}>
-                    <div className="modal-content wide-modal" onClick={e => e.stopPropagation()}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        
+                        {/* 1. CABECERA (Fija) */}
                         <h3 className="modal-title">Boletas de {selectedUser.username}</h3>
                         
+                        {/* 2. CUERPO (Con Scroll) */}
                         {loadingTickets ? (
-                            <p>Cargando...</p>
+                            <p style={{padding: '20px'}}>Cargando...</p>
                         ) : (
                             <div className="tickets-scroll-area">
                                 {Object.keys(ticketsPorFecha).length === 0 ? (
-                                    <p style={{color: '#aaa'}}>Sin boletas creadas.</p>
+                                    <p style={{color: '#aaa', textAlign: 'center', padding: '20px'}}>
+                                        Sin boletas creadas.
+                                    </p>
                                 ) : (
                                     Object.keys(ticketsPorFecha).map(fecha => (
                                         <div key={fecha} className="round-group">
-                                            <h4 className="round-header" style={{color: '#4caf50', borderBottom: '1px solid #333', paddingBottom: '5px', marginTop:'15px'}}>{fecha}</h4>
-                                            <div className="tickets-grid" style={{display: 'grid', gap: '10px', marginTop: '10px'}}>
+                                            <h4 className="round-header">{fecha}</h4>
+                                            <div className="tickets-grid">
                                                 {ticketsPorFecha[fecha].map(ticket => (
                                                     <button 
                                                         key={ticket.id}
                                                         onClick={() => handleToggleTicket(ticket.id)}
                                                         className={`btn-round ${ticket.is_paid ? 'paid' : 'pending'}`}
-                                                        style={{display: 'flex', justifyContent: 'space-between', alignItems:'center', width: '100%', padding:'12px'}}
                                                     >
-                                                        <span style={{fontWeight:'bold'}}>{ticket.ticket_name} <small>({ticket.points} pts)</small></span>
-                                                        <span style={{fontSize:'0.9rem'}}>{ticket.is_paid ? '✅ HABILITADA' : '🔒 PENDIENTE'}</span>
+                                                        <span>{ticket.ticket_name} <small>({ticket.points} pts)</small></span>
+                                                        <span>{ticket.is_paid ? '✅ HABILITADA' : '🔒 PENDIENTE'}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -214,7 +216,11 @@ function UsersManagement() {
                                 )}
                             </div>
                         )}
-                        <button className="btn-close-modal" onClick={() => setSelectedUser(null)} style={{marginTop:'20px'}}>Cerrar</button>
+
+                        {/* 3. PIE (Fijo) */}
+                        <button className="btn-close-modal" onClick={() => setSelectedUser(null)}>
+                            Cerrar
+                        </button>
                     </div>
                 </div>
             )}
