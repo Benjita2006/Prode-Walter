@@ -1,136 +1,159 @@
+/* src/components/Ranking.css */
+
 .ranking-container {
-    max-width: 800px;
-    margin: 0 auto;
     padding: 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    animation: fadeIn 0.5s ease-in;
+    max-width: 700px; /* Un poco más ancho para que respire */
+    margin: 0 auto;
+    padding-bottom: 100px;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* --- CABECERA Y FILTROS --- */
+.ranking-header-area {
+    text-align: center;
+    margin-bottom: 25px;
 }
 
 .ranking-title {
-   text-align: center;
     color: #fff;
-    font-size: 2rem;
-    margin-bottom: 25px;
+    font-size: 1.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
-.ranking-card {
-    background-color: #2b2b2b;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    border: 1px solid #444;
-}
-
-.ranking-table {
-   width: 100%;
-    border-collapse: collapse;
-    background-color: #1e1e1e; /* Fondo oscuro */
-    border-radius: 10px;
-    overflow: hidden; /* Para que los bordes redondeados funcionen */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
-
-.ranking-table th {
-   background-color: #333;
-    color: #4caf50; /* Verde estilo fútbol */
-    padding: 15px;
-    text-align: left;
+.ranking-selector {
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 25px;
+    border: 1px solid #4caf50;
+    background-color: #1a1a1a;
+    color: white;
+    outline: none;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
     font-weight: bold;
-    text-transform: uppercase;
-    font-size: 0.9rem;
-}
-.ranking-table td {
-    padding: 15px;
-    color: #e0e0e0;
-    border-bottom: 1px solid #333;
-}
-.ranking-table tr:hover {
-    background-color: #2a2a2a;
 }
 
-.rank-row {
-    transition: background 0.2s;
+.ranking-selector:hover {
+    background-color: #252525;
+    border-color: #66bb6a;
 }
 
-.rank-row:hover {
-    background-color: #3a3a3a;
-}
-
-.rank-row td {
-    padding: 15px 10px;
-    border-bottom: 1px solid #333;
-    font-size: 1.1rem;
-}
-
-/* Posición / Medallas */
-.rank-pos {
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-align: center;
-}
-
-/* Usuario y Avatar */
-.user-info {
+/* --- LISTA DE TARJETAS --- */
+.ranking-list {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 12px;
 }
 
+.ranking-card {
+    display: flex;
+    align-items: center;
+    background-color: #1e1e1e; /* Fondo base tarjeta */
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    border-left: 5px solid #444; /* Borde por defecto */
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.ranking-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+/* Resaltar al usuario actual (YO) */
+.ranking-card.is-me {
+    border: 2px solid #4caf50;
+    background-color: #1a2e1b; /* Verde muy oscuro */
+}
+
+/* --- PODIO: ORO, PLATA, BRONCE --- */
+
+/* 🥇 1er Lugar */
+.ranking-card.rank-1 {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(184, 134, 11, 0.1) 100%);
+    border-left: 5px solid #FFD700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+}
+.ranking-card.rank-1 .rank-position { color: #FFD700; font-size: 1.8rem; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+
+/* 🥈 2do Lugar */
+.ranking-card.rank-2 {
+    background: linear-gradient(135deg, rgba(224, 224, 224, 0.1) 0%, rgba(169, 169, 169, 0.05) 100%);
+    border-left: 5px solid #C0C0C0;
+}
+.ranking-card.rank-2 .rank-position { color: #C0C0C0; font-size: 1.6rem; }
+
+/* 🥉 3er Lugar */
+.ranking-card.rank-3 {
+    background: linear-gradient(135deg, rgba(205, 127, 50, 0.1) 0%, rgba(139, 69, 19, 0.05) 100%);
+    border-left: 5px solid #CD7F32;
+}
+.ranking-card.rank-3 .rank-position { color: #CD7F32; font-size: 1.5rem; }
+
+
+/* --- ELEMENTOS DENTRO DE LA TARJETA --- */
+
+.rank-position {
+    width: 40px;
+    font-weight: 900;
+    font-size: 1.2rem;
+    text-align: center;
+    margin-right: 15px;
+    color: #666;
+}
+
 .user-avatar {
-    width: 35px;
-    height: 35px;
-    background: linear-gradient(135deg, #2196F3, #21CBF3);
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
+    background: linear-gradient(45deg, #2196F3, #00BCD4);
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    color: white;
-    font-size: 0.9rem;
-}
-
-/* Puntos */
-.rank-points {
-    text-align: right;
-    font-weight: bold;
-    color: #4caf50; /* Verde Puntos */
-    font-size: 1.3rem;
-}
-
-.rank-1 {
-    background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
-    border-left: 5px solid #ffd700;
-}
-.rank-1 .rank-position { font-size: 1.5rem; }
-.rank-1 .rank-user { color: #ffd700; font-weight: bold; }
-
-/* 🥈 SEGUNDO LUGAR */
-.rank-2 {
-    background: linear-gradient(90deg, rgba(192, 192, 192, 0.1) 0%, rgba(192, 192, 192, 0.05) 100%);
-    border-left: 5px solid #c0c0c0;
-}
-.rank-2 .rank-position { font-size: 1.4rem; }
-.rank-2 .rank-user { color: #c0c0c0; font-weight: bold; }
-
-/* 🥉 TERCER LUGAR */
-.rank-3 {
-    background: linear-gradient(90deg, rgba(205, 127, 50, 0.1) 0%, rgba(205, 127, 50, 0.05) 100%);
-    border-left: 5px solid #cd7f32;
-}
-.rank-3 .rank-position { font-size: 1.3rem; }
-.rank-3 .rank-user { color: #cd7f32; font-weight: bold; }
-
-/* Columnas especificas */
-.rank-points {
-    font-weight: bold;
-    text-align: right;
+    margin-right: 15px;
     font-size: 1.1rem;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
-.loading-text { text-align: center; color: #888; margin-top: 50px; }
-.no-data { text-align: center; color: #666; padding: 20px; }
+.user-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #e0e0e0;
+}
+
+.ticket-name {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 2px;
+}
+
+.user-points {
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: #4caf50;
+    min-width: 50px;
+    text-align: right;
+}
+
+/* Loading y Vacío */
+.loading-state, .empty-state {
+    text-align: center;
+    color: #888;
+    margin-top: 40px;
+    font-style: italic;
+}
