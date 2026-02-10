@@ -14,8 +14,12 @@ import Ranking from './components/Ranking';
 import { API_URL } from './config'; 
 import TutorialOverlay from './components/TutorialOverlay';
 import { FaCalendarDay, FaChevronDown } from 'react-icons/fa';
-import confetti from 'canvas-confetti'; // Mantenemos el confetti
+import confetti from 'canvas-confetti';
+import io from 'socket.io-client'; // <--- IMPORTANTE
 import './App.css';
+
+// Iniciamos el socket fuera para mantener la conexión
+const socket = io(API_URL);
 
 function App() {
     // --- ESTADOS ---
@@ -33,6 +37,9 @@ function App() {
     const [adminTab, setAdminTab] = useState('dashboard');
     const [chatMessages, setChatMessages] = useState([]);
 
+    // --- NUEVO ESTADO: Notificación de chat ---
+    const [hasUnreadChat, setHasUnreadChat] = useState(false);
+
     // --- ESTADOS DE LÓGICA ---
     const [misPronosticosTemp, setMisPronosticosTemp] = useState({});
     const [fechaAbierta, setFechaAbierta] = useState(null);
@@ -48,8 +55,31 @@ function App() {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme); 
     }, [theme]);
+
+    // 2. SOCKET LISTENER GLOBAL (Para notificaciones)
+    useEffect(() => {
+        const handleNewMessageGlobal = () => {
+            // Si NO estoy en la pantalla de chat, marca como no leído
+            if (appView !== 'chat') {
+                setHasUnreadChat(true);
+            }
+        };
+
+        socket.on('chat_message', handleNewMessageGlobal);
+
+        return () => {
+            socket.off('chat_message', handleNewMessageGlobal);
+        };
+    }, [appView]); // Se recrea cuando cambia la vista para saber cuál es la actual
+
+    // 3. Limpiar notificación al entrar al chat
+    useEffect(() => {
+        if (appView === 'chat') {
+            setHasUnreadChat(false);
+        }
+    }, [appView]);
     
-    // 2. Cargar pronósticos al cambiar de boleta
+    // 4. Cargar pronósticos al cambiar de boleta
     useEffect(() => {
         const cargarPronosticosDeBoleta = async () => {
             if (!ticketActivo || !fechaAbierta) {
@@ -79,7 +109,7 @@ function App() {
         cargarPronosticosDeBoleta();
     }, [ticketActivo, fechaAbierta]);
 
-    // 3. Verificar estado de pago
+    // 5. Verificar estado de pago
     useEffect(() => {
         const verificarPagoTicket = async () => {
             if (!ticketActivo) {
@@ -156,7 +186,7 @@ function App() {
         }
     }, []);
 
-    // 4. Verificar Token
+    // 6. Verificar Token
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -174,7 +204,7 @@ function App() {
         setLoading(false);
     }, [handleLogout, fetchPartidos]);
 
-    // 5. Buffer de pronósticos
+    // 7. Buffer de pronósticos
     useEffect(() => {
         if (partidos.length > 0) {
             const buffer = {};
@@ -230,7 +260,6 @@ function App() {
             const data = await res.json();
 
             if (res.ok) {
-                // --- 🎉 FIESTA DE PAPELITOS ---
                 const duration = 3 * 1000;
                 const animationEnd = Date.now() + duration;
                 const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
@@ -246,7 +275,7 @@ function App() {
 
                     const particleCount = 50 * (timeLeft / duration);
 
-                    // Papelitos celestes, blancos y verdes
+                    // Papelitos
                     confetti({
                         ...defaults, 
                         particleCount,
@@ -336,7 +365,14 @@ function App() {
         <div className="app-container">
             {showWelcome && <div className="welcome-overlay"><h1 className="welcome-text">⚽ Hola, {usuario.username}</h1></div>}
             
-            <NavBar userRole={userRole || 'Guest'} onLogout={handleLogout} onNavClick={handleNavClick} currentView={appView} />
+            {/* NAV BAR CON NOTIFICACIÓN */}
+            <NavBar 
+                userRole={userRole || 'Guest'} 
+                onLogout={handleLogout} 
+                onNavClick={handleNavClick} 
+                currentView={appView} 
+                hasUnreadChat={hasUnreadChat} // <--- NUEVA PROP
+            />
             
             <div className="main-content-wrapper">
                 
@@ -382,7 +418,6 @@ function App() {
                                 {Object.keys(partidosPorFechaFixture).map((nombreFecha) => (
                                     <div key={nombreFecha} className="fecha-group-container">
                                         
-                                        {/* BOTÓN ENCABEZADO */}
                                         <button 
                                             onClick={() => toggleFecha(nombreFecha)}
                                             className={`date-header-btn ${fechaAbierta === nombreFecha ? 'open' : ''}`}
@@ -394,7 +429,6 @@ function App() {
                                             <FaChevronDown className="arrow-icon" />
                                         </button>
 
-                                        {/* CONTENIDO DESPLEGABLE */}
                                         {fechaAbierta === nombreFecha && (
                                             <div className="date-content-area">
                                                 {tickets.length === 0 && !cargandoTickets ? (

@@ -74,3 +74,28 @@
     border-radius: 6px;
     cursor: pointer;
 }
+
+.nav-icon-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 10px;
+    height: 10px;
+    background-color: #ff3b30; /* Rojo iPhone */
+    border-radius: 50%;
+    border: 2px solid var(--card-bg, #1a1a1a); /* Borde para separar del icono */
+    animation: bounceBadge 0.3s ease-out;
+}
+
+@keyframes bounceBadge {
+    0% { transform: scale(0); }
+    80% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
