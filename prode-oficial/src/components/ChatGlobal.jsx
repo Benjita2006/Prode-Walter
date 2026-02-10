@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import { API_URL } from '../config'; 
 import './ChatGlobal.css'; 
+import AudioPlayer from './AudioPlayer';
 
 // Iconos simples (puedes cambiarlos por íconos SVG o de librería si prefieres)
 const ICON_MIC = "🎤";
@@ -186,8 +187,8 @@ function ChatGlobal({ username, fullPage, messages, setMessages }) {
                             </div>
                             <div className="msg-content">
                                 {/* Renderizado condicional: Audio o Texto */}
-                                {msg.type === 'audio' ? (
-                                    <audio controls src={msg.text} className="audio-player" />
+                               {msg.type === 'audio' ? (
+                                    <AudioPlayer src={msg.text} />
                                 ) : (
                                     msg.text
                                 )}
