@@ -94,35 +94,46 @@ async function googleLogin(token) {
         const payload = ticket.getPayload();
         
         const email = payload.email;
-        // const googleId = payload.sub; // ID único de google
+        const googleId = payload.sub; // ID único de Google
         const name = payload.name || payload.given_name;
+        const picture = payload.picture; // URL de la foto de perfil
 
-        // B. Verificar si el usuario ya existe en nuestra DB
+        // B. Verificar si el usuario ya existe
         const conn = await db.getConnection();
         const [users] = await conn.execute('SELECT * FROM users WHERE email = ?', [email]);
         let user = users[0];
 
-        // C. Si no existe, lo creamos (Registro automático)
         if (!user) {
-            // Generamos un nombre de usuario basado en el nombre de Google
+            // C.1. Si NO existe, lo creamos (Registro)
             let username = name || email.split('@')[0];
             
-            // Insertamos sin contraseña (password NULL)
             const [result] = await conn.execute(
-                'INSERT INTO users (username, email, password, role) VALUES (?, ?, NULL, ?)',
-                [username, email, 'User']
+                // ¡Aquí guardamos el google_id y el avatar!
+                'INSERT INTO users (username, email, password, google_id, avatar, role, auth_provider) VALUES (?, ?, NULL, ?, ?, ?, ?)',
+                [username, email, googleId, picture, 'User', 'google']
             );
             
-            // Recuperamos el usuario recién creado
             const [newUsers] = await conn.execute('SELECT * FROM users WHERE id = ?', [result.insertId]);
             user = newUsers[0];
+
+        } else {
+            // C.2. Si YA existe, actualizamos su foto y google_id por si cambiaron
+            // Esto es útil para usuarios viejos que ahora entran con Google
+            if (!user.google_id || !user.avatar) {
+                 await conn.execute(
+                    'UPDATE users SET google_id = ?, avatar = ?, auth_provider = ? WHERE id = ?',
+                    [googleId, picture, 'google', user.id]
+                );
+                // Actualizamos el objeto user en memoria para el token
+                user.avatar = picture; 
+            }
         }
 
         conn.release();
 
-        // D. Generamos nuestro propio Token JWT para la App
+        // D. Generamos Token JWT
         const appToken = jwt.sign(
-            { id: user.id, username: user.username, role: user.role },
+            { id: user.id, username: user.username, role: user.role, avatar: user.avatar }, // Agregamos avatar al token
             process.env.JWT_SECRET || 'secreto_super_seguro',
             { expiresIn: '24h' }
         );
@@ -130,7 +141,13 @@ async function googleLogin(token) {
         return { 
             success: true, 
             token: appToken, 
-            user: { id: user.id, username: user.username, email: user.email, role: user.role } 
+            user: { 
+                id: user.id, 
+                username: user.username, 
+                email: user.email, 
+                role: user.role,
+                avatar: user.avatar // Enviamos el avatar al frontend
+            } 
         };
 
     } catch (error) {
