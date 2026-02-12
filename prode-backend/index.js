@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http'); 
 const { Server } = require("socket.io"); 
-const path = require('path');
 require('dotenv').config(); 
 
 // --- IMPORTACIONES LOCALES ---
@@ -32,17 +31,42 @@ const {
 const PORT = process.env.PORT || 3000;
 
 // ======================================================
-// 1. INICIALIZACIÓN
+// 1. INICIALIZACIÓN Y CONFIGURACIÓN DE CORS
 // ======================================================
 const app = express(); 
 const server = http.createServer(app); 
 
-const io = new Server(server, {
-    cors: { origin: "*", methods: ["GET", "POST"] }
-});
+// 👇 LISTA DE SITIOS PERMITIDOS (Tu Frontend en Vercel y tu Localhost)
+const allowedOrigins = [
+    "https://prode-walter.vercel.app", // Tu web en producción
+    "http://localhost:5173",           // Tu entorno local de Vite
+    "http://localhost:3000"            // Por si acaso
+];
 
-app.use(cors());
+// A. Configuración CORS para Express (Rutas API)
+app.use(cors({
+    origin: function (origin, callback) {
+        // Permitir solicitudes sin origen (como Postman o móviles) o si está en la lista
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log("Bloqueado por CORS:", origin);
+            callback(new Error('No permitido por CORS'));
+        }
+    },
+    credentials: true // Importante para cookies/sesiones si las usas
+}));
+
 app.use(express.json());
+
+// B. Configuración CORS para Socket.IO (El Chat) - ¡SOLO UNA VEZ!
+const io = new Server(server, {
+    cors: { 
+        origin: allowedOrigins, // Usamos la misma lista de arriba
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
 
 // ======================================================
 // 2. SOCKET.IO (CHAT CON PERSISTENCIA)
@@ -56,9 +80,12 @@ io.on('connection', (socket) => {
         try {
             // 1. Guardar en Base de Datos
             const conn = await db.getConnection();
+            // Asegúrate de que la tabla 'messages' exista (en el script SQL la llamamos 'messages', no 'chat_messages')
+            // Voy a usar 'messages' que es el nombre estándar del script que te pasé.
+            // Si tu tabla se llama 'chat_messages', cambia 'messages' por 'chat_messages' aquí abajo.
             await conn.execute(
-                'INSERT INTO chat_messages (user_id, username, message, type) VALUES (?, ?, ?, ?)',
-                [data.userId, data.user, data.text, data.type || 'text']
+                'INSERT INTO messages (user_id, content) VALUES (?, ?)',
+                [data.userId, data.text]
             );
             conn.release();
 
@@ -81,11 +108,18 @@ io.on('connection', (socket) => {
 // --- NUEVA RUTA: OBTENER HISTORIAL DE CHAT (48 HS) ---
 app.get('/api/chat/history', authenticateToken, async (req, res) => {
     try {
+        // Ajustado a la tabla 'messages' del script SQL nuevo
         const [rows] = await db.execute(`
-            SELECT user_id as userId, username as user, message as text, type, created_at as timestamp
-            FROM chat_messages
-            WHERE created_at >= NOW() - INTERVAL 48 HOUR
-            ORDER BY created_at ASC
+            SELECT 
+                m.user_id as userId, 
+                u.username as user, 
+                m.content as text, 
+                'text' as type, 
+                m.created_at as timestamp
+            FROM messages m
+            JOIN users u ON m.user_id = u.id
+            WHERE m.created_at >= NOW() - INTERVAL 48 HOUR
+            ORDER BY m.created_at ASC
         `);
         res.json(rows);
     } catch (error) {
